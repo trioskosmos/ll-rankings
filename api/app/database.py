@@ -18,7 +18,9 @@ engine = None
 SessionLocal = None
 
 def init_engine():
-    """Initialize database engine with error handling"""
+    """Initializes the SQLAlchemy engine with connection pooling.
+    pool_pre_ping=True verifies connections before each query to
+    prevent 'Server has gone away' errors during idle periods."""
     global engine, SessionLocal
     
     try:
@@ -50,7 +52,9 @@ def init_engine():
 
 
 def get_db() -> Session:
-    """Dependency for getting DB session with error handling"""
+    """FastAPI Dependency that yields a database session.
+    Automatically closes the connection after the request finishes,
+    performing a rollback if an unhandled exception occurs."""
     if SessionLocal is None:
         raise DatabaseException("Database not initialized. Call init_engine() first.")
     
