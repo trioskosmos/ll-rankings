@@ -74,6 +74,32 @@ class ControversyResponse(BaseModel):
     results: list[ControversySongResult]
 
 
+class HotTakeResult(BaseModel):
+    username: str
+    song_name: str
+    user_rank: float
+    group_avg: float
+    delta: float
+    score: float  # Normalized percentage
+    take_type: str  # "HOT_TAKE" or "GLAZE"
+
+
+class HotTakesResponse(BaseModel):
+    metadata: AnalysisMetadata
+    takes: list[HotTakeResult]
+
+
+class UserSpiceResult(BaseModel):
+    username: str
+    global_spice: float
+    group_breakdown: Dict[str, float]  # {subgroup_name: spice_score}
+
+
+class SpiceMeterResponse(BaseModel):
+    metadata: AnalysisMetadata
+    results: list[UserSpiceResult]
+
+
 class HealthResponse(BaseModel):
     status: str
     database: str
