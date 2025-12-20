@@ -17,8 +17,9 @@ class SubmitRankingRequest(BaseModel):
 
 # Responses
 class ConflictDetail(BaseModel):
-    reason: str
-    line_num: Optional[int] = None
+    reason: str  # "invalid_format", "song_not_found", "duplicate_song"
+    line_num: int
+    raw_text: str
     expected_format: Optional[str] = None
     suggestions: Optional[list[str]] = None
 
@@ -27,6 +28,7 @@ class SubmissionResponse(BaseModel):
     submission_id: UUID
     status: str
     parsed_count: int
+    # Now uses the structured ConflictDetail
     conflicts: Optional[Dict[str, ConflictDetail]] = None
 
 
@@ -98,6 +100,31 @@ class UserSpiceResult(BaseModel):
 class SpiceMeterResponse(BaseModel):
     metadata: AnalysisMetadata
     results: list[UserSpiceResult]
+
+
+class CommunityRankResult(BaseModel):
+    song_id: UUID
+    song_name: str
+    points: float        # Sum of ranks
+    average: float  # Mean of ranks
+    submission_count: int
+
+
+class CommunityRankResponse(BaseModel):
+    metadata: AnalysisMetadata
+    rankings: list[CommunityRankResult]
+
+
+class DeleteSubmissionsResponse(BaseModel):
+    username: str
+    deleted_count: int
+    message: str
+
+
+class TriggerResponse(BaseModel):
+    status: str
+    message: str
+    timestamp: datetime
 
 
 class HealthResponse(BaseModel):

@@ -1,124 +1,93 @@
 # app/services/matching.py
 
-import re
 import difflib
-import logging
-from typing import Tuple, Dict
-from uuid import UUID
-from sqlalchemy.orm import Session
-from app.models import Song, Franchise
-from app.exceptions import MatchingException
-from app.utils.validators import DataValidator
+import re
+from typing import Dict, Tuple
 
-logger = logging.getLogger(__name__)
+from sqlalchemy.orm import Session
+
+from app.models import Franchise, Song
+
 
 class StrictSongMatcher:
-    """Match songs from ranking text strictly with error handling"""
-    
-    RANKING_PATTERN = re.compile(r"^\d+\.\s+(.+?)\s+-\s+.+$")
-    
+    # Format: "Rank. Song Name - Artist Info"
+    RANKING_PATTERN = re.compile(r"^(\d+)\.\s+(.+?)\s+-\s+(.+)$")
+
+    @staticmethod
+    def _normalize(text: str) -> str:
+        """Standardize special characters and case for robust matching."""
+        if not text:
+            return ""
+        return (
+            text.strip()
+            .lower()
+            .replace("’", "'")  # Curly apostrophe
+            .replace("‘", "'")  # Curly apostrophe
+            .replace("–", "-")  # En-dash
+            .replace("—", "-")  # Em-dash
+        )
+
     @staticmethod
     def parse_ranking_text(
-        text: str,
-        franchise: str,
-        db: Session
-    ) -> Tuple[Dict[str, float], Dict[str, Dict]]:
-        """
-        Parse ranking text, match songs strictly.
-        Returns:
-            (matched: {song_id: rank}, conflicts: {song_name: reason_dict})
-        """
-        try:
-            # Validate input
-            DataValidator.validate_ranking_text(text)
-            DataValidator.validate_franchise(franchise)
-            
-            lines = text.strip().split('\n')
-            
-            # Load songs for this franchise
-            try:
-                franchise_obj = db.query(Franchise).filter_by(name=franchise).first()
-                if not franchise_obj:
-                    raise MatchingException(f"Franchise '{franchise}' not found in database")
-                
-                songs = db.query(Song).filter_by(franchise_id=franchise_obj.id).all()
-                if not songs:
-                    raise MatchingException(f"No songs found for franchise '{franchise}'")
-                
-                logger.info(f"Matching against {len(songs)} songs for {franchise}")
-            
-            except MatchingException:
-                raise
-            except Exception as e:
-                logger.error(f"Failed to load songs from database: {str(e)}")
-                raise MatchingException(f"Database error: {str(e)}")
-            
-            song_by_name_lower = {song.name.lower(): song for song in songs}
-            
-            matched: Dict[str, float] = {}
-            conflicts: Dict[str, Dict] = {}
-            line_num = 0
-            
-            for line in lines:
-                line = line.strip()
-                if not line:
-                    continue
-                
-                line_num += 1
-                
-                # Extract rank and song name
-                regex_match = StrictSongMatcher.RANKING_PATTERN.match(line)
-                if not regex_match:
-                    conflicts[line] = {
-                        "reason": "invalid_format",
-                        "line_num": line_num,
-                        "expected_format": "1. Song Name - Artist Info"
-                    }
-                    logger.debug(f"Line {line_num}: Invalid format - {line}")
-                    continue
-                
-                song_name = regex_match.group(1).strip()
-                rank = float(line_num)
-                
-                try:
-                    DataValidator.validate_song_data(song_name, None)
-                except Exception as e:
-                    conflicts[song_name] = {
-                        "reason": "invalid_song_name",
-                        "line_num": line_num,
-                        "error": str(e)
-                    }
-                    logger.warning(f"Line {line_num}: Invalid song name - {str(e)}")
-                    continue
-                
-                # Strict match (case-insensitive)
-                song = song_by_name_lower.get(song_name.lower())
-                
-                if song:
-                    matched[str(song.id)] = rank
-                    logger.debug(f"Line {line_num}: Matched '{song_name}'")
-                else:
-                    # Find suggestions
-                    close = difflib.get_close_matches(
-                        song_name.lower(),
-                        song_by_name_lower.keys(),
-                        n=3,
-                        cutoff=0.75
-                    )
-                    
-                    conflicts[song_name] = {
-                        "reason": "not_found",
-                        "line_num": line_num,
-                        "suggestions": [song_by_name_lower[c].name for c in close] if close else []
-                    }
-                    logger.warning(f"Line {line_num}: No match for '{song_name}'")
-            
-            logger.info(f"Matching complete: {len(matched)} matched, {len(conflicts)} conflicts")
-            return matched, conflicts
-        
-        except MatchingException:
-            raise
-        
-        except Exception as e:
-            logger.error(f"Unexpected error during matching: {str(e)}")
-            raise MatchingException(f"Matching failed: {str(e)}")
+        text: str, franchise: str, db: Session
+    ) -> Tuple[Dict[str, float], Dict[str, dict]]:
+        # Load franchise and associated songs
+        franchise_obj = db.query(Franchise).filter_by(name=franchise).first()
+        songs = db.query(Song).filter_by(franchise_id=franchise_obj.id).all()
+
+        # Build normalized lookup map: {normalized_name: SongObject}
+        song_lookup = {StrictSongMatcher._normalize(s.name): s for s in songs}
+
+        matched: Dict[str, float] = {}
+        conflicts: Dict[str, dict] = {}
+        seen_song_ids = set()
+
+        lines = [l.strip() for l in text.strip().split("\n") if l.strip()]
+
+        for idx, line in enumerate(lines, start=1):
+            match = StrictSongMatcher.RANKING_PATTERN.match(line)
+
+            # Error 1: Format mismatch
+            if not match:
+                conflicts[f"line_{idx}"] = {
+                    "reason": "invalid_format",
+                    "line_num": idx,
+                    "raw_text": line,
+                    "expected_format": "Rank. Song Name - Artist Info",
+                }
+                continue
+
+            rank_str, song_name, _ = match.groups()
+            song_name_clean = song_name.strip()
+            normalized_input = StrictSongMatcher._normalize(song_name_clean)
+
+            # Error 2: Song lookup (using normalized strings)
+            song = song_lookup.get(normalized_input)
+
+            if not song:
+                # Fuzzy suggestions using normalized keys but returning original names
+                close_matches = difflib.get_close_matches(
+                    normalized_input, song_lookup.keys(), n=3, cutoff=0.7
+                )
+                conflicts[song_name_clean] = {
+                    "reason": "song_not_found",
+                    "line_num": idx,
+                    "raw_text": line,
+                    "suggestions": [song_lookup[c].name for c in close_matches],
+                }
+                continue
+
+            # Error 3: Duplicate in the current list
+            if str(song.id) in seen_song_ids:
+                conflicts[f"{song_name_clean}_dup_{idx}"] = {
+                    "reason": "duplicate_song",
+                    "line_num": idx,
+                    "raw_text": line,
+                }
+                continue
+
+            # Success
+            matched[str(song.id)] = float(rank_str)
+            seen_song_ids.add(str(song.id))
+
+        return matched, conflicts

@@ -80,7 +80,7 @@ class DatabaseSeeder:
     @staticmethod
     def seed_franchises(db: Session):
         """Create franchise records with error handling"""
-        franchises = ["liella", "u's", "aqours", "nijigasaki"]
+        franchises = ["liella", "u's", "aqours", "nijigasaki", "hasunosora"]
         created = 0
         
         try:

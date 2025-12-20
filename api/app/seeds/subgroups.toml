@@ -197,64 +197,83 @@ songs = [
     "Departure"
 ]
 
-[liella.subunits]
-name = "Subunits"
-is_custom = false
-songs = [
-    "オルタネイト",
-    "ベロア",
-    "不可視なブルー",
-    "ニュートラル",
-    "カメリアの囁き",
-    "ディストーション",
-    "全力ライオット",
-    "影遊び",
-    "Dancing Raspberry",
-    "Thank you Good morning",
-    "A Little Love",
-    "Jellyfish"
-]
-
 [liella.group_songs]
 name = "Group Songs"
 is_custom = false
 songs = [
-    "WE WILL!!",
-    "スター宣言",
-    "追いかける夢の先で",
-    "水しぶきのサイン",
-    "Welcome to 僕らのセカイ",
-    "色づいて透明",
-    "揺らぐわ",
+    "Starlight Prologue",
+    "Aspire",
+    "Dazzling Game",
+    "真っ赤。",
+    "始まりは君の空",
+    "未来は風のように",
     "ビタミンSUMMER！",
-    "Chance Day, Chance Way！",
-    "ユートピアマジック",
-    "POP TALKING",
-    "Sing！Shine！Smile！",
-    "未来の音が聴こえる",
-    "TO BE CONTINUED",
-    "名前呼びあうように",
-    "Butterfly Wing",
-    "エンドレスサーキット",
-    "迷宮讃歌",
-    "プライム・アドベンチャー",
-    "パレードはいつも",
-    "駆けるメリーゴーランド",
-    "Time to go",
+    "Bubble Rise",
+    "いつものピースサイン",
+    "ノンフィクション!!",
     "Second Sparkle",
-    "ビギナーズRock!!",
-    "ミッドナイトラプソディ",
-    "星屑クルージング",
-    "君を想う花になる",
-    "ガラスボールリジェクション",
-    "心キラララ",
-    "常夏☆サンシャイン",
+    "Special Color",
+    "私のSymphony",
+    "キラーキューン☆",
+    "Tiny Stars",
+    "スーパースター!!",
+    "START!! True dreams",
     "Wish Song",
+    "QUESTION99",
+    "OPEN THE G☆TE!!!",
+    "揺らぐわ",
+    "絶対的LOVER",
+    "What a Wonderful Dream!!",
+    "常夏☆サンシャイン",
+    "Day1",
+    "未来予報ハレルヤ！",
+    "だから僕らは鳴らすんだ！",
+    "Chance Day, Chance Way！",
+    "笑顔のPromise",
+    "アイコトバ！",
+    "WE WILL!!",
+    "DAISUKI FULL POWER",
+    "シェキラ☆☆☆",
+    "Jump Into the New World",
+    "UNIVERSE!!",
+    "MIRACLE NEW STORY",
+    "オレンジのままで",
+    "結ぶメロディ",
+    "追いかける夢の先で",
+    "君・街・空・星",
+    "Dream Rainbow",
+    "Let's be ONE",
+    "探して！Future",
+    "FANTASTiC",
+    "Shooting Voice!!",
+    "ユニゾン",
+    "TO BE CONTINUED",
+    "1.2.3！",
+    "Welcome to 僕らのセカイ",
+    "青春HOPPERS",
+    "POP TALKING",
+    "ファイティングコール",
     "バイバイしちゃえば！？",
+    "スター宣言",
+    "未来の音が聴こえる",
+    "この街でいまキミと",
     "瞬きの先へ",
-    "青空を待ってる",
-    "水色のSunday",
-    "あふれる言葉"
+    "Sing！Shine！Smile！",
+    "Go!! リスタート",
+    "名前呼びあうように",
+    "Dancing Heart La-Pa-Pa-Pa!",
+    "水しぶきのサイン",
+    "Dreaming Energy",
+    "GOING UP",
+    "Primary",
+    "Within a Dream",
+    "Including you",
+    "色づいて透明",
+    "ユートピアマジック",
+    "Departure",
+    "プライム・アドベンチャー",
+    "トゥ トゥ トゥ！",
+    "Time to go"
 ]
 
 [liella.liella_no_uta]
@@ -267,19 +286,19 @@ songs = [
     "Summer Escape!!",
     "迷宮讃歌",
     "dolce",
-    "Dreamer Coaster",
-    "Memories",
-    "Ringing!",
-    "Message",
-    "パレードはいつも",
-    "ヒロインズ☆ランウェイ",
-    "Free Flight",
     "Anniversary",
-    "Dears",
     "Departure",
-    "Hoshizora Monologue",
+    "Dears",
     "ひとひらだけ",
-    "結び葉"
+    "エンドレスサーキット",
+    "パレードはいつも",
+    "Message",
+    "Ringing!",
+    "プライム・アドベンチャー",
+    "駆けるメリーゴーランド",
+    "Memories",
+    "Dreamer Coaster",
+    "Time to go"
 ]
 
 [liella.season_1_singles]
@@ -298,10 +317,10 @@ songs = [
     "Wish Song",
     "バイバイしちゃえば！？",
     "瞬きの先へ",
-    "Departure",
+    "ノンフィクション!!",
     "Day1",
     "Dream Rainbow",
-    "Primary"
+    "Starlight Prologue"
 ]
 
 [liella.season_2_singles]
@@ -346,13 +365,12 @@ songs = [
     "真っ赤。",
     "笑顔のPromise",
     "スーパースター!!",
-    "君・街・空・星",
-    "OPEN THE G☆TE!!!"
+    "君・街・空・星"
 ]
 
 # Example of potential user-defined custom subgroup
 # [liella.custom_subgroups.user_top_10]
-# name = "User's Top 10"
+# name = "User's Top 10"l
 # is_custom = true
 # creator = "admin"
 # songs = [

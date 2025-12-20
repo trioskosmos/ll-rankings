@@ -2,97 +2,24 @@
 
 import logging
 from datetime import datetime
+from sqlalchemy.orm import Session
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
-from sqlalchemy.orm import Session
 
 from app.config import settings
-from app.database import SessionLocal
+from app import database
 from app.models import AnalysisResult, Franchise, Subgroup, Submission, SubmissionStatus
 from app.services.analysis import AnalysisService
 
 logger = logging.getLogger(__name__)
 scheduler = BackgroundScheduler()
 
-
-def recompute_all_analyses():
-    """Recompute all statistical metrics for the entire franchise."""
-    logger.info("Starting background analysis recomputation...")
-    db = SessionLocal()
-
-    try:
-        franchises = db.query(Franchise).all()
-
-        for franchise in franchises:
-            f_id_str = str(franchise.id)
-            subgroups = db.query(Subgroup).filter_by(franchise_id=franchise.id).all()
-
-            # 1. SUBGROUP-LEVEL ANALYSIS
-            # Metrics that look at songs within a specific group (e.g. CatChu!)
-            for subgroup in subgroups:
-                s_id_str = str(subgroup.id)
-                logger.info(f"Computing subgroup metrics: {franchise.name}/{subgroup.name}")
-
-                # Compute results
-                divergence = AnalysisService.compute_divergence_matrix(
-                    f_id_str, s_id_str, db
-                )
-                controversy = AnalysisService.compute_controversy(
-                    f_id_str, s_id_str, db
-                )
-                takes = AnalysisService.compute_hot_takes(
-                    f_id_str, s_id_str, db
-                )
-
-                valid_subs = db.query(Submission).filter(
-                    Submission.subgroup_id == subgroup.id,
-                    Submission.submission_status == SubmissionStatus.VALID
-                ).count()
-
-                # Store subgroup results
-                analysis_map = {
-                    "DIVERGENCE": divergence,
-                    "CONTROVERSY": controversy,
-                    "TAKES": takes
-                }
-
-                for a_type, data in analysis_map.items():
-                    update_analysis_record(
-                        db, franchise.id, subgroup.id, a_type, data, valid_subs
-                    )
-
-            # 2. FRANCHISE-LEVEL ANALYSIS
-            # Metrics that aggregate data across all subgroups (e.g. Spice Meter)
-            logger.info(f"Computing franchise metrics for {franchise.name}")
-            
-            spice_data = AnalysisService.compute_spice_meter(f_id_str, db)
-            
-            total_subs = db.query(Submission).filter(
-                Submission.franchise_id == franchise.id,
-                Submission.submission_status == SubmissionStatus.VALID
-            ).count()
-
-            update_analysis_record(
-                db, franchise.id, None, "SPICE", spice_data, total_subs
-            )
-
-            db.commit()
-
-        logger.info("Analysis recomputation complete.")
-
-    except Exception as e:
-        logger.error(f"Analysis job failed: {str(e)}")
-        db.rollback()
-    finally:
-        db.close()
-
-
-def update_analysis_record(db, f_id, s_id, a_type, data, sub_count):
-    """Upsert helper for the AnalysisResult table."""
+def update_analysis_record(db: Session, franchise_id, subgroup_id, analysis_type, data, sub_count):
+    """Safely updates or creates an analysis result record (Upsert logic)."""
     existing = db.query(AnalysisResult).filter(
-        AnalysisResult.franchise_id == f_id,
-        AnalysisResult.subgroup_id == s_id,
-        AnalysisResult.analysis_type == a_type
+        AnalysisResult.franchise_id == franchise_id,
+        AnalysisResult.subgroup_id == subgroup_id,
+        AnalysisResult.analysis_type == analysis_type
     ).first()
 
     if existing:
@@ -101,18 +28,86 @@ def update_analysis_record(db, f_id, s_id, a_type, data, sub_count):
         existing.based_on_submissions = sub_count
     else:
         new_result = AnalysisResult(
-            franchise_id=f_id,
-            subgroup_id=s_id,
-            analysis_type=a_type,
+            franchise_id=franchise_id,
+            subgroup_id=subgroup_id,
+            analysis_type=analysis_type,
             result_data=data,
             computed_at=datetime.utcnow(),
             based_on_submissions=sub_count
         )
         db.add(new_result)
 
+def recompute_all_analyses():
+    """Iterates through data and recomputes all metrics."""
+    logger.info("Starting background analysis recomputation job...")
+
+    try:
+        db = database.get_session()
+    except Exception as e:
+        logger.error(f"Failed to get database session: {str(e)}")
+        return
+
+    try:
+        franchises = db.query(Franchise).all()
+        if not franchises:
+            return
+
+        for franchise in franchises:
+            f_id_str = str(franchise.id)
+            logger.info(f"--- Processing Franchise: {franchise.name} ---")
+
+            try:
+                # Get the count of all valid submissions in this franchise
+                franchise_valid_count = db.query(Submission).filter(
+                    Submission.franchise_id == franchise.id,
+                    Submission.submission_status == SubmissionStatus.VALID
+                ).count()
+
+                if franchise_valid_count < 2:
+                    logger.info(f"Skipping {franchise.name}: insufficient franchise data.")
+                    continue
+
+                subgroups = db.query(Subgroup).filter_by(franchise_id=franchise.id).all()
+
+                for subgroup in subgroups:
+                    s_id_str = str(subgroup.id)
+                    
+                    subgroup_tasks = {
+                        "DIVERGENCE": AnalysisService.compute_divergence_matrix,
+                        "CONTROVERSY": AnalysisService.compute_controversy,
+                        "TAKES": AnalysisService.compute_hot_takes,
+                        "COMMUNITY_RANK": AnalysisService.compute_community_rankings
+                    }
+
+                    for a_type, calc_func in subgroup_tasks.items():
+                        try:
+                            data = calc_func(f_id_str, s_id_str, db)
+                            # Only save if the task returned data (relativizer found matches)
+                            if data:
+                                update_analysis_record(db, franchise.id, subgroup.id, a_type, data, franchise_valid_count)
+                        except Exception as e:
+                            logger.error(f"Error calculating {a_type} for {subgroup.name}: {str(e)}")
+
+                # Franchise-wide Spice Index
+                try:
+                    spice_data = AnalysisService.compute_spice_meter(f_id_str, db)
+                    update_analysis_record(db, franchise.id, None, "SPICE", spice_data, franchise_valid_count)
+                except Exception as e:
+                    logger.error(f"Error calculating SPICE for {franchise.name}: {str(e)}")
+
+                db.commit()
+                logger.info(f"Finished recomputation for {franchise.name}")
+
+            except Exception as e:
+                db.rollback()
+                logger.error(f"Critical error in franchise {franchise.name} loop: {str(e)}")
+
+    except Exception as e:
+        logger.critical(f"Scheduler job failed: {str(e)}")
+    finally:
+        db.close()
 
 def start_scheduler():
-    """Register and start the cron job."""
     if not scheduler.running:
         trigger = CronTrigger(
             hour=settings.analysis_schedule_hour,
@@ -127,9 +122,8 @@ def start_scheduler():
         scheduler.start()
         logger.info("Analysis scheduler active.")
 
-
 def stop_scheduler():
-    """Shut down the background scheduler."""
     if scheduler.running:
         scheduler.shutdown()
         logger.info("Analysis scheduler stopped.")
+        

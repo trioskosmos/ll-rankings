@@ -2,9 +2,10 @@
 
 from contextlib import asynccontextmanager
 import logging
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.config import settings
 from app import database  # Import module, not individual exports
@@ -23,21 +24,27 @@ async def lifespan(app: FastAPI):
     # Startup
     try:
         logger.info("Starting application...")
-        
-        # Initialize database connection
         database.init_engine()
         database.init_db()
         
-        # Seed if empty
         db = database.get_session()
         try:
             from app.models import Song
             song_count = db.query(Song).count()
+            
+            # Initial setup for songs (only if empty)
             if song_count == 0:
-                logger.info("Database empty, running seeds...")
-                DatabaseSeeder.seed_all(db)
-            else:
-                logger.info(f"Database has {song_count} songs")
+                logger.info("Database empty, running initial song seeds...")
+                DatabaseSeeder.seed_franchises(db)
+                DatabaseSeeder.seed_songs(db, "liella")
+            
+            # SUBGROUP SYNCHRONIZATION
+            # This runs every time the app starts/reloads
+            logger.info("Synchronizing subgroups from TOML...")
+            DatabaseSeeder.seed_subgroups(db, "liella")
+            
+            logger.info(f"Ready: {song_count} songs in database.")
+            
         except Exception as e:
             logger.error(f"Seeding error: {str(e)}")
             db.close()
@@ -45,7 +52,6 @@ async def lifespan(app: FastAPI):
         finally:
             db.close()
         
-        # Start scheduler
         if settings.analysis_scheduler_enabled:
             analysis_scheduler.start_scheduler()
         
@@ -53,9 +59,6 @@ async def lifespan(app: FastAPI):
     
     except LiellaException as e:
         logger.critical(f"Critical startup error: {str(e)}")
-        raise
-    except Exception as e:
-        logger.critical(f"Unexpected startup error: {str(e)}")
         raise
     
     yield
@@ -92,6 +95,22 @@ async def liella_exception_handler(request, exc):
     return JSONResponse(
         status_code=400,
         content={"error": str(exc), "type": type(exc).__name__}
+    )
+
+@app.exception_handler(SQLAlchemyError)
+async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError):
+    logger.error(f"DATABASE FAILURE: {str(exc)}")
+    return JSONResponse(
+        status_code=500,
+        content={"error": "Database sync failed.", "type": "DatabaseError"}
+    )
+
+@app.exception_handler(Exception)
+async def universal_exception_handler(request: Request, exc: Exception):
+    logger.error(f"UNHANDLED SYSTEM ERROR: {str(exc)}")
+    return JSONResponse(
+        status_code=500,
+        content={"error": "An internal error occurred.", "type": "InternalError"}
     )
 
 # Routes

@@ -27,7 +27,7 @@ class DataValidator:
     @staticmethod
     def validate_franchise(franchise: str) -> bool:
         """Validate franchise name"""
-        valid_franchises = ["liella", "u's", "aqours", "nijigasaki"]
+        valid_franchises = ["liella", "u's", "aqours", "nijigasaki", "hasunosora"]
         
         if not franchise or not isinstance(franchise, str):
             raise ValidationException("Franchise must be a non-empty string")
