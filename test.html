@@ -190,12 +190,6 @@
     const API = "http://localhost:8000/api/v1";
     let activeTab = 'leader';
 
-    const SUBUNITS = {
-        'CatChu!': ['オルタネイト', '影遊び', 'ディストーション', '全力ライオット'],
-        'KALEIDOSCORE': ['ベロア', '不可視なブルー', 'ニュートラル', 'カメリアの囁き'],
-        '5yncri5e!': ['Dancing Raspberry', 'A Little Love', 'Jellyfish', 'Thank you Good morning']
-    };
-
     async function init() {
         const d = await fetch(`${API}/health/database`).then(r => r.json());
         const sel = document.getElementById("sub-select");
@@ -215,11 +209,12 @@
 
     async function syncData() {
         const sub = document.getElementById('sub-select').value;
-        const [ranks, cont, takes, spice] = await Promise.all([
+        const [ranks, cont, takes, spice, subunits] = await Promise.all([
             fetch(`${API}/analysis/rankings?franchise=liella&subgroup=${sub}`).then(r => r.json()),
             fetch(`${API}/analysis/controversy?franchise=liella&subgroup=${sub}`).then(r => r.json()),
             fetch(`${API}/analysis/takes?franchise=liella&subgroup=${sub}`).then(r => r.json()),
-            fetch(`${API}/analysis/spice?franchise=liella`).then(r => r.json())
+            fetch(`${API}/analysis/spice?franchise=liella`).then(r => r.json()),
+            fetch(`${API}/analysis/subunits?franchise=liella`).then(r => r.json())
         ]);
 
         if(activeTab === 'leader') renderLeaderboard(ranks.rankings);
@@ -229,7 +224,7 @@
             renderControversy(cont.results);
             renderConsistent(cont.results);
             renderSleepers(takes.takes);
-            renderSubunitPopularity(ranks.rankings, cont.results);
+            renderSubunitPopularity(ranks.rankings, cont.results, subunits.results);
             renderOutliers(spice.results);
         }
         if(activeTab === 'opps') renderMatrix(sub);
@@ -275,8 +270,8 @@
         document.getElementById('c-sleeper').innerHTML = `<table><tr><th>Song Name</th><th>Lover</th><th>Avg Rank</th><th>Gap</th></tr>` + sleepers.map(t => `<tr><td>${t.song_name}</td><td style="font-weight:bold">${t.username}</td><td>${t.group_avg}</td><td class="metric" style="color:var(--green)">${Math.abs(t.delta).toFixed(1)}</td></tr>`).join('') + `</table>`;
     }
 
-    function renderSubunitPopularity(rankings, controversy) {
-        const data = Object.entries(SUBUNITS).map(([name, songs]) => {
+    function renderSubunitPopularity(rankings, controversy, subunits) {
+        const data = Object.entries(subunits).map(([name, songs]) => {
             const rS = rankings.filter(r => songs.includes(r.song_name)), cS = controversy.filter(r => songs.includes(r.song_name));
             return { name, avg: rS.length ? (rS.reduce((a,b)=>a+b.average,0)/rS.length).toFixed(2) : 0, div: cS.length ? (cS.reduce((a,b)=>a+b.cv,0)/cS.length).toFixed(4) : 0 };
         }).sort((a,b) => a.avg - b.avg);

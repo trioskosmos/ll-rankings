@@ -368,6 +368,39 @@ songs = [
     "君・街・空・星"
 ]
 
+[liella.catchu]
+name = "CatChu!"
+is_custom = false
+is_subunit = true
+songs = [
+    "オルタネイト",
+    "影遊び",
+    "ディストーション",
+    "全力ライオット"
+]
+
+[liella.kaleidoscore]
+name = "KALEIDOSCORE"
+is_custom = false
+is_subunit = true
+songs = [
+    "ベロア",
+    "不可視なブルー",
+    "ニュートラル",
+    "カメリアの囁き"
+]
+
+[liella.5syncri5e]
+name = "5syncri5e!"
+is_custom = false
+is_subunit = true
+songs = [
+    "Dancing Raspberry",
+    "A Little Love",
+    "Jellyfish",
+    "Thank you Good morning"
+]
+
 # Example of potential user-defined custom subgroup
 # [liella.custom_subgroups.user_top_10]
 # name = "User's Top 10"l
