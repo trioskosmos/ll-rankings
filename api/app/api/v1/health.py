@@ -70,10 +70,10 @@ async def database_diagnostics(db: Session = Depends(database.get_db)):
         "subgroups_detail": subgroup_details,
         "verification": {
             "expected_songs": 147,
-            "expected_subgroups": 8,
+            "expected_subgroups": 10,
             "songs_match": liella_songs == 147,
-            "subgroups_match": liella_subgroups == 8,
-            "all_pass": liella_songs == 147 and liella_subgroups == 8
+            "subgroups_match": liella_subgroups == 10,
+            "all_pass": liella_songs == 147 and liella_subgroups == 10
         }
     }
 

@@ -56,6 +56,7 @@ class Subgroup(Base):
     franchise_id = Column(UUID(as_uuid=True), ForeignKey("franchises.id"))
     song_ids = Column(JSON)  # List of UUID strings
     is_custom = Column(Boolean, default=False)
+    is_subunit = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     franchise = relationship("Franchise", back_populates="subgroups")
