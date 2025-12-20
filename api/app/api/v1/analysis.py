@@ -11,7 +11,7 @@ from app.models import AnalysisResult, Franchise, Subgroup, Submission, Song
 from app.schemas import (AnalysisMetadata, CommunityRankResponse,
                          ControversyResponse, DivergenceMatrixResponse,
                          HotTakesResponse, SpiceMeterResponse, TriggerResponse,
-                         SubunitResponse)
+                         SubgroupResponse)
 from app.services.analysis import AnalysisService
 
 router = APIRouter(prefix="/api/v1", tags=["analysis"])
@@ -269,25 +269,42 @@ async def trigger_manual_analysis(background_tasks: BackgroundTasks):
         timestamp=datetime.utcnow(),
     )
 
-@router.get("/analysis/subunits", response_model=SubunitResponse)
-async def get_subunits(franchise: str, db: Session = Depends(get_db)):
-    """Get subunits for franchise"""
+
+@router.get("/subgroups", response_model=list[SubgroupResponse])
+async def get_franchise_subgroups(franchise: str, db: Session = Depends(get_db)):
+    """
+    Get all subgroup definitions for a franchise, 
+    including resolved song name lists.
+    """
+    # 1. Validate Franchise
     franchise_obj = db.query(Franchise).filter_by(name=franchise).first()
     if not franchise_obj:
         raise HTTPException(status_code=404, detail="Franchise not found")
 
-    subunits = (
+    # 2. Fetch all subgroups belonging to this franchise
+    subgroups = (
         db.query(Subgroup)
-        .filter(
-            Subgroup.franchise_id == franchise_obj.id,
-            Subgroup.is_subunit
-        )
+        .filter(Subgroup.franchise_id == franchise_obj.id)
+        .all()
     )
 
-    grouped_songs = dict()
+    # 3. Transform and Resolve Song Names
+    results = []
+    for sg in subgroups:
+        # Resolve names for IDs stored in the JSON list
+        song_names = []
+        if sg.song_ids:
+            songs = db.query(Song.name).filter(Song.id.in_(sg.song_ids)).all()
+            song_names = [s.name for s in songs]
 
-    for subunit in subunits:
-        songs = db.query(Song).filter(Song.id.in_(subunit.song_ids)).all()
-        grouped_songs[subunit.name] = [song.name for song in songs]
+        results.append(SubgroupResponse(
+            id=sg.id,
+            name=sg.name,
+            franchise=franchise_obj.name,
+            song_count=len(sg.song_ids) if sg.song_ids else 0,
+            is_custom=sg.is_custom,
+            is_subunit=sg.is_subunit,
+            songs=song_names
+        ))
 
-    return SubunitResponse(results = grouped_songs)
+    return results

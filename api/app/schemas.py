@@ -47,6 +47,8 @@ class SubgroupResponse(BaseModel):
     franchise: str
     song_count: int
     is_custom: bool
+    is_subunit: bool
+    songs: Optional[list[str]] = None  # Resolved song names
 
     class Config:
         from_attributes = True
