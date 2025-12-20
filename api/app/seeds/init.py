@@ -221,6 +221,7 @@ class DatabaseSeeder:
                         continue
                     
                     is_custom = subgroup_cfg.get("is_custom", False)
+                    is_subunit = subgroup_cfg.get("is_subunit", False)
                     song_names = subgroup_cfg.get("songs", [])
                     
                     if not isinstance(song_names, list):
@@ -258,17 +259,19 @@ class DatabaseSeeder:
                         if existing:
                             existing.song_ids = song_ids
                             existing.is_custom = is_custom
-                            logger.info(f"  Updated subgroup '{subgroup_name}' with {len(song_ids)} songs")
+                            existing.is_subunit = is_subunit
+                            logger.info(f"  Updated subgroup '{subgroup_name}' with {len(song_ids)} songs, is_subunit = {is_subunit}")
                         else:
                             new_subgroup = Subgroup(
                                 name=subgroup_name,
                                 franchise_id=franchise.id,
                                 song_ids=song_ids,
-                                is_custom=is_custom
+                                is_custom=is_custom,
+                                is_subunit=is_subunit
                             )
                             db.add(new_subgroup)
                             created_count += 1
-                            logger.info(f"  Created subgroup '{subgroup_name}' with {len(song_ids)} songs")
+                            logger.info(f"  Created subgroup '{subgroup_name}' with {len(song_ids)} songs, is_subunit = {is_subunit}")
                         
                         db.commit()
                     

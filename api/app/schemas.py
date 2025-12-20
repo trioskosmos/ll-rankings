@@ -131,3 +131,6 @@ class HealthResponse(BaseModel):
     status: str
     database: str
     timestamp: datetime
+
+class SubunitResponse(BaseModel):
+    results: dict[str,list[str]]

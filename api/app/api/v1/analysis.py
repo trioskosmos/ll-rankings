@@ -7,10 +7,11 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.jobs.analysis_scheduler import recompute_all_analyses, scheduler
-from app.models import AnalysisResult, Franchise, Subgroup, Submission
+from app.models import AnalysisResult, Franchise, Subgroup, Submission, Song
 from app.schemas import (AnalysisMetadata, CommunityRankResponse,
                          ControversyResponse, DivergenceMatrixResponse,
-                         HotTakesResponse, SpiceMeterResponse, TriggerResponse)
+                         HotTakesResponse, SpiceMeterResponse, TriggerResponse,
+                         SubunitResponse)
 from app.services.analysis import AnalysisService
 
 router = APIRouter(prefix="/api/v1", tags=["analysis"])
@@ -267,3 +268,26 @@ async def trigger_manual_analysis(background_tasks: BackgroundTasks):
         message="Analysis recomputation started in the background.",
         timestamp=datetime.utcnow(),
     )
+
+@router.get("/analysis/subunits", response_model=SubunitResponse)
+async def get_subunits(franchise: str, db: Session = Depends(get_db)):
+    """Get subunits for franchise"""
+    franchise_obj = db.query(Franchise).filter_by(name=franchise).first()
+    if not franchise_obj:
+        raise HTTPException(status_code=404, detail="Franchise not found")
+
+    subunits = (
+        db.query(Subgroup)
+        .filter(
+            Subgroup.franchise_id == franchise_obj.id,
+            Subgroup.is_subunit
+        )
+    )
+
+    grouped_songs = dict()
+
+    for subunit in subunits:
+        songs = db.query(Song).filter(Song.id.in_(subunit.song_ids)).all()
+        grouped_songs[subunit.name] = [song.name for song in songs]
+
+    return SubunitResponse(results = grouped_songs)
