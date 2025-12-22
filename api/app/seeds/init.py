@@ -17,7 +17,7 @@ class DatabaseSeeder:
     def load_songs_json(franchise_name: str = "liella") -> list[dict]:
         """Load songs from JSON file with error handling"""
         try:
-            seed_path = Path(__file__).parent / "liella_songs.json"
+            seed_path = Path(__file__).parent / f"{franchise_name}_songs.json"
             
             if not seed_path.exists():
                 raise ConfigException(f"Songs JSON file not found: {seed_path}")

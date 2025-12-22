@@ -418,3 +418,9 @@ songs = [
 #     "絶対的LOVER",
 #     "Aspire"
 # ]
+
+# --- aqours section ---
+
+[aqours.all_songs]
+name = "All Songs"
+songs = ["君のこころは輝いてるかい？", "Step! ZERO to ONE", "Aqours☆HEROES"]

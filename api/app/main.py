@@ -9,6 +9,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.config import settings
 from app import database  # Import module, not individual exports
+from app.models import Song, Franchise
 from app.seeds.init import DatabaseSeeder
 from app.exceptions import LiellaException
 from app.logging_config import setup_logging
@@ -29,29 +30,49 @@ async def lifespan(app: FastAPI):
         
         db = database.get_session()
         try:
-            from app.models import Song
-            song_count = db.query(Song).count()
             
-            # Initial setup for songs (only if empty)
-            if song_count == 0:
-                logger.info("Database empty, running initial song seeds...")
-                DatabaseSeeder.seed_franchises(db)
-                DatabaseSeeder.seed_songs(db, "liella")
+            # 1. Ensure all standard franchises exist in the DB
+            DatabaseSeeder.seed_franchises(db)
             
-            # SUBGROUP SYNCHRONIZATION
-            # This runs every time the app starts/reloads
-            logger.info("Synchronizing subgroups from TOML...")
-            DatabaseSeeder.seed_subgroups(db, "liella")
+            # 2. Define the active pool to seed/sync
+            franchises = ["liella", "aqours", "u's", "nijigasaki", "hasunosora"]
             
-            logger.info(f"Ready: {song_count} songs in database.")
+            for franchise_name in franchises:
+                logger.info(f"Processing startup sync for: {franchise_name}")
+                
+                # Fetch franchise object to check song population
+                f_obj = db.query(Franchise).filter_by(name=franchise_name).first()
+                if not f_obj:
+                    continue
+                
+                # Seed songs from {franchise}_songs.json only if that franchise has no songs
+                song_count = db.query(Song).filter_by(franchise_id=f_obj.id).count()
+                if song_count == 0:
+                    try:
+                        logger.info(f"Song table for {franchise_name} empty, loading JSON...")
+                        DatabaseSeeder.seed_songs(db, franchise_name)
+                    except Exception as e:
+                        logger.warning(f"Could not seed songs for {franchise_name}: {str(e)}")
+
+                # SUBGROUP SYNCHRONIZATION
+                # This runs every boot to allow for TOML updates. 
+                # If no subgroups are defined in the TOML for this franchise, the seeder will skip.
+                try:
+                    DatabaseSeeder.seed_subgroups(db, franchise_name)
+                except Exception as e:
+                    logger.info(f"Skipping subgroup sync for {franchise_name}: No definitions found in TOML.")
+
+            total_songs = db.query(Song).count()
+            logger.info(f"Ready: {total_songs} total songs in system.")
             
         except Exception as e:
-            logger.error(f"Seeding error: {str(e)}")
+            logger.error(f"Global seeding error: {str(e)}")
             db.close()
             raise
         finally:
             db.close()
         
+        # Start background analysis engine
         if settings.analysis_scheduler_enabled:
             analysis_scheduler.start_scheduler()
         
