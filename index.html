@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -7,147 +8,556 @@
     <style>
         :root {
             /* Dimmed Gray Palette */
-            --bg: #22272e; --card: #2d333b; --border: #444c56;
-            --pink: #f852ad; --green: #57ab5a; --red: #f85149;
-            --text: #adbac7; --muted: #768390;
+            --bg: #22272e;
+            --card: #2d333b;
+            --border: #444c56;
+            --pink: #f852ad;
+            --green: #57ab5a;
+            --red: #f85149;
+            --text: #adbac7;
+            --muted: #768390;
             --font-size-base: 22px;
         }
 
-        * { box-sizing: border-box; }
-        body { 
-            font-family: -apple-system, system-ui, sans-serif; 
-            background: var(--bg); color: var(--text); margin: 0; 
-            font-size: var(--font-size-base); min-height: 100vh;
-            display: flex; flex-direction: column; overflow-x: hidden;
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            font-size: var(--font-size-base);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
         }
 
         /* HEADER */
         header {
-            background: var(--card); border-bottom: 2px solid var(--border);
-            padding: 15px; display: flex; flex-direction: column; gap: 15px; flex-shrink: 0;
+            background: var(--card);
+            border-bottom: 2px solid var(--border);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            flex-shrink: 0;
         }
+
         @media (min-width: 1024px) {
-            header { flex-direction: row; align-items: center; padding: 20px 40px; justify-content: space-between; }
+            header {
+                flex-direction: row;
+                align-items: center;
+                padding: 20px 40px;
+                justify-content: space-between;
+            }
         }
 
-        .header-left { display: flex; flex-direction: column; gap: 15px; }
-        @media (min-width: 1024px) { .header-left { flex-direction: row; align-items: center; } }
-        h1 { font-size: 20px; margin: 0; text-transform: uppercase; color: #fff; letter-spacing: 1px; white-space: nowrap; }
-
-        .selector-group { display: flex; flex-direction: column; gap: 10px; width: 100%; }
-        @media (min-width: 600px) { .selector-group { flex-direction: row; width: auto; } }
-
-        .selector-wrapper { 
-            display: flex; align-items: center; gap: 8px; background: var(--bg); 
-            padding: 10px 15px; border-radius: 8px; border: 1px solid var(--border);
+        .header-left {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
         }
-        .selector-wrapper label { font-size: 9px; text-transform: uppercase; color: var(--muted); font-weight: bold; }
-        select { background: transparent; color: #fff; border: none; font-size: 14px; font-weight: bold; outline: none; cursor: pointer; width: 100%; }
 
-        .nav { display: flex; gap: 20px; overflow-x: auto; padding-bottom: 5px; width: 100%; justify-content: flex-start; }
-        @media (min-width: 1024px) { .nav { width: auto; margin-left: auto; overflow: visible; padding-bottom: 0; } }
-        .nav-item { cursor: pointer; color: var(--muted); font-size: 13px; font-weight: bold; text-transform: uppercase; white-space: nowrap; padding: 5px 0; border-bottom: 3px solid transparent; }
-        .nav-item.active { color: var(--pink); border-bottom-color: var(--pink); }
+        @media (min-width: 1024px) {
+            .header-left {
+                flex-direction: row;
+                align-items: center;
+            }
+        }
+
+        h1 {
+            font-size: 20px;
+            margin: 0;
+            text-transform: uppercase;
+            color: #fff;
+            letter-spacing: 1px;
+            white-space: nowrap;
+        }
+
+        .selector-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+        }
+
+        @media (min-width: 600px) {
+            .selector-group {
+                flex-direction: row;
+                width: auto;
+            }
+        }
+
+        .selector-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg);
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .selector-wrapper label {
+            font-size: 9px;
+            text-transform: uppercase;
+            color: var(--muted);
+            font-weight: bold;
+        }
+
+        select {
+            background: transparent;
+            color: #fff;
+            border: none;
+            font-size: 14px;
+            font-weight: bold;
+            outline: none;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .nav {
+            display: flex;
+            gap: 20px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+            width: 100%;
+            justify-content: flex-start;
+        }
+
+        @media (min-width: 1024px) {
+            .nav {
+                width: auto;
+                margin-left: auto;
+                overflow: visible;
+                padding-bottom: 0;
+            }
+        }
+
+        .nav-item {
+            cursor: pointer;
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: bold;
+            text-transform: uppercase;
+            white-space: nowrap;
+            padding: 5px 0;
+            border-bottom: 3px solid transparent;
+        }
+
+        .nav-item.active {
+            color: var(--pink);
+            border-bottom-color: var(--pink);
+        }
 
         /* GRID LAYOUT */
-        main { flex: 1; padding: 15px; padding-bottom: 120px; overflow-y: auto; }
-        @media (min-width: 1024px) { main { padding: 40px; } }
+        main {
+            flex: 1;
+            padding: 15px;
+            padding-bottom: 120px;
+            overflow-y: auto;
+        }
 
-        .grid { display: grid; grid-template-columns: 100%; gap: 30px; width: 100%; }
-        @media (min-width: 1500px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (min-width: 1024px) {
+            main {
+                padding: 40px;
+            }
+        }
 
-        .card { background: var(--card); border: 2px solid var(--border); border-radius: 16px; padding: 25px; width: 100%; min-width: 0; }
-        h3 { margin: 0 0 15px 0; color: #fff; font-size: 16px; text-transform: uppercase; letter-spacing: 2px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        .grid {
+            display: grid;
+            grid-template-columns: 100%;
+            gap: 30px;
+            width: 100%;
+        }
+
+        @media (min-width: 1500px) {
+            .grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        .card {
+            background: var(--card);
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            padding: 25px;
+            width: 100%;
+            min-width: 0;
+        }
+
+        h3 {
+            margin: 0 0 15px 0;
+            color: #fff;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+        }
 
         /* TABLES */
-        .table-container { width: 100%; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        th { text-align: left; padding: 12px 5px; color: var(--muted); border-bottom: 2px solid var(--border); text-transform: uppercase; font-size: 10px; }
-        td { padding: 15px 5px; border-bottom: 1px solid var(--border); font-size: 16px; word-wrap: break-word; vertical-align: middle; }
-        
-        .col-rank { width: 50px; font-weight: 800; color: var(--pink); }
-        .col-metric { width: 85px; text-align: right; font-family: monospace; font-weight: bold; }
-        .col-fight { width: 180px; font-size: 12px; color: var(--muted); font-style: italic; }
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        th {
+            text-align: left;
+            padding: 12px 5px;
+            color: var(--muted);
+            border-bottom: 2px solid var(--border);
+            text-transform: uppercase;
+            font-size: 10px;
+        }
+
+        td {
+            padding: 15px 5px;
+            border-bottom: 1px solid var(--border);
+            font-size: 16px;
+            word-wrap: break-word;
+            vertical-align: middle;
+        }
+
+        .col-rank {
+            width: 50px;
+            font-weight: 800;
+            color: var(--pink);
+        }
+
+        .col-metric {
+            width: 85px;
+            text-align: right;
+            font-family: monospace;
+            font-weight: bold;
+        }
+
+        .col-fight {
+            width: 180px;
+            font-size: 12px;
+            color: var(--muted);
+            font-style: italic;
+        }
 
         /* MATRIX */
-        #matrix-scroll-wrapper { width: 100%; overflow-x: auto; }
-        #c-matrix { display: grid; gap: 2px; margin-top: 10px; width: fit-content; }
-        .cell { aspect-ratio: 1/1; display: flex; align-items: center; justify-content: center; border-radius: 2px; font-size: 11px; font-weight: bold; min-width: 55px; }
-        .m-label { font-size: 10px; color: var(--muted); padding: 10px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        #matrix-scroll-wrapper {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        #c-matrix {
+            display: grid;
+            gap: 2px;
+            margin-top: 10px;
+            width: fit-content;
+        }
+
+        .cell {
+            aspect-ratio: 1/1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 2px;
+            font-size: 11px;
+            font-weight: bold;
+            min-width: 55px;
+        }
+
+        .m-label {
+            font-size: 10px;
+            color: var(--muted);
+            padding: 10px;
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
         /* FIXED FOOTER */
-        footer { position: fixed; bottom: 0; left: 0; width: 100%; background: #1c2128; border-top: 2px solid var(--border); padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; gap: 15px; z-index: 1000; }
-        .btn-footer { background: var(--bg); color: var(--text); border: 1px solid var(--border); padding: 10px 18px; border-radius: 6px; font-size: 13px; cursor: pointer; font-weight: bold; }
-        .btn-submit-action { background: var(--pink); color: #000; border: none; }
-        #engine-log { font-size: 12px; font-family: monospace; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #1c2128;
+            border-top: 2px solid var(--border);
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            z-index: 1000;
+        }
+
+        .btn-footer {
+            background: var(--bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-submit-action {
+            background: var(--pink);
+            color: #000;
+            border: none;
+        }
+
+        #engine-log {
+            font-size: 12px;
+            font-family: monospace;
+            color: var(--muted);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
 
         /* VISUALS */
-        .bar-bg { width: 100%; height: 16px; background: #1c2128; margin-top: 5px; border-radius: 8px; overflow: hidden; }
-        .bar-fill { height: 100%; background: var(--pink); border-radius: 8px; transition: width 0.6s ease; }
+        .bar-bg {
+            width: 100%;
+            height: 16px;
+            background: #1c2128;
+            margin-top: 5px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: var(--pink);
+            border-radius: 8px;
+            transition: width 0.6s ease;
+        }
 
         /* --- SUBMISSION PAGE DESIGN --- */
-        #submission-overlay { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(13, 17, 23, 0.98); display: none; 
-            justify-content: center; align-items: center; z-index: 2000; padding: 20px; 
-        }
-        
-        .modal-card { 
-            width: 100%; max-width: 900px; background: var(--card); 
-            border: 2px solid var(--border); border-radius: 20px; 
-            padding: 45px; position: relative; max-height: 95vh; overflow-y: auto; 
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-        }
-
-        .close-btn { 
-            position: absolute; top: 25px; right: 25px; font-size: 36px; 
-            cursor: pointer; color: var(--muted); line-height: 1; transition: color 0.2s;
-        }
-        .close-btn:hover { color: var(--pink); }
-
-        .form-group { margin-bottom: 25px; }
-        .form-group label { 
-            display: block; margin-bottom: 12px; font-size: 14px; 
-            font-weight: 800; color: var(--text); text-transform: uppercase; letter-spacing: 1px;
+        #submission-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(13, 17, 23, 0.98);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            padding: 20px;
         }
 
-        .modal-select { 
-            width: 100%; background: #1c2128; border: 2px solid var(--pink); 
-            border-radius: 12px; color: #fff; padding: 18px; font-size: 22px; 
-            font-weight: bold; outline: none; appearance: none;
+        .modal-card {
+            width: 100%;
+            max-width: 900px;
+            background: var(--card);
+            border: 2px solid var(--border);
+            border-radius: 20px;
+            padding: 45px;
+            position: relative;
+            max-height: 95vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 25px;
+            right: 25px;
+            font-size: 36px;
+            cursor: pointer;
+            color: var(--muted);
+            line-height: 1;
+            transition: color 0.2s;
+        }
+
+        .close-btn:hover {
+            color: var(--pink);
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 12px;
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--text);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .modal-select {
+            width: 100%;
+            background: #1c2128;
+            border: 2px solid var(--pink);
+            border-radius: 12px;
+            color: #fff;
+            padding: 18px;
+            font-size: 22px;
+            font-weight: bold;
+            outline: none;
+            appearance: none;
             background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-            background-repeat: no-repeat; background-position: right 20px center; background-size: 20px;
+            background-repeat: no-repeat;
+            background-position: right 20px center;
+            background-size: 20px;
         }
 
-        .modal-input, .modal-textarea { 
-            width: 100%; background: #1c2128; border: 2px solid var(--border); 
-            border-radius: 12px; color: #fff; padding: 18px; font-size: 20px; outline: none; 
+        .modal-input,
+        .modal-textarea {
+            width: 100%;
+            background: #1c2128;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            color: #fff;
+            padding: 18px;
+            font-size: 20px;
+            outline: none;
             transition: border-color 0.2s;
         }
-        .modal-input:focus, .modal-textarea:focus { border-color: var(--pink); box-shadow: 0 0 10px rgba(248, 82, 173, 0.2); }
-        .modal-textarea { height: 350px; font-family: monospace; font-size: 16px; line-height: 1.5; }
-        
-        .submit-btn { 
-            background: var(--pink); color: #000; font-weight: 900; border: none; 
-            padding: 22px; border-radius: 12px; width: 100%; cursor: pointer; 
-            text-transform: uppercase; font-size: 20px; letter-spacing: 1px;
+
+        .modal-input:focus,
+        .modal-textarea:focus {
+            border-color: var(--pink);
+            box-shadow: 0 0 10px rgba(248, 82, 173, 0.2);
+        }
+
+        .modal-textarea {
+            height: 350px;
+            font-family: monospace;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .submit-btn {
+            background: var(--pink);
+            color: #000;
+            font-weight: 900;
+            border: none;
+            padding: 22px;
+            border-radius: 12px;
+            width: 100%;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-size: 20px;
+            letter-spacing: 1px;
             transition: transform 0.1s, opacity 0.2s;
         }
-        .submit-btn:active { transform: scale(0.98); }
-        .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        .hidden { display: none !important; }
+        .submit-btn:active {
+            transform: scale(0.98);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .hidden {
+            display: none !important;
+        }
     </style>
 </head>
+
 <body>
 
-<header>
-    <div class="header-left">
-        <h1>Rankings Suite</h1>
-        <div class="selector-group">
-            <div class="selector-wrapper">
-                <label>Franchise</label>
-                <select id="view-franchise" onchange="changeFranchiseView()">
+    <header>
+        <div class="header-left">
+            <h1>Rankings Suite</h1>
+            <div class="selector-group">
+                <div class="selector-wrapper">
+                    <label>Franchise</label>
+                    <select id="view-franchise" onchange="changeFranchiseView()">
+                        <option value="liella">Liella</option>
+                        <option value="aqours">Aqours</option>
+                        <option value="u's">u's</option>
+                        <option value="nijigasaki">Nijigasaki</option>
+                        <option value="hasunosora">Hasunosora</option>
+                    </select>
+                </div>
+                <div class="selector-wrapper">
+                    <label>View</label>
+                    <select id="view-subgroup" onchange="syncData()"></select>
+                </div>
+            </div>
+        </div>
+        <div class="nav">
+            <div class="nav-item active" id="btn-leader" onclick="tab('leader')">Consensus</div>
+            <div class="nav-item" id="btn-more" onclick="tab('more')">Analysis</div>
+            <div class="nav-item" id="btn-opps" onclick="tab('opps')">Divergence</div>
+            <div class="nav-item" id="btn-spice" onclick="tab('spice')">Spice Meter</div>
+            <div class="nav-item" onclick="window.location.href='users.html'">Users</div>
+        </div>
+    </header>
+
+    <main>
+        <div id="view-leader" class="card">
+            <h3>Community Consensus</h3>
+            <div class="table-container" id="c-leaderboard"></div>
+        </div>
+        <div id="view-more" class="grid hidden">
+            <div class="card">
+                <h3>Top/Bottom 10</h3>
+                <div class="table-container" id="c-universal"></div>
+            </div>
+            <div class="card">
+                <h3>Most Disputed</h3>
+                <div class="table-container" id="c-disputed"></div>
+            </div>
+            <div class="card">
+                <h3>Subunit Power</h3>
+                <div class="table-container" id="c-subunits"></div>
+            </div>
+            <div class="card">
+                <h3>Controversial Tracks</h3>
+                <div class="table-container" id="c-controversy"></div>
+            </div>
+            <div class="card">
+                <h3>Sleepers</h3>
+                <div class="table-container" id="c-sleeper"></div>
+            </div>
+            <div class="card">
+                <h3>Consistent</h3>
+                <div class="table-container" id="c-consistent"></div>
+            </div>
+            <div class="card">
+                <h3>Outliers</h3>
+                <div class="table-container" id="c-outliers"></div>
+            </div>
+        </div>
+        <div id="view-opps" class="card hidden">
+            <h3>User Divergence Matrix</h3>
+            <div id="matrix-scroll-wrapper">
+                <div id="c-matrix"></div>
+            </div>
+        </div>
+        <div id="view-spice" class="card hidden">
+            <h3>Global Spice breakdown</h3>
+            <div id="c-spice"></div>
+        </div>
+    </main>
+
+    <!-- UPDATED SUBMISSION OVERLAY -->
+    <div id="submission-overlay">
+        <div class="modal-card">
+            <span class="close-btn" onclick="toggleSubmission(false)">&times;</span>
+            <h3 style="font-size: 24px; margin-bottom: 30px; border:none;">Rankings Submission</h3>
+
+            <div class="form-group">
+                <label>1. Select Franchise</label>
+                <select id="sub-franchise" class="modal-select">
                     <option value="liella">Liella</option>
                     <option value="aqours">Aqours</option>
                     <option value="u's">u's</option>
@@ -155,245 +565,195 @@
                     <option value="hasunosora">Hasunosora</option>
                 </select>
             </div>
-            <div class="selector-wrapper">
-                <label>View</label>
-                <select id="view-subgroup" onchange="syncData()"></select>
+
+            <div class="form-group">
+                <label>2. Your Name</label>
+                <input type="text" id="in-user" class="modal-input" placeholder="Username">
             </div>
+
+            <div class="form-group">
+                <label>3. Ranked List (Format: 1. Song - Artist)</label>
+                <textarea id="in-list" class="modal-textarea"
+                    placeholder="1. Starlight Prologue - Liella!&#10;2. 始まりは君の空 - Liella!"></textarea>
+            </div>
+
+            <button class="submit-btn" id="submit-btn-real" onclick="postSubmission()">Post My Rankings</button>
+            <div id="submit-log" style="margin-top:20px; font-size:16px;"></div>
         </div>
     </div>
-    <div class="nav">
-        <div class="nav-item active" id="btn-leader" onclick="tab('leader')">Consensus</div>
-        <div class="nav-item" id="btn-more" onclick="tab('more')">Analysis</div>
-        <div class="nav-item" id="btn-opps" onclick="tab('opps')">Divergence</div>
-        <div class="nav-item" id="btn-spice" onclick="tab('spice')">Spice Meter</div>
-    </div>
-</header>
 
-<main>
-    <div id="view-leader" class="card">
-        <h3>Community Consensus</h3>
-        <div class="table-container" id="c-leaderboard"></div>
-    </div>
-    <div id="view-more" class="grid hidden">
-        <div class="card"><h3>Top/Bottom 10</h3><div class="table-container" id="c-universal"></div></div>
-        <div class="card"><h3>Most Disputed</h3><div class="table-container" id="c-disputed"></div></div>
-        <div class="card"><h3>Subunit Power</h3><div class="table-container" id="c-subunits"></div></div>
-        <div class="card"><h3>Controversial Tracks</h3><div class="table-container" id="c-controversy"></div></div>
-        <div class="card"><h3>Sleepers</h3><div class="table-container" id="c-sleeper"></div></div>
-        <div class="card"><h3>Consistent</h3><div class="table-container" id="c-consistent"></div></div>
-        <div class="card"><h3>Outliers</h3><div class="table-container" id="c-outliers"></div></div>
-    </div>
-    <div id="view-opps" class="card hidden">
-        <h3>User Divergence Matrix</h3>
-        <div id="matrix-scroll-wrapper"><div id="c-matrix"></div></div>
-    </div>
-    <div id="view-spice" class="card hidden">
-        <h3>Global Spice breakdown</h3>
-        <div id="c-spice"></div>
-    </div>
-</main>
-
-<!-- UPDATED SUBMISSION OVERLAY -->
-<div id="submission-overlay">
-    <div class="modal-card">
-        <span class="close-btn" onclick="toggleSubmission(false)">&times;</span>
-        <h3 style="font-size: 24px; margin-bottom: 30px; border:none;">Rankings Submission</h3>
-        
-        <div class="form-group">
-            <label>1. Select Franchise</label>
-            <select id="sub-franchise" class="modal-select">
-                <option value="liella">Liella</option>
-                <option value="aqours">Aqours</option>
-                <option value="u's">u's</option>
-                <option value="nijigasaki">Nijigasaki</option>
-                <option value="hasunosora">Hasunosora</option>
-            </select>
+    <footer>
+        <div class="footer-left">
+            <div id="engine-log">READY</div>
         </div>
-
-        <div class="form-group">
-            <label>2. Your Name</label>
-            <input type="text" id="in-user" class="modal-input" placeholder="Username">
+        <div class="footer-right">
+            <button class="btn-footer" onclick="recompute()">Recompute</button>
+            <button class="btn-footer btn-submit-action" onclick="toggleSubmission(true)">Submit</button>
         </div>
+    </footer>
 
-        <div class="form-group">
-            <label>3. Ranked List (Format: 1. Song - Artist)</label>
-            <textarea id="in-list" class="modal-textarea" placeholder="1. Starlight Prologue - Liella!&#10;2. 始まりは君の空 - Liella!"></textarea>
-        </div>
+    <script>
+        const API = "http://localhost:8000/api/v1";
+        let activeTab = 'leader', allSubgroups = [];
 
-        <button class="submit-btn" id="submit-btn-real" onclick="postSubmission()">Post My Rankings</button>
-        <div id="submit-log" style="margin-top:20px; font-size:16px;"></div>
-    </div>
-</div>
+        async function init() { await fetchMasterSubgroups(); syncData(); }
 
-<footer>
-    <div class="footer-left"><div id="engine-log">READY</div></div>
-    <div class="footer-right">
-        <button class="btn-footer" onclick="recompute()">Recompute</button>
-        <button class="btn-footer btn-submit-action" onclick="toggleSubmission(true)">Submit</button>
-    </div>
-</footer>
-
-<script>
-    const API = "/api/v1";
-    let activeTab = 'leader', allSubgroups = []; 
-
-    async function init() { await fetchMasterSubgroups(); syncData(); }
-
-    async function fetchMasterSubgroups() {
-        const franchises = ["liella", "aqours", "u's", "nijigasaki", "hasunosora"];
-        const results = await Promise.all(franchises.map(f => fetch(`${API}/subgroups?franchise=${f}`).then(r => r.json()).catch(() => [])));
-        allSubgroups = results.flat();
-        updateSubgroupDropdown();
-    }
-
-    function updateSubgroupDropdown() {
-        const f = document.getElementById('view-franchise').value, sel = document.getElementById("view-subgroup");
-        const filtered = allSubgroups.filter(sg => sg.franchise === f);
-        sel.innerHTML = filtered.map(s => `<option value="${s.name}">${s.name}</option>`).join("");
-        if (filtered.some(s => s.name === "All Songs")) sel.value = "All Songs";
-    }
-
-    function changeFranchiseView() { wipeUI(); updateSubgroupDropdown(); syncData(); }
-    function wipeUI() { ['c-leaderboard','c-universal','c-disputed','c-subunits','c-controversy','c-sleeper','c-consistent','c-outliers','c-matrix','c-spice'].forEach(id => { const el = document.getElementById(id); if(el) el.innerHTML = "Refreshing..."; }); }
-    function tab(name) { activeTab = name; document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active')); document.getElementById(`btn-${name}`).classList.add('active'); document.querySelectorAll('main > div').forEach(v => v.classList.add('hidden')); document.getElementById(`view-${name}`).classList.remove('hidden'); syncData(); }
-
-    async function syncData() {
-        const sub = document.getElementById('view-subgroup').value, f = document.getElementById('view-franchise').value;
-        if (!sub) return;
-        try {
-            const [ranks, cont, takes, spice] = await Promise.all([
-                fetch(`${API}/analysis/rankings?franchise=${f}&subgroup=${sub}`).then(r => r.ok ? r.json() : null),
-                fetch(`${API}/analysis/controversy?franchise=${f}&subgroup=${sub}`).then(r => r.ok ? r.json() : null),
-                fetch(`${API}/analysis/takes?franchise=${f}&subgroup=${sub}`).then(r => r.ok ? r.json() : null),
-                fetch(`${API}/analysis/spice?franchise=${f}`).then(r => r.ok ? r.json() : null)
-            ]);
-            if (!ranks) return;
-            renderLeaderboard(ranks.rankings);
-            if(activeTab === 'more') {
-                renderUniversal(ranks.rankings, cont?.results || []); renderDisputed(takes?.takes || []);
-                renderSubunitPopularity(ranks.rankings, cont?.results || [], f); renderControversy(cont?.results || []);
-                renderConsistent(cont?.results || []); renderSleepers(takes?.takes || []); renderOutliers(spice?.results || []);
-            }
-            if(activeTab === 'opps') renderMatrix(sub, f);
-            if(activeTab === 'spice') renderSpice(spice?.results || []);
-        } catch (e) {}
-    }
-
-    function renderLeaderboard(ranks) {
-        document.getElementById('c-leaderboard').innerHTML = `<table><colgroup><col class="col-rank"><col><col class="col-metric"><col class="col-metric"></colgroup><tr><th>#</th><th>Song Name</th><th>Avg</th><th>Pts</th></tr>` + 
-            ranks.map((s, i) => `<tr><td class="col-rank">${i+1}</td><td>${s.song_name}</td><td class="col-metric" style="color:var(--pink)">${s.average}</td><td class="col-metric">${s.points}</td></tr>`).join('') + `</table>`;
-    }
-
-    function renderUniversal(ranks, controversy) {
-        const top = ranks.slice(0, 10), btm = ranks.slice(-10);
-        const mapAgreement = (songName) => {
-            const c = controversy.find(x => x.song_name === songName);
-            return c ? Math.max(0, 100 - ((c.cv * c.avg_rank) * 2.5)).toFixed(1) : "0.0";
-        };
-        const rows = [...top, ...btm].map((s, i) => `<tr><td class="col-rank" style="color:${i < 10 ? 'var(--green)' : 'var(--red)'}">${i < 10 ? 'TOP' : 'BTM'}</td><td>${s.song_name}</td><td class="col-metric" style="color:var(--pink)">${s.average}</td><td class="col-metric">${mapAgreement(s.song_name)}%</td></tr>`).join('');
-        document.getElementById('c-universal').innerHTML = `<table><colgroup><col class="col-rank"><col><col class="col-metric"><col class="col-metric"></colgroup><tr><th>Type</th><th>Song</th><th>Avg</th><th>Agr</th></tr>${rows}</table>`;
-    }
-
-    function renderDisputed(takes) {
-        const songGroups = {};
-        takes.forEach(t => { if (!songGroups[t.song_name]) songGroups[t.song_name] = []; songGroups[t.song_name].push(t); });
-        const res = Object.keys(songGroups).map(name => {
-            const g = songGroups[name].sort((a,b) => a.user_rank - b.user_rank);
-            return { name, fight: `${g[0].username} vs ${g[g.length-1].username}`, diff: Math.abs(g[g.length-1].user_rank - g[0].user_rank) };
-        }).sort((a,b) => b.diff - a.diff).slice(0, 10);
-        document.getElementById('c-disputed').innerHTML = `<table><colgroup><col><col class="col-fight"><col class="col-metric"></colgroup><tr><th>Song</th><th>Fight</th><th class="col-metric">Diff</th></tr>` + res.map(r => `<tr><td>${r.name}</td><td class="col-fight">${r.fight}</td><td class="col-metric" style="color:var(--pink)">${r.diff}</td></tr>`).join('') + `</table>`;
-    }
-
-    function renderSubunitPopularity(rankings, controversy, franchise) {
-        const subunits = allSubgroups.filter(sg => sg.franchise === franchise && sg.is_subunit);
-        if (!subunits.length) { document.getElementById('c-subunits').innerHTML = "No subunits."; return; }
-        const data = subunits.map(unit => {
-            const rS = rankings.filter(r => unit.songs.includes(r.song_name)), cS = controversy.filter(r => unit.songs.includes(r.song_name));
-            return { name: unit.name, avg: rS.length ? (rS.reduce((a,b)=>a+b.average,0)/rS.length).toFixed(2) : 0, div: cS.length ? (cS.reduce((a,b)=>a+b.cv,0)/cS.length).toFixed(4) : 0 };
-        }).sort((a,b) => a.avg - b.avg);
-        document.getElementById('c-subunits').innerHTML = `<table><colgroup><col><col class="col-metric"><col class="col-metric"></colgroup><tr><th>Unit</th><th class="col-metric">Avg</th><th class="col-metric">Div</th></tr>` + data.map(d => `<tr><td style="font-weight:bold">${d.name}</td><td class="col-metric" style="color:var(--pink)">${d.avg}</td><td class="col-metric">${d.div}</td></tr>`).join('') + `</table>`;
-    }
-
-    function renderControversy(results) { document.getElementById('c-controversy').innerHTML = `<table><colgroup><col><col class="col-metric"><col class="col-metric"></colgroup><tr><th>Song</th><th class="col-metric">Score</th><th class="col-metric">Div</th></tr>` + results.slice(0, 10).map(s => `<tr><td>${s.song_name}</td><td class="col-metric" style="color:var(--pink)">${s.controversy_score}</td><td class="col-metric">${s.cv}</td></tr>`).join('') + `</table>`; }
-    function renderConsistent(results) { const sorted = [...results].sort((a,b) => a.controversy_score - b.controversy_score).slice(0, 10); document.getElementById('c-consistent').innerHTML = `<table><colgroup><col><col class="col-metric"><col class="col-metric"></colgroup><tr><th>Song</th><th class="col-metric">Score</th><th class="col-metric">Avg</th></tr>` + sorted.map(s => `<tr><td>${s.song_name}</td><td class="col-metric" style="color:var(--pink)">${s.controversy_score}</td><td class="col-metric">${s.avg_rank}</td></tr>`).join('') + `</table>`; }
-    function renderSleepers(takes) { const sleepers = takes.filter(t => t.score < -15).slice(0, 10); document.getElementById('c-sleeper').innerHTML = `<table><colgroup><col><col class="col-metric"><col class="col-metric"></colgroup><tr><th>Song</th><th class="col-metric">Lover</th><th class="col-metric">Gap</th></tr>` + sleepers.map(t => `<tr><td>${t.song_name}</td><td class="col-metric">${t.username.substring(0,8)}</td><td class="col-metric" style="color:var(--green)">${Math.abs(t.delta).toFixed(1)}</td></tr>`).join('') + `</table>`; }
-    function renderOutliers(results) { if (!results || !results.length) return; const s = results.map(u => u.global_spice), min = Math.min(...s), max = Math.max(...s), r = (max - min) || 1; document.getElementById('c-outliers').innerHTML = `<table><colgroup><col><col class="col-metric"></colgroup><tr><th>User</th><th class="col-metric">Spice</th></tr>` + results.slice(0, 10).map(u => `<tr><td style="font-weight:bold">${u.username}</td><td class="metric"><div class="bar-bg" style="width:180px"><div class="bar-fill" style="width:${((u.global_spice - min) / r) * 100}%"></div><div style="font-size:10px; margin-top:-14px; margin-left:5px;">${u.global_spice}</div></div></td></tr>`).join('') + `</table>`; }
-
-    async function renderMatrix(sub, f) {
-        const wrap = document.getElementById("c-matrix"); wrap.innerHTML = "Loading...";
-        try {
-            const r = await fetch(`${API}/analysis/divergence?franchise=${f}&subgroup=${sub}`);
-            const d = await r.json(), u = Object.keys(d.matrix).sort(), max = Math.max(...Object.values(d.matrix).flatMap(o => Object.values(o))) || 1;
-            wrap.style.gridTemplateColumns = `150px repeat(${u.length}, 1fr)`;
-            wrap.innerHTML = `<div></div>` + u.map(n => `<div class="m-label">${n}</div>`).join('');
-            u.forEach(u1 => { wrap.innerHTML += `<div class="m-label" style="text-align:left">${u1}</div>`; u.forEach(u2 => { const v = d.matrix[u1][u2], op = Math.pow(v/max, 1.8); wrap.innerHTML += `<div class="cell" style="background:rgba(248, 82, 173, ${op}); color:${op > 0.5 ? '#000' : '#fff'}; border-bottom:1px solid #1c2128;">${v}</div>`; }); });
-        } catch (e) { wrap.innerHTML = "Error."; }
-    }
-
-    function renderSpice(results) {
-        if (!results || !results.length) return;
-        const s = results.map(u => u.global_spice), min = Math.min(...s), max = Math.max(...s), r = (max - min) || 1;
-        document.getElementById('c-spice').innerHTML = results.map(u => {
-            const norm = ((u.global_spice - min) / r) * 100;
-            return `<div style="margin-bottom:30px;"><div style="display:flex; justify-content:space-between; font-size:24px;"><strong>${u.username}</strong><span class="metric">${u.global_spice}</span></div><div class="bar-bg" style="height:24px"><div class="bar-fill" style="width:${norm}%"></div></div></div>`;
-        }).join('');
-    }
-
-    function toggleSubmission(show) { document.getElementById('submission-overlay').style.display = show ? 'flex' : 'none'; }
-    
-    // UPDATED SUBMISSION LOGIC
-    async function postSubmission() {
-        const log = document.getElementById('submit-log');
-        const user = document.getElementById('in-user').value.trim();
-        const list = document.getElementById('in-list').value.trim();
-        const f = document.getElementById('sub-franchise').value;
-        const btn = document.getElementById('submit-btn-real');
-
-        // Validation: Ensure fields are non-empty
-        if (!user || !list) {
-            log.innerHTML = `<span style="color:var(--red)">Username and list are required.</span>`;
-            return;
+        async function fetchMasterSubgroups() {
+            const franchises = ["liella", "aqours", "u's", "nijigasaki", "hasunosora"];
+            const results = await Promise.all(franchises.map(f => fetch(`${API}/subgroups?franchise=${f}`).then(r => r.json()).catch(() => [])));
+            allSubgroups = results.flat();
+            updateSubgroupDropdown();
         }
 
-        btn.disabled = true;
-        log.innerHTML = "POSTING DATA...";
+        function updateSubgroupDropdown() {
+            const f = document.getElementById('view-franchise').value, sel = document.getElementById("view-subgroup");
+            const filtered = allSubgroups.filter(sg => sg.franchise === f);
+            sel.innerHTML = filtered.map(s => `<option value="${s.name}">${s.name}</option>`).join("");
+            if (filtered.some(s => s.name === "All Songs")) sel.value = "All Songs";
+        }
 
-        try {
-            const r = await fetch(`${API}/submit`, { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify({ 
-                    username: user, 
-                    franchise: f, 
-                    subgroup_name: "All Songs", 
-                    ranking_list: list 
-                }) 
-            });
-            const d = await r.json();
-            if (d.status === "VALID") { 
-                log.innerHTML = `<span style="color:var(--green)">SUCCESSFULLY SUBMITTED!</span>`; 
-                setTimeout(()=> {
-                    toggleSubmission(false);
+        function changeFranchiseView() { wipeUI(); updateSubgroupDropdown(); syncData(); }
+        function wipeUI() { ['c-leaderboard', 'c-universal', 'c-disputed', 'c-subunits', 'c-controversy', 'c-sleeper', 'c-consistent', 'c-outliers', 'c-matrix', 'c-spice'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = "Refreshing..."; }); }
+        function tab(name) { activeTab = name; document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active')); document.getElementById(`btn-${name}`).classList.add('active'); document.querySelectorAll('main > div').forEach(v => v.classList.add('hidden')); document.getElementById(`view-${name}`).classList.remove('hidden'); syncData(); }
+
+        async function syncData() {
+            const sub = document.getElementById('view-subgroup').value, f = document.getElementById('view-franchise').value;
+            if (!sub) return;
+            try {
+                const [ranks, cont, takes, spice] = await Promise.all([
+                    fetch(`${API}/analysis/rankings?franchise=${f}&subgroup=${sub}`).then(r => r.ok ? r.json() : null),
+                    fetch(`${API}/analysis/controversy?franchise=${f}&subgroup=${sub}`).then(r => r.ok ? r.json() : null),
+                    fetch(`${API}/analysis/takes?franchise=${f}&subgroup=${sub}`).then(r => r.ok ? r.json() : null),
+                    fetch(`${API}/analysis/spice?franchise=${f}`).then(r => r.ok ? r.json() : null)
+                ]);
+                if (!ranks) return;
+                renderLeaderboard(ranks.rankings);
+                if (activeTab === 'more') {
+                    renderUniversal(ranks.rankings, cont?.results || []); renderDisputed(takes?.takes || []);
+                    renderSubunitPopularity(ranks.rankings, cont?.results || [], f); renderControversy(cont?.results || []);
+                    renderConsistent(cont?.results || []); renderSleepers(takes?.takes || []); renderOutliers(spice?.results || []);
+                }
+                if (activeTab === 'opps') renderMatrix(sub, f);
+                if (activeTab === 'spice') renderSpice(spice?.results || []);
+            } catch (e) { }
+        }
+
+        function renderLeaderboard(ranks) {
+            document.getElementById('c-leaderboard').innerHTML = `<table><colgroup><col class="col-rank"><col><col class="col-metric"><col class="col-metric"></colgroup><tr><th>#</th><th>Song Name</th><th>Avg</th><th>Pts</th></tr>` +
+                ranks.map((s, i) => `<tr><td class="col-rank">${i + 1}</td><td>${s.song_name}</td><td class="col-metric" style="color:var(--pink)">${s.average}</td><td class="col-metric">${s.points}</td></tr>`).join('') + `</table>`;
+        }
+
+        function renderUniversal(ranks, controversy) {
+            const top = ranks.slice(0, 10), btm = ranks.slice(-10);
+            const mapAgreement = (songName) => {
+                const c = controversy.find(x => x.song_name === songName);
+                return c ? Math.max(0, 100 - ((c.cv * c.avg_rank) * 2.5)).toFixed(1) : "0.0";
+            };
+            const rows = [...top, ...btm].map((s, i) => `<tr><td class="col-rank" style="color:${i < 10 ? 'var(--green)' : 'var(--red)'}">${i < 10 ? 'TOP' : 'BTM'}</td><td>${s.song_name}</td><td class="col-metric" style="color:var(--pink)">${s.average}</td><td class="col-metric">${mapAgreement(s.song_name)}%</td></tr>`).join('');
+            document.getElementById('c-universal').innerHTML = `<table><colgroup><col class="col-rank"><col><col class="col-metric"><col class="col-metric"></colgroup><tr><th>Type</th><th>Song</th><th>Avg</th><th>Agr</th></tr>${rows}</table>`;
+        }
+
+        function renderDisputed(takes) {
+            const songGroups = {};
+            takes.forEach(t => { if (!songGroups[t.song_name]) songGroups[t.song_name] = []; songGroups[t.song_name].push(t); });
+            const res = Object.keys(songGroups).map(name => {
+                const g = songGroups[name].sort((a, b) => a.user_rank - b.user_rank);
+                return { name, fight: `${g[0].username} vs ${g[g.length - 1].username}`, diff: Math.abs(g[g.length - 1].user_rank - g[0].user_rank) };
+            }).sort((a, b) => b.diff - a.diff).slice(0, 10);
+            document.getElementById('c-disputed').innerHTML = `<table><colgroup><col><col class="col-fight"><col class="col-metric"></colgroup><tr><th>Song</th><th>Fight</th><th class="col-metric">Diff</th></tr>` + res.map(r => `<tr><td>${r.name}</td><td class="col-fight">${r.fight}</td><td class="col-metric" style="color:var(--pink)">${r.diff}</td></tr>`).join('') + `</table>`;
+        }
+
+        function renderSubunitPopularity(rankings, controversy, franchise) {
+            const subunits = allSubgroups.filter(sg => sg.franchise === franchise && sg.is_subunit);
+            if (!subunits.length) { document.getElementById('c-subunits').innerHTML = "No subunits."; return; }
+            const data = subunits.map(unit => {
+                const rS = rankings.filter(r => unit.songs.includes(r.song_name)), cS = controversy.filter(r => unit.songs.includes(r.song_name));
+                return { name: unit.name, avg: rS.length ? (rS.reduce((a, b) => a + b.average, 0) / rS.length).toFixed(2) : 0, div: cS.length ? (cS.reduce((a, b) => a + b.cv, 0) / cS.length).toFixed(4) : 0 };
+            }).sort((a, b) => a.avg - b.avg);
+            document.getElementById('c-subunits').innerHTML = `<table><colgroup><col><col class="col-metric"><col class="col-metric"></colgroup><tr><th>Unit</th><th class="col-metric">Avg</th><th class="col-metric">Div</th></tr>` + data.map(d => `<tr><td style="font-weight:bold">${d.name}</td><td class="col-metric" style="color:var(--pink)">${d.avg}</td><td class="col-metric">${d.div}</td></tr>`).join('') + `</table>`;
+        }
+
+        function renderControversy(results) { document.getElementById('c-controversy').innerHTML = `<table><colgroup><col><col class="col-metric"><col class="col-metric"></colgroup><tr><th>Song</th><th class="col-metric">Score</th><th class="col-metric">Div</th></tr>` + results.slice(0, 10).map(s => `<tr><td>${s.song_name}</td><td class="col-metric" style="color:var(--pink)">${s.controversy_score}</td><td class="col-metric">${s.cv}</td></tr>`).join('') + `</table>`; }
+        function renderConsistent(results) { const sorted = [...results].sort((a, b) => a.controversy_score - b.controversy_score).slice(0, 10); document.getElementById('c-consistent').innerHTML = `<table><colgroup><col><col class="col-metric"><col class="col-metric"></colgroup><tr><th>Song</th><th class="col-metric">Score</th><th class="col-metric">Avg</th></tr>` + sorted.map(s => `<tr><td>${s.song_name}</td><td class="col-metric" style="color:var(--pink)">${s.controversy_score}</td><td class="col-metric">${s.avg_rank}</td></tr>`).join('') + `</table>`; }
+        function renderSleepers(takes) { const sleepers = takes.filter(t => t.score < -15).slice(0, 10); document.getElementById('c-sleeper').innerHTML = `<table><colgroup><col><col class="col-metric"><col class="col-metric"></colgroup><tr><th>Song</th><th class="col-metric">Lover</th><th class="col-metric">Gap</th></tr>` + sleepers.map(t => `<tr><td>${t.song_name}</td><td class="col-metric">${t.username.substring(0, 8)}</td><td class="col-metric" style="color:var(--green)">${Math.abs(t.delta).toFixed(1)}</td></tr>`).join('') + `</table>`; }
+        function renderOutliers(results) { if (!results || !results.length) return; const s = results.map(u => u.global_spice), min = Math.min(...s), max = Math.max(...s), r = (max - min) || 1; document.getElementById('c-outliers').innerHTML = `<table><colgroup><col><col class="col-metric"></colgroup><tr><th>User</th><th class="col-metric">Spice</th></tr>` + results.slice(0, 10).map(u => `<tr><td style="font-weight:bold">${u.username}</td><td class="metric"><div class="bar-bg" style="width:180px"><div class="bar-fill" style="width:${((u.global_spice - min) / r) * 100}%"></div><div style="font-size:10px; margin-top:-14px; margin-left:5px;">${u.global_spice}</div></div></td></tr>`).join('') + `</table>`; }
+
+        async function renderMatrix(sub, f) {
+            const wrap = document.getElementById("c-matrix"); wrap.innerHTML = "Loading...";
+            try {
+                const r = await fetch(`${API}/analysis/divergence?franchise=${f}&subgroup=${sub}`);
+                const d = await r.json(), u = Object.keys(d.matrix).sort(), max = Math.max(...Object.values(d.matrix).flatMap(o => Object.values(o))) || 1;
+                wrap.style.gridTemplateColumns = `150px repeat(${u.length}, 1fr)`;
+                wrap.innerHTML = `<div></div>` + u.map(n => `<div class="m-label">${n}</div>`).join('');
+                u.forEach(u1 => { wrap.innerHTML += `<div class="m-label" style="text-align:left">${u1}</div>`; u.forEach(u2 => { const v = d.matrix[u1][u2], op = Math.pow(v / max, 1.8); wrap.innerHTML += `<div class="cell" style="background:rgba(248, 82, 173, ${op}); color:${op > 0.5 ? '#000' : '#fff'}; border-bottom:1px solid #1c2128;">${v}</div>`; }); });
+            } catch (e) { wrap.innerHTML = "Error."; }
+        }
+
+        function renderSpice(results) {
+            if (!results || !results.length) return;
+            const s = results.map(u => u.global_spice), min = Math.min(...s), max = Math.max(...s), r = (max - min) || 1;
+            document.getElementById('c-spice').innerHTML = results.map(u => {
+                const norm = ((u.global_spice - min) / r) * 100;
+                return `<div style="margin-bottom:30px;"><div style="display:flex; justify-content:space-between; font-size:24px;"><strong>${u.username}</strong><span class="metric">${u.global_spice}</span></div><div class="bar-bg" style="height:24px"><div class="bar-fill" style="width:${norm}%"></div></div></div>`;
+            }).join('');
+        }
+
+        function toggleSubmission(show) { document.getElementById('submission-overlay').style.display = show ? 'flex' : 'none'; }
+
+        // UPDATED SUBMISSION LOGIC
+        async function postSubmission() {
+            const log = document.getElementById('submit-log');
+            const user = document.getElementById('in-user').value.trim();
+            const list = document.getElementById('in-list').value.trim();
+            const f = document.getElementById('sub-franchise').value;
+            const btn = document.getElementById('submit-btn-real');
+
+            // Validation: Ensure fields are non-empty
+            if (!user || !list) {
+                log.innerHTML = `<span style="color:var(--red)">Username and list are required.</span>`;
+                return;
+            }
+
+            btn.disabled = true;
+            log.innerHTML = "POSTING DATA...";
+
+            try {
+                const r = await fetch(`${API}/submit`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: user,
+                        franchise: f,
+                        subgroup_name: "All Songs",
+                        ranking_list: list
+                    })
+                });
+                const d = await r.json();
+                if (d.status === "VALID") {
+                    log.innerHTML = `<span style="color:var(--green)">SUCCESSFULLY SUBMITTED!</span>`;
+                    setTimeout(() => {
+                        toggleSubmission(false);
+                        btn.disabled = false;
+                    }, 1500);
+                } else {
+                    let firstErr = Object.values(d.conflicts)[0];
+                    log.innerHTML = `<span style="color:var(--red)">VALIDATION ERROR: Line ${firstErr.line_num} (${firstErr.reason})</span>`;
                     btn.disabled = false;
-                }, 1500); 
-            } else {
-                let firstErr = Object.values(d.conflicts)[0];
-                log.innerHTML = `<span style="color:var(--red)">VALIDATION ERROR: Line ${firstErr.line_num} (${firstErr.reason})</span>`;
+                }
+            } catch (e) {
+                log.innerHTML = `<span style="color:var(--red)">CONNECTION ERROR.</span>`;
                 btn.disabled = false;
             }
-        } catch (e) { 
-            log.innerHTML = `<span style="color:var(--red)">CONNECTION ERROR.</span>`; 
-            btn.disabled = false;
         }
-    }
 
-    async function recompute() {
-        document.getElementById('engine-log').innerText = "CALCULATING...";
-        await fetch(`${API}/analysis/trigger`, { method: 'POST' });
-        setTimeout(() => { syncData(); document.getElementById('engine-log').innerText = "READY"; }, 3000);
-    }
+        async function recompute() {
+            document.getElementById('engine-log').innerText = "CALCULATING...";
+            await fetch(`${API}/analysis/trigger`, { method: 'POST' });
+            setTimeout(() => { syncData(); document.getElementById('engine-log').innerText = "READY"; }, 3000);
+        }
 
-    init();
-</script>
+        init();
+    </script>
 </body>
+
 </html>

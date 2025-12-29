@@ -2,7 +2,7 @@
 
 import statistics
 from collections import defaultdict
-from typing import Dict, List
+from typing import Dict, List, Union
 from uuid import UUID
 import math
 
@@ -10,12 +10,19 @@ from sqlalchemy.orm import Session
 from app.models import Song, Subgroup, Submission, SubmissionStatus
 from app.services.ranking_utils import RelativeRankingService
 
+
+def to_uuid(val: Union[str, UUID]) -> UUID:
+    """Convert string or UUID to UUID object"""
+    if isinstance(val, UUID):
+        return val
+    return UUID(val)
+
 class AnalysisService:
     @staticmethod
     def compute_divergence_matrix(
         franchise_id: str, subgroup_id: str, db: Session
     ) -> Dict[str, Dict[str, float]]:
-        subgroup = db.query(Subgroup).filter_by(id=subgroup_id).first()
+        subgroup = db.query(Subgroup).filter_by(id=to_uuid(subgroup_id)).first()
         if not subgroup or not subgroup.song_ids:
             return {}
 
@@ -23,7 +30,7 @@ class AnalysisService:
         submissions = (
             db.query(Submission)
             .filter(
-                Submission.franchise_id == franchise_id,
+                Submission.franchise_id == to_uuid(franchise_id),
                 Submission.submission_status == SubmissionStatus.VALID,
             )
             .all()
@@ -67,14 +74,14 @@ class AnalysisService:
     def compute_controversy(
         franchise_id: str, subgroup_id: str, db: Session
     ) -> list[dict]:
-        subgroup = db.query(Subgroup).filter_by(id=UUID(subgroup_id)).first()
+        subgroup = db.query(Subgroup).filter_by(id=to_uuid(subgroup_id)).first()
         if not subgroup or not subgroup.song_ids:
             return []
 
         submissions = (
             db.query(Submission)
             .filter(
-                Submission.franchise_id == franchise_id,
+                Submission.franchise_id == to_uuid(franchise_id),
                 Submission.submission_status == SubmissionStatus.VALID,
             )
             .all()
@@ -122,14 +129,14 @@ class AnalysisService:
     def compute_hot_takes(
         franchise_id: str, subgroup_id: str, db: Session
     ) -> list[dict]:
-        subgroup = db.query(Subgroup).filter_by(id=UUID(subgroup_id)).first()
+        subgroup = db.query(Subgroup).filter_by(id=to_uuid(subgroup_id)).first()
         if not subgroup or not subgroup.song_ids:
             return []
 
         submissions = (
             db.query(Submission)
             .filter(
-                Submission.franchise_id == franchise_id,
+                Submission.franchise_id == to_uuid(franchise_id),
                 Submission.submission_status == SubmissionStatus.VALID,
             )
             .all()
@@ -182,7 +189,7 @@ class AnalysisService:
 
     @staticmethod
     def compute_spice_meter(franchise_id: str, db: Session) -> list[dict]:
-        subgroups = db.query(Subgroup).filter_by(franchise_id=franchise_id).all()
+        subgroups = db.query(Subgroup).filter_by(franchise_id=to_uuid(franchise_id)).all()
         user_raw_data = defaultdict(dict)
         all_usernames = set()
 
@@ -195,7 +202,7 @@ class AnalysisService:
             submissions = (
                 db.query(Submission)
                 .filter(
-                    Submission.franchise_id == franchise_id,
+                    Submission.franchise_id == to_uuid(franchise_id),
                     Submission.submission_status == SubmissionStatus.VALID
                 ).all()
             )
@@ -257,14 +264,14 @@ class AnalysisService:
     def compute_community_rankings(
         franchise_id: str, subgroup_id: str, db: Session
     ) -> list[dict]:
-        subgroup = db.query(Subgroup).filter_by(id=UUID(subgroup_id)).first()
+        subgroup = db.query(Subgroup).filter_by(id=to_uuid(subgroup_id)).first()
         if not subgroup or not subgroup.song_ids:
             return []
 
         submissions = (
             db.query(Submission)
             .filter(
-                Submission.franchise_id == franchise_id,
+                Submission.franchise_id == to_uuid(franchise_id),
                 Submission.submission_status == SubmissionStatus.VALID,
             )
             .all()
@@ -308,14 +315,14 @@ class AnalysisService:
         franchise_id: str, subgroup_id: str, db: Session
     ) -> list[dict]:
         """Find songs with the largest rank gap between users"""
-        subgroup = db.query(Subgroup).filter_by(id=UUID(subgroup_id)).first()
+        subgroup = db.query(Subgroup).filter_by(id=to_uuid(subgroup_id)).first()
         if not subgroup or not subgroup.song_ids:
             return []
 
         submissions = (
             db.query(Submission)
             .filter(
-                Submission.franchise_id == UUID(franchise_id),
+                Submission.franchise_id == to_uuid(franchise_id),
                 Submission.submission_status == SubmissionStatus.VALID,
             )
             .all()
@@ -367,14 +374,14 @@ class AnalysisService:
         franchise_id: str, subgroup_id: str, db: Session, limit: int = 10
     ) -> dict:
         """Find songs universally ranked high or low (low std dev)"""
-        subgroup = db.query(Subgroup).filter_by(id=UUID(subgroup_id)).first()
+        subgroup = db.query(Subgroup).filter_by(id=to_uuid(subgroup_id)).first()
         if not subgroup or not subgroup.song_ids:
             return {"top": [], "bottom": []}
 
         submissions = (
             db.query(Submission)
             .filter(
-                Submission.franchise_id == franchise_id,
+                Submission.franchise_id == to_uuid(franchise_id),
                 Submission.submission_status == SubmissionStatus.VALID,
             )
             .all()
@@ -433,14 +440,14 @@ class AnalysisService:
         franchise_id: str, subgroup_id: str, db: Session
     ) -> list[dict]:
         """Identify users with the most extreme rankings"""
-        subgroup = db.query(Subgroup).filter_by(id=UUID(subgroup_id)).first()
+        subgroup = db.query(Subgroup).filter_by(id=to_uuid(subgroup_id)).first()
         if not subgroup or not subgroup.song_ids:
             return []
 
         submissions = (
             db.query(Submission)
             .filter(
-                Submission.franchise_id == franchise_id,
+                Submission.franchise_id == to_uuid(franchise_id),
                 Submission.submission_status == SubmissionStatus.VALID,
             )
             .all()
@@ -507,14 +514,14 @@ class AnalysisService:
         franchise_id: str, subgroup_id: str, db: Session
     ) -> list[dict]:
         """Identify sleeper/comeback songs - ranked very low by some, high by others"""
-        subgroup = db.query(Subgroup).filter_by(id=UUID(subgroup_id)).first()
+        subgroup = db.query(Subgroup).filter_by(id=to_uuid(subgroup_id)).first()
         if not subgroup or not subgroup.song_ids:
             return []
 
         submissions = (
             db.query(Submission)
             .filter(
-                Submission.franchise_id == franchise_id,
+                Submission.franchise_id == to_uuid(franchise_id),
                 Submission.submission_status == SubmissionStatus.VALID,
             )
             .all()
@@ -573,12 +580,12 @@ class AnalysisService:
     ) -> list[dict]:
         """Aggregate rankings by subunit/artist to find strongest groups"""
         # Get all subunits for this franchise
-        subgroups = db.query(Subgroup).filter_by(franchise_id=franchise_id).all()
+        subgroups = db.query(Subgroup).filter_by(franchise_id=to_uuid(franchise_id)).all()
         
         submissions = (
             db.query(Submission)
             .filter(
-                Submission.franchise_id == franchise_id,
+                Submission.franchise_id == to_uuid(franchise_id),
                 Submission.submission_status == SubmissionStatus.VALID,
             )
             .all()

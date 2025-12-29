@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Rankings - LL Rankings</title>
+    <style>
+        :root {
+            --bg: #22272e;
+            --card: #2d333b;
+            --border: #444c56;
+            --pink: #f852ad;
+            --green: #57ab5a;
+            --red: #f85149;
+            --text: #adbac7;
+            --muted: #768390;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        header {
+            background: var(--card);
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #fff;
+            font-size: 28px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .selector-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--bg);
+            padding: 12px 18px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .selector-wrapper label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--muted);
+            font-weight: bold;
+        }
+
+        select {
+            background: transparent;
+            color: #fff;
+            border: none;
+            font-size: 16px;
+            font-weight: bold;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .back-link {
+            display: inline-block;
+            padding: 12px 20px;
+            background: var(--border);
+            color: var(--text);
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .back-link:hover {
+            background: var(--pink);
+            color: #000;
+        }
+
+        .user-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .user-card {
+            background: var(--card);
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            padding: 25px;
+            transition: border-color 0.3s;
+        }
+
+        .user-card:hover {
+            border-color: var(--pink);
+        }
+
+        .user-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .user-name {
+            font-size: 20px;
+            font-weight: 900;
+            color: var(--pink);
+            text-transform: uppercase;
+        }
+
+        .song-count {
+            font-size: 14px;
+            color: var(--muted);
+            font-family: monospace;
+            font-weight: bold;
+        }
+
+        .rankings-list {
+            max-height: 600px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .rankings-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .rankings-list::-webkit-scrollbar-track {
+            background: var(--bg);
+            border-radius: 4px;
+        }
+
+        .rankings-list::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        .rankings-list::-webkit-scrollbar-thumb:hover {
+            background: var(--pink);
+        }
+
+        .rank-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 10px;
+            margin-bottom: 8px;
+            background: var(--bg);
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .rank-item:hover {
+            background: #1c2128;
+        }
+
+        .rank-number {
+            font-size: 18px;
+            font-weight: 900;
+            color: var(--pink);
+            min-width: 45px;
+            text-align: right;
+            font-family: monospace;
+        }
+
+        .song-name {
+            flex: 1;
+            font-size: 15px;
+            color: var(--text);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 100px 20px;
+            font-size: 24px;
+            color: var(--muted);
+        }
+
+        .error {
+            background: var(--red);
+            color: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            background: var(--bg);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+
+        .stat-item {
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 900;
+            color: var(--pink);
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>📊 Individual User Rankings</h1>
+        <div class="controls">
+            <div class="selector-wrapper">
+                <label>Franchise</label>
+                <select id="franchise-select" onchange="loadRankings()">
+                    <option value="liella">Liella</option>
+                    <option value="aqours">Aqours</option>
+                    <option value="u's">u's</option>
+                    <option value="nijigasaki">Nijigasaki</option>
+                    <option value="hasunosora">Hasunosora</option>
+                </select>
+            </div>
+            <div class="selector-wrapper">
+                <label>View</label>
+                <select id="subgroup-select">
+                    <option value="All Songs">All Songs</option>
+                </select>
+            </div>
+            <a href="index.html" class="back-link">← Back to Main</a>
+        </div>
+    </header>
+
+    <div id="stats-container"></div>
+    <div id="content">
+        <div class="loading">Loading user rankings...</div>
+    </div>
+
+    <script>
+        const API = "http://localhost:8000/api/v1";
+
+        async function loadRankings() {
+            const franchise = document.getElementById('franchise-select').value;
+            const subgroup = document.getElementById('subgroup-select').value;
+            const content = document.getElementById('content');
+            const stats = document.getElementById('stats-container');
+
+            content.innerHTML = '<div class="loading">Loading rankings...</div>';
+            stats.innerHTML = '';
+
+            try {
+                const response = await fetch(`${API}/users/rankings?franchise=${franchise}&subgroup=${encodeURIComponent(subgroup)}`);
+
+                if (!response.ok) {
+                    throw new Error(`API returned ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // Display stats
+                stats.innerHTML = `
+                    <div class="stats">
+                        <div class="stat-item">
+                            <span class="stat-value">${data.total_users}</span>
+                            Total Users
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">${data.franchise}</span>
+                            Franchise
+                        </div>
+                    </div>
+                `;
+
+                // Display user cards
+                if (data.users.length === 0) {
+                    content.innerHTML = '<div class="loading">No rankings found</div>';
+                    return;
+                }
+
+                const grid = document.createElement('div');
+                grid.className = 'user-grid';
+
+                data.users.forEach(user => {
+                    const card = document.createElement('div');
+                    card.className = 'user-card';
+
+                    const rankingsList = user.rankings.map(r => `
+                        <div class="rank-item">
+                            <div class="rank-number">#${r.rank}</div>
+                            <div class="song-name">${r.song_name}</div>
+                        </div>
+                    `).join('');
+
+                    card.innerHTML = `
+                        <div class="user-header">
+                            <div class="user-name">${user.username}</div>
+                            <div class="song-count">${user.total_songs} songs</div>
+                        </div>
+                        <div class="rankings-list">
+                            ${rankingsList}
+                        </div>
+                    `;
+
+                    grid.appendChild(card);
+                });
+
+                content.innerHTML = '';
+                content.appendChild(grid);
+
+            } catch (error) {
+                console.error('Error loading rankings:', error);
+                content.innerHTML = `<div class="error">Failed to load rankings: ${error.message}</div>`;
+            }
+        }
+
+        // Load on page load
+        loadRankings();
+    </script>
+</body>
+
+</html>

@@ -433,7 +433,8 @@ async def get_franchise_subgroups(franchise: str, db: Session = Depends(get_db))
         # Resolve names for IDs stored in the JSON list
         song_names = []
         if sg.song_ids:
-            songs = db.query(Song.name).filter(Song.id.in_(sg.song_ids)).all()
+            from uuid import UUID
+            songs = db.query(Song.name).filter(Song.id.in_([UUID(sid) for sid in sg.song_ids])).all()
             song_names = [s.name for s in songs]
 
         results.append(SubgroupResponse(

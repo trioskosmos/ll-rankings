@@ -13,7 +13,7 @@ from app.models import Song, Franchise
 from app.seeds.init import DatabaseSeeder
 from app.exceptions import LiellaException
 from app.logging_config import setup_logging
-from app.api.v1 import submissions, analysis, health
+from app.api.v1 import submissions, analysis, health, users
 from app.jobs import analysis_scheduler
 
 # Setup logging
@@ -149,6 +149,7 @@ async def universal_exception_handler(request: Request, exc: Exception):
 app.include_router(health.router)
 app.include_router(submissions.router)
 app.include_router(analysis.router)
+app.include_router(users.router)
 
 if __name__ == "__main__":
     import uvicorn
