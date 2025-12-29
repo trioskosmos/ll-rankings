@@ -12,7 +12,7 @@ from app.schemas import (AnalysisMetadata, CommunityRankResponse,
                          ControversyResponse, DivergenceMatrixResponse,
                          HotTakesResponse, SpiceMeterResponse, TriggerResponse,
                          SubgroupResponse)
-from app.services.analysis import AnalysisService
+from app.services.analysis import AnalysisService, ControversyIndexService
 
 router = APIRouter(prefix="/api/v1", tags=["analysis"])
 
@@ -471,7 +471,7 @@ async def get_head_to_head(
     if not subgroup_obj:
         raise HTTPException(status_code=404, detail="Subgroup not found")
 
-    result = AnalysisService.compute_head_to_head(
+    result = ControversyIndexService.compute_head_to_head(
         str(franchise_obj.id), str(subgroup_obj.id), user_a, user_b, db
     )
     
@@ -501,7 +501,7 @@ async def get_user_matches(
     if not subgroup_obj:
         raise HTTPException(status_code=404, detail="Subgroup not found")
 
-    result = AnalysisService.compute_user_match(
+    result = ControversyIndexService.compute_user_match(
         str(franchise_obj.id), str(subgroup_obj.id), user, db
     )
     
@@ -526,7 +526,7 @@ async def get_conformity_scores(
     if not subgroup_obj:
          raise HTTPException(status_code=404, detail="Subgroup not found")
          
-    return AnalysisService.compute_conformity(str(franchise_obj.id), str(subgroup_obj.id), db)
+    return ControversyIndexService.compute_conformity(str(franchise_obj.id), str(subgroup_obj.id), db)
 
 
 @router.get("/analysis/oshi-bias")
@@ -540,4 +540,4 @@ async def get_oshi_bias(
     if not franchise_obj:
          raise HTTPException(status_code=404, detail="Franchise not found")
          
-    return AnalysisService.compute_oshi_bias(str(franchise_obj.id), user, db)
+    return ControversyIndexService.compute_oshi_bias(str(franchise_obj.id), user, db)
