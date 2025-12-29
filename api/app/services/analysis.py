@@ -67,7 +67,7 @@ class AnalysisService:
     def compute_controversy(
         franchise_id: str, subgroup_id: str, db: Session
     ) -> list[dict]:
-        subgroup = db.query(Subgroup).filter_by(id=subgroup_id).first()
+        subgroup = db.query(Subgroup).filter_by(id=UUID(subgroup_id)).first()
         if not subgroup or not subgroup.song_ids:
             return []
 
@@ -97,7 +97,7 @@ class AnalysisService:
             for song_id, rank in rel_map.items():
                 song_rank_collections[song_id].append(rank)
 
-        songs = db.query(Song).filter(Song.id.in_(subgroup.song_ids)).all()
+        songs = db.query(Song).filter(Song.id.in_([UUID(sid) for sid in subgroup.song_ids])).all()
         song_name_map = {str(s.id): s.name for s in songs}
         
         results = []
@@ -122,7 +122,7 @@ class AnalysisService:
     def compute_hot_takes(
         franchise_id: str, subgroup_id: str, db: Session
     ) -> list[dict]:
-        subgroup = db.query(Subgroup).filter_by(id=subgroup_id).first()
+        subgroup = db.query(Subgroup).filter_by(id=UUID(subgroup_id)).first()
         if not subgroup or not subgroup.song_ids:
             return []
 
@@ -156,7 +156,7 @@ class AnalysisService:
             sid: statistics.mean(ranks) for sid, ranks in song_ranks.items()
         }
 
-        songs = db.query(Song).filter(Song.id.in_(subgroup.song_ids)).all()
+        songs = db.query(Song).filter(Song.id.in_([UUID(sid) for sid in subgroup.song_ids])).all()
         song_name_map = {str(s.id): s.name for s in songs}
         
         results = []
@@ -257,7 +257,7 @@ class AnalysisService:
     def compute_community_rankings(
         franchise_id: str, subgroup_id: str, db: Session
     ) -> list[dict]:
-        subgroup = db.query(Subgroup).filter_by(id=subgroup_id).first()
+        subgroup = db.query(Subgroup).filter_by(id=UUID(subgroup_id)).first()
         if not subgroup or not subgroup.song_ids:
             return []
 
@@ -287,7 +287,7 @@ class AnalysisService:
             for song_id, rank in rel_map.items():
                 song_stats[song_id].append(rank)
 
-        songs = db.query(Song).filter(Song.id.in_(subgroup.song_ids)).all()
+        songs = db.query(Song).filter(Song.id.in_([UUID(sid) for sid in subgroup.song_ids])).all()
         song_name_map = {str(s.id): s.name for s in songs}
         
         results = []
@@ -302,6 +302,319 @@ class AnalysisService:
             })
 
         return sorted(results, key=lambda x: x["average"])
+
+    @staticmethod
+    def compute_most_disputed(
+        franchise_id: str, subgroup_id: str, db: Session
+    ) -> list[dict]:
+        """Find songs with the largest rank gap between users"""
+        subgroup = db.query(Subgroup).filter_by(id=UUID(subgroup_id)).first()
+        if not subgroup or not subgroup.song_ids:
+            return []
+
+        submissions = (
+            db.query(Submission)
+            .filter(
+                Submission.franchise_id == UUID(franchise_id),
+                Submission.submission_status == SubmissionStatus.VALID,
+            )
+            .all()
+        )
+
+        user_rel_rankings = []
+        for sub in submissions:
+            rel_map = RelativeRankingService.relativize(
+                sub.parsed_rankings, 
+                subgroup.song_ids
+            )
+            if rel_map:
+                user_rel_rankings.append(rel_map)
+
+        if not user_rel_rankings:
+            return []
+
+        song_ranks = defaultdict(list)
+        for rel_map in user_rel_rankings:
+            for song_id, rank in rel_map.items():
+                song_ranks[song_id].append(rank)
+
+
+        songs = db.query(Song).filter(Song.id.in_([UUID(sid) for sid in subgroup.song_ids])).all()
+        song_name_map = {str(s.id): s.name for s in songs}
+        
+        results = []
+        for song_id, ranks in song_ranks.items():
+            if len(ranks) < 2:
+                continue
+            
+            min_rank = min(ranks)
+            max_rank = max(ranks)
+            spread = max_rank - min_rank
+            
+            results.append({
+                "song_id": song_id,
+                "song_name": song_name_map.get(song_id, "Unknown"),
+                "min_rank": round(min_rank, 1),
+                "max_rank": round(max_rank, 1),
+                "spread": round(spread, 1),
+                "avg_rank": round(statistics.mean(ranks), 1)
+            })
+
+        return sorted(results, key=lambda x: x["spread"], reverse=True)
+
+    @staticmethod
+    def compute_top_bottom_consensus(
+        franchise_id: str, subgroup_id: str, db: Session, limit: int = 10
+    ) -> dict:
+        """Find songs universally ranked high or low (low std dev)"""
+        subgroup = db.query(Subgroup).filter_by(id=UUID(subgroup_id)).first()
+        if not subgroup or not subgroup.song_ids:
+            return {"top": [], "bottom": []}
+
+        submissions = (
+            db.query(Submission)
+            .filter(
+                Submission.franchise_id == franchise_id,
+                Submission.submission_status == SubmissionStatus.VALID,
+            )
+            .all()
+        )
+
+        user_rel_rankings = []
+        for sub in submissions:
+            rel_map = RelativeRankingService.relativize(
+                sub.parsed_rankings, 
+                subgroup.song_ids
+            )
+            if rel_map:
+                user_rel_rankings.append(rel_map)
+
+        if not user_rel_rankings:
+            return {"top": [], "bottom": []}
+
+        song_ranks = defaultdict(list)
+        for rel_map in user_rel_rankings:
+            for song_id, rank in rel_map.items():
+                song_ranks[song_id].append(rank)
+
+        songs = db.query(Song).filter(Song.id.in_([UUID(sid) for sid in subgroup.song_ids])).all()
+        song_name_map = {str(s.id): s.name for s in songs}
+        
+        # Calculate consistency for each song
+        song_data = []
+        for song_id, ranks in song_ranks.items():
+            if len(ranks) < 2:
+                continue
+            
+            avg = statistics.mean(ranks)
+            std_dev = statistics.stdev(ranks)
+            
+            song_data.append({
+                "song_id": song_id,
+                "song_name": song_name_map.get(song_id, "Unknown"),
+                "avg_rank": round(avg, 1),
+                "std_dev": round(std_dev, 2),
+                "consistency": round(1 / (1 + std_dev), 3)  # Higher = more agreement
+            })
+
+        # Sort by average and filter by consistency
+        top_candidates = sorted([s for s in song_data if s["avg_rank"] <= 50], 
+                               key=lambda x: (x["avg_rank"], -x["consistency"]))
+        bottom_candidates = sorted([s for s in song_data if s["avg_rank"] >= 50], 
+                                  key=lambda x: (-x["avg_rank"], -x["consistency"]))
+
+        return {
+            "top": top_candidates[:limit],
+            "bottom": bottom_candidates[:limit]
+        }
+
+    @staticmethod
+    def compute_outlier_users(
+        franchise_id: str, subgroup_id: str, db: Session
+    ) -> list[dict]:
+        """Identify users with the most extreme rankings"""
+        subgroup = db.query(Subgroup).filter_by(id=UUID(subgroup_id)).first()
+        if not subgroup or not subgroup.song_ids:
+            return []
+
+        submissions = (
+            db.query(Submission)
+            .filter(
+                Submission.franchise_id == franchise_id,
+                Submission.submission_status == SubmissionStatus.VALID,
+            )
+            .all()
+        )
+
+        user_rel_rankings = {}
+        for sub in submissions:
+            rel_map = RelativeRankingService.relativize(
+                sub.parsed_rankings, 
+                subgroup.song_ids
+            )
+            if rel_map:
+                user_rel_rankings[sub.username] = rel_map
+
+        if not user_rel_rankings:
+            return []
+
+        # Calculate average ranks
+        song_ranks = defaultdict(list)
+        for rel_map in user_rel_rankings.values():
+            for song_id, rank in rel_map.items():
+                song_ranks[song_id].append(rank)
+
+        song_averages = {
+            sid: statistics.mean(ranks) for sid, ranks in song_ranks.items()
+        }
+
+        songs = db.query(Song).filter(Song.id.in_([UUID(sid) for sid in subgroup.song_ids])).all()
+        song_name_map = {str(s.id): s.name for s in songs}
+
+        # Calculate outlier score for each user
+        results = []
+        for username, rel_map in user_rel_rankings.items():
+            deviations = []
+            extreme_picks = []
+            
+            for song_id, user_rank in rel_map.items():
+                avg_rank = song_averages.get(song_id)
+                if avg_rank:
+                    deviation = abs(user_rank - avg_rank)
+                    deviations.append(deviation)
+                    
+                    if deviation > 30:  # Extreme deviation threshold
+                        extreme_picks.append({
+                            "song": song_name_map.get(song_id, "Unknown"),
+                            "user_rank": round(user_rank, 1),
+                            "avg_rank": round(avg_rank, 1),
+                            "deviation": round(deviation, 1)
+                        })
+            
+            if deviations:
+                outlier_score = statistics.mean(deviations)
+                results.append({
+                    "username": username,
+                    "outlier_score": round(outlier_score, 2),
+                    "max_deviation": round(max(deviations), 1),
+                    "extreme_picks": sorted(extreme_picks, key=lambda x: x["deviation"], reverse=True)[:5]
+                })
+
+        return sorted(results, key=lambda x: x["outlier_score"], reverse=True)
+
+    @staticmethod
+    def compute_comeback_songs(
+        franchise_id: str, subgroup_id: str, db: Session
+    ) -> list[dict]:
+        """Identify sleeper/comeback songs - ranked very low by some, high by others"""
+        subgroup = db.query(Subgroup).filter_by(id=UUID(subgroup_id)).first()
+        if not subgroup or not subgroup.song_ids:
+            return []
+
+        submissions = (
+            db.query(Submission)
+            .filter(
+                Submission.franchise_id == franchise_id,
+                Submission.submission_status == SubmissionStatus.VALID,
+            )
+            .all()
+        )
+
+        user_rel_rankings = []
+        for sub in submissions:
+            rel_map = RelativeRankingService.relativize(
+                sub.parsed_rankings, 
+                subgroup.song_ids
+            )
+            if rel_map:
+                user_rel_rankings.append(rel_map)
+
+        if not user_rel_rankings:
+            return []
+
+        song_ranks = defaultdict(list)
+        for rel_map in user_rel_rankings:
+            for song_id, rank in rel_map.items():
+                song_ranks[song_id].append(rank)
+
+        songs = db.query(Song).filter(Song.id.in_([UUID(sid) for sid in subgroup.song_ids])).all()
+        song_name_map = {str(s.id): s.name for s in songs}
+        
+        results = []
+        for song_id, ranks in song_ranks.items():
+            if len(ranks) < 3:
+                continue
+            
+            sorted_ranks = sorted(ranks)
+            bottom_third = sorted_ranks[:len(sorted_ranks)//3]
+            top_third = sorted_ranks[-len(sorted_ranks)//3:]
+            
+            # A "comeback" song has some very low ranks AND some very high ranks
+            if bottom_third and top_third:
+                avg_bottom = statistics.mean(bottom_third)
+                avg_top = statistics.mean(top_third)
+                comeback_potential = avg_bottom - avg_top
+                
+                if comeback_potential > 30:  # Significant gap
+                    results.append({
+                        "song_id": song_id,
+                        "song_name": song_name_map.get(song_id, "Unknown"),
+                        "avg_low": round(avg_bottom, 1),
+                        "avg_high": round(avg_top, 1),
+                        "comeback_score": round(comeback_potential, 1),
+                        "overall_avg": round(statistics.mean(ranks), 1)
+                    })
+
+        return sorted(results, key=lambda x: x["comeback_score"], reverse=True)
+
+    @staticmethod
+    def compute_subunit_popularity(
+        franchise_id: str, db: Session
+    ) -> list[dict]:
+        """Aggregate rankings by subunit/artist to find strongest groups"""
+        # Get all subunits for this franchise
+        subgroups = db.query(Subgroup).filter_by(franchise_id=franchise_id).all()
+        
+        submissions = (
+            db.query(Submission)
+            .filter(
+                Submission.franchise_id == franchise_id,
+                Submission.submission_status == SubmissionStatus.VALID,
+            )
+            .all()
+        )
+
+        if not submissions:
+            return []
+
+        results = []
+        
+        for subgroup in subgroups:
+            if not subgroup.song_ids or len(subgroup.song_ids) < 1:
+                continue
+                
+            # Calculate average rank for songs in this subunit
+            all_ranks = []
+            
+            for sub in submissions:
+                rel_map = RelativeRankingService.relativize(
+                    sub.parsed_rankings,
+                    subgroup.song_ids
+                )
+                if rel_map:
+                    all_ranks.extend(rel_map.values())
+            
+            if all_ranks:
+                avg_rank = statistics.mean(all_ranks)
+                results.append({
+                    "subgroup_name": subgroup.name,
+                    "song_count": len(subgroup.song_ids),
+                    "avg_rank": round(avg_rank, 2),
+                    "total_rankings": len(all_ranks),
+                    "is_subunit": getattr(subgroup, 'is_subunit', False)
+                })
+
+        return sorted(results, key=lambda x: x["avg_rank"])
 
 
 class ControversyIndexService:

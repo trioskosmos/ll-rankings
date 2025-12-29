@@ -247,6 +247,145 @@ async def get_spice_meter(franchise: str, db: Session = Depends(get_db)):
     )
 
 
+# NEW ENDPOINTS FOR ADDITIONAL FEATURES
+
+@router.get("/analysis/disputed")
+async def get_most_disputed(franchise: str, subgroup: str, db: Session = Depends(get_db)):
+    """Get songs with the largest ranking gaps between users"""
+    franchise_obj = db.query(Franchise).filter_by(name=franchise).first()
+    if not franchise_obj:
+        raise HTTPException(status_code=404, detail="Franchise not found")
+
+    subgroup_obj = (
+        db.query(Subgroup)
+        .filter(Subgroup.name == subgroup, Subgroup.franchise_id == franchise_obj.id)
+        .first()
+    )
+    if not subgroup_obj:
+        raise HTTPException(status_code=404, detail="Subgroup not found")
+
+    data = AnalysisService.compute_most_disputed(
+        str(franchise_obj.id), str(subgroup_obj.id), db
+    )
+    
+    return {
+        "metadata": {
+            "computed_at": datetime.utcnow(),
+            "based_on_submissions": len(subgroup_obj.submissions),
+        },
+        "results": data
+    }
+
+
+@router.get("/analysis/consensus")
+async def get_top_bottom_consensus(
+    franchise: str, subgroup: str, limit: int = 10, db: Session = Depends(get_db)
+):
+    """Get songs universally ranked high or low with strong agreement"""
+    franchise_obj = db.query(Franchise).filter_by(name=franchise).first()
+    if not franchise_obj:
+        raise HTTPException(status_code=404, detail="Franchise not found")
+
+    subgroup_obj = (
+        db.query(Subgroup)
+        .filter(Subgroup.name == subgroup, Subgroup.franchise_id == franchise_obj.id)
+        .first()
+    )
+    if not subgroup_obj:
+        raise HTTPException(status_code=404, detail="Subgroup not found")
+
+    data = AnalysisService.compute_top_bottom_consensus(
+        str(franchise_obj.id), str(subgroup_obj.id), db, limit
+    )
+    
+    return {
+        "metadata": {
+            "computed_at": datetime.utcnow(),
+            "based_on_submissions": len(subgroup_obj.submissions),
+        },
+        "top": data["top"],
+        "bottom": data["bottom"]
+    }
+
+
+@router.get("/analysis/outliers")
+async def get_outlier_users(franchise: str, subgroup: str, db: Session = Depends(get_db)):
+    """Identify users with the most extreme/unique rankings"""
+    franchise_obj = db.query(Franchise).filter_by(name=franchise).first()
+    if not franchise_obj:
+        raise HTTPException(status_code=404, detail="Franchise not found")
+
+    subgroup_obj = (
+        db.query(Subgroup)
+        .filter(Subgroup.name == subgroup, Subgroup.franchise_id == franchise_obj.id)
+        .first()
+    )
+    if not subgroup_obj:
+        raise HTTPException(status_code=404, detail="Subgroup not found")
+
+    data = AnalysisService.compute_outlier_users(
+        str(franchise_obj.id), str(subgroup_obj.id), db
+    )
+    
+    return {
+        "metadata": {
+            "computed_at": datetime.utcnow(),
+            "based_on_submissions": len(subgroup_obj.submissions),
+        },
+        "results": data
+    }
+
+
+@router.get("/analysis/comebacks")
+async def get_comeback_songs(franchise: str, subgroup: str, db: Session = Depends(get_db)):
+    """Find sleeper/comeback songs with polarized rankings"""
+    franchise_obj = db.query(Franchise).filter_by(name=franchise).first()
+    if not franchise_obj:
+        raise HTTPException(status_code=404, detail="Franchise not found")
+
+    subgroup_obj = (
+        db.query(Subgroup)
+        .filter(Subgroup.name == subgroup, Subgroup.franchise_id == franchise_obj.id)
+        .first()
+    )
+    if not subgroup_obj:
+        raise HTTPException(status_code=404, detail="Subgroup not found")
+
+    data = AnalysisService.compute_comeback_songs(
+        str(franchise_obj.id), str(subgroup_obj.id), db
+    )
+    
+    return {
+        "metadata": {
+            "computed_at": datetime.utcnow(),
+            "based_on_submissions": len(subgroup_obj.submissions),
+        },
+        "results": data
+    }
+
+
+@router.get("/analysis/subunits")
+async def get_subunit_popularity(franchise: str, db: Session = Depends(get_db)):
+    """Analyze performance of different subunits/groups"""
+    franchise_obj = db.query(Franchise).filter_by(name=franchise).first()
+    if not franchise_obj:
+        raise HTTPException(status_code=404, detail="Franchise not found")
+
+    data = AnalysisService.compute_subunit_popularity(
+        str(franchise_obj.id), db
+    )
+    
+    sub_count = db.query(Submission).filter_by(franchise_id=franchise_obj.id).count()
+    
+    return {
+        "metadata": {
+            "computed_at": datetime.utcnow(),
+            "based_on_submissions": sub_count,
+        },
+        "results": data
+    }
+
+
 @router.post("/analysis/trigger", response_model=TriggerResponse)
 async def trigger_manual_analysis(background_tasks: BackgroundTasks):
     """
