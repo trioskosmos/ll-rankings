@@ -1,6 +1,8 @@
 # app/services/analysis.py
 
 import statistics
+import json
+import os
 from collections import defaultdict
 from typing import Dict, List, Union
 from uuid import UUID
@@ -657,3 +659,211 @@ class ControversyIndexService:
             "bimodality_indicator": bimodality_indicator,
             "score": round(controversy_score, 4),
         }
+
+    @staticmethod
+    def compute_head_to_head(
+        franchise_id: str, subgroup_id: str, user_a: str, user_b: str, db: Session
+    ) -> dict:
+        subgroup = db.query(Subgroup).filter_by(id=to_uuid(subgroup_id)).first()
+        if not subgroup or not subgroup.song_ids:
+            return {}
+
+        users = db.query(Submission).filter(
+            Submission.franchise_id == to_uuid(franchise_id),
+            Submission.submission_status == SubmissionStatus.VALID,
+            Submission.username.in_([user_a, user_b])
+        ).all()
+        
+        rank_maps = {}
+        for sub in users:
+             rank_maps[sub.username] = RelativeRankingService.relativize(
+                sub.parsed_rankings, subgroup.song_ids
+             )
+
+        if user_a not in rank_maps or user_b not in rank_maps:
+             return {"error": "One or both users have no data for this view."}
+
+        map_a = rank_maps[user_a]
+        map_b = rank_maps[user_b]
+        
+        shared_songs = set(map_a.keys()) & set(map_b.keys())
+        if not shared_songs:
+             return {"error": "No shared ranked songs."}
+        
+        diffs = []
+        for sid in shared_songs:
+            r1 = map_a[sid]
+            r2 = map_b[sid]
+            diffs.append({"id": str(sid), "r1": r1, "r2": r2, "diff": abs(r1-r2)})
+
+        # Resolve Song Names
+        sids = [to_uuid(d['id']) for d in diffs]
+        songs = db.query(Song).filter(Song.id.in_(sids)).all()
+        song_lookup = {str(s.id): s.name for s in songs}
+        
+        for d in diffs:
+            d['name'] = song_lookup.get(d['id'], "Unknown")
+            del d['id']
+            
+        N = len(shared_songs)
+        # Compatibility Score (Linear overlap metric)
+        # Avg Diff ranges from 0 to N/2 approx.
+        avg_diff = sum(d['diff'] for d in diffs) / N
+        score = max(0, 100 * (1 - (avg_diff / (N / 2))))
+        
+        diffs.sort(key=lambda x: x['diff'], reverse=True)
+        
+        return {
+            "users": [user_a, user_b],
+            "score": round(score, 1),
+            "common_count": N,
+            "diffs": diffs
+        }
+
+    @staticmethod
+    def compute_user_match(
+         franchise_id: str, subgroup_id: str, target_user: str, db: Session
+    ) -> dict:
+        # Reuse existing divergence calculation
+        matrix = AnalysisService.compute_divergence_matrix(franchise_id, subgroup_id, db)
+        if target_user not in matrix:
+            return {"error": "User not found"}
+        
+        row = matrix[target_user]
+        # Remove self and sort
+        others = [(u, val) for u, val in row.items() if u != target_user]
+        others.sort(key=lambda x: x[1]) # Ascending divergence (Lower is better match)
+        
+        if not others:
+            return {"soulmates": [], "nemeses": []}
+            
+        return {
+            "soulmates": [{"user": u, "div": v} for u, v in others[:3]],
+            "nemeses": [{"user": u, "div": v} for u, v in others[-3:][::-1]]
+        }
+
+    @staticmethod
+    def compute_conformity(
+         franchise_id: str, subgroup_id: str, db: Session
+    ) -> dict:
+        # Get Consensus
+        community_ranks = AnalysisService.compute_community_rankings(franchise_id, subgroup_id, db)
+        if not community_ranks:
+            return {}
+        
+        # Rankings is List[Dict] usually. Let's ensure map
+        # CommunityRankResponse usually has result_data as list of objects?
+        # compute_community_rankings returns List[dict(song_id, rank, ...)]
+        consensus_map = {str(r['song_id']): float(r['rank']) for r in community_ranks}
+        
+        subgroup = db.query(Subgroup).filter_by(id=to_uuid(subgroup_id)).first()
+        subs = db.query(Submission).filter(
+             Submission.franchise_id == to_uuid(franchise_id),
+             Submission.submission_status == SubmissionStatus.VALID
+        ).all()
+        
+        user_scores = []
+        for sub in subs:
+            user_map = RelativeRankingService.relativize(sub.parsed_rankings, subgroup.song_ids)
+            common = set(user_map.keys()) & set(consensus_map.keys())
+            if len(common) < 5: continue
+            
+            # Mean Absolute Deviation from Consensus
+            diffs = [abs(user_map[sid] - consensus_map[sid]) for sid in common]
+            avg_diff = sum(diffs) / len(diffs)
+            
+            user_scores.append({
+                "username": sub.username,
+                "score": round(avg_diff, 2),
+                "song_count": len(common)
+            })
+            
+        user_scores.sort(key=lambda x: x['score'])
+        
+        return {
+            "normies": user_scores[:5],
+            "hipsters": user_scores[-5:][::-1],
+            "all": user_scores
+        }
+
+    @staticmethod
+    def compute_oshi_bias(franchise_id: str, username: str, db: Session) -> dict:
+        try:
+            # Adjust path: api/app/services -> api/app -> api -> rankings -> data
+            # Use fixed relative path from known location
+            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+            data_path = os.path.join(base_dir, "data", "artists-info.json")
+            if not os.path.exists(data_path):
+                 # Fail silently or return error
+                 return {"error": "Artist data not found"}
+                 
+            with open(data_path, 'r', encoding='utf-8') as f:
+                artists = json.load(f)
+        except Exception as e:
+            return {"error": str(e)}
+
+        char_names = {}
+        for a in artists:
+            if a.get('characters') and len(a['characters']) == 1:
+                cid = a['characters'][0]
+                # Prefer English Name if available
+                char_names[cid] = a.get('englishName', a['name'])
+
+        group_chars = {a['name']: a['characters'] for a in artists if a.get('characters')}
+
+        sub = db.query(Submission).filter(
+            Submission.franchise_id == to_uuid(franchise_id),
+            Submission.submission_status == SubmissionStatus.VALID,
+            Submission.username == username
+        ).order_by(Submission.created_at.desc()).first()
+
+        if not sub:
+            return {"error": "User not found"}
+
+        user_ranks = sub.parsed_rankings
+        if not user_ranks: return {"result": []}
+        
+        ranks = [float(v) for v in user_ranks.values()]
+        global_avg = sum(ranks) / len(ranks)
+
+        # Find Subunits that are mapped
+        all_subgroups = db.query(Subgroup).filter(
+            Subgroup.franchise_id == to_uuid(franchise_id),
+            Subgroup.is_subunit == True
+        ).all()
+        
+        song_to_chars = defaultdict(set)
+        for sg in all_subgroups:
+            # Match Subgroup Name to Artist
+            # We might need fuzzy match? Assuming exact for now.
+            name_key = sg.name
+            if name_key in group_chars:
+                cids = group_chars[name_key]
+                if not sg.song_ids: continue
+                for sid in sg.song_ids:
+                    for cid in cids:
+                        if cid: song_to_chars[sid].add(cid)
+        
+        char_stats = defaultdict(list)
+        for sid, rank in user_ranks.items():
+            if sid in song_to_chars:
+                for cid in song_to_chars[sid]:
+                    char_stats[cid].append(float(rank))
+                    
+        results = []
+        for cid, cranks in char_stats.items():
+            if len(cranks) < 3: continue
+            avg = sum(cranks) / len(cranks)
+            # Bias: How much BETTER (lower rank) than global avg?
+            # Positive Bias = Liked more than average song.
+            bias = global_avg - avg 
+            results.append({
+                "char_id": cid,
+                "name": char_names.get(cid, cid),
+                "avg_rank": round(avg, 1),
+                "bias": round(bias, 1),
+                "count": len(cranks)
+            })
+            
+        results.sort(key=lambda x: x['bias'], reverse=True)
+        return {"global_avg": round(global_avg, 1), "biases": results[:5]}

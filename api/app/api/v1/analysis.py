@@ -448,3 +448,96 @@ async def get_franchise_subgroups(franchise: str, db: Session = Depends(get_db))
         ))
 
     return results
+
+
+@router.get("/analysis/head-to-head")
+async def get_head_to_head(
+    franchise: str,
+    subgroup: str,
+    user_a: str,
+    user_b: str,
+    db: Session = Depends(get_db)
+):
+    """Compare two users' rankings directly"""
+    franchise_obj = db.query(Franchise).filter_by(name=franchise).first()
+    if not franchise_obj:
+        raise HTTPException(status_code=404, detail="Franchise not found")
+        
+    subgroup_obj = (
+        db.query(Subgroup)
+        .filter(Subgroup.name == subgroup, Subgroup.franchise_id == franchise_obj.id)
+        .first()
+    )
+    if not subgroup_obj:
+        raise HTTPException(status_code=404, detail="Subgroup not found")
+
+    result = AnalysisService.compute_head_to_head(
+        str(franchise_obj.id), str(subgroup_obj.id), user_a, user_b, db
+    )
+    
+    if "error" in result:
+        raise HTTPException(status_code=404, detail=result["error"])
+        
+    return result
+
+
+@router.get("/analysis/user-match")
+async def get_user_matches(
+    franchise: str,
+    subgroup: str,
+    user: str,
+    db: Session = Depends(get_db)
+):
+    """Find soulmates and nemeses for a user"""
+    franchise_obj = db.query(Franchise).filter_by(name=franchise).first()
+    if not franchise_obj:
+        raise HTTPException(status_code=404, detail="Franchise not found")
+        
+    subgroup_obj = (
+        db.query(Subgroup)
+        .filter(Subgroup.name == subgroup, Subgroup.franchise_id == franchise_obj.id)
+        .first()
+    )
+    if not subgroup_obj:
+        raise HTTPException(status_code=404, detail="Subgroup not found")
+
+    result = AnalysisService.compute_user_match(
+        str(franchise_obj.id), str(subgroup_obj.id), user, db
+    )
+    
+    if "error" in result:
+        raise HTTPException(status_code=404, detail=result["error"])
+        
+    return result
+
+
+@router.get("/analysis/conformity")
+async def get_conformity_scores(
+    franchise: str,
+    subgroup: str,
+    db: Session = Depends(get_db)
+):
+    """Identify Normies and Hipsters based on consensus deviation"""
+    franchise_obj = db.query(Franchise).filter_by(name=franchise).first()
+    if not franchise_obj:
+         raise HTTPException(status_code=404, detail="Franchise not found")
+    
+    subgroup_obj = db.query(Subgroup).filter(Subgroup.name == subgroup, Subgroup.franchise_id == franchise_obj.id).first()
+    if not subgroup_obj:
+         raise HTTPException(status_code=404, detail="Subgroup not found")
+         
+    return AnalysisService.compute_conformity(str(franchise_obj.id), str(subgroup_obj.id), db)
+
+
+@router.get("/analysis/oshi-bias")
+async def get_oshi_bias(
+    franchise: str,
+    user: str,
+    db: Session = Depends(get_db)
+):
+    """Calculate member bias for a user"""
+    franchise_obj = db.query(Franchise).filter_by(name=franchise).first()
+    if not franchise_obj:
+         raise HTTPException(status_code=404, detail="Franchise not found")
+         
+    return AnalysisService.compute_oshi_bias(str(franchise_obj.id), user, db)

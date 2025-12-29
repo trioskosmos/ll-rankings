@@ -4,17 +4,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Rankings - LL Rankings</title>
+    <title>User Rankings - LL Rankings Suite</title>
     <style>
         :root {
-            --bg: #22272e;
-            --card: #2d333b;
-            --border: #444c56;
-            --pink: #f852ad;
-            --green: #57ab5a;
+            --bg: #0d1117;
+            --card: #161b22;
+            --border: #30363d;
+            --pink: #db61a2;
+            --green: #3fb950;
             --red: #f85149;
-            --text: #adbac7;
-            --muted: #768390;
+            --yellow: #d29922;
+            --purple: #a371f7;
+            --text: #c9d1d9;
+            --muted: #8b949e;
         }
 
         * {
@@ -24,27 +26,47 @@
         }
 
         body {
-            font-family: -apple-system, system-ui, sans-serif;
+            font-family: 'Segoe UI', -apple-system, sans-serif;
             background: var(--bg);
             color: var(--text);
             padding: 20px;
             line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* FIX: Select dropdown visibility */
+        select {
+            background: #21262d;
+            color: #fff;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px 14px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+        }
+
+        option {
+            background: var(--bg);
+            color: var(--text);
         }
 
         header {
             background: var(--card);
-            border: 2px solid var(--border);
-            border-radius: 16px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
             padding: 25px;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
 
         h1 {
             color: #fff;
-            font-size: 28px;
+            font-size: 24px;
             margin-bottom: 20px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
         .controls {
@@ -59,105 +81,183 @@
             align-items: center;
             gap: 10px;
             background: var(--bg);
-            padding: 12px 18px;
+            padding: 8px 14px;
             border-radius: 8px;
             border: 1px solid var(--border);
         }
 
         .selector-wrapper label {
-            font-size: 11px;
+            font-size: 10px;
             text-transform: uppercase;
             color: var(--muted);
-            font-weight: bold;
-        }
-
-        select {
-            background: transparent;
-            color: #fff;
-            border: none;
-            font-size: 16px;
-            font-weight: bold;
-            outline: none;
-            cursor: pointer;
+            font-weight: 700;
+            letter-spacing: 1px;
         }
 
         .back-link {
-            display: inline-block;
-            padding: 12px 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
             background: var(--border);
             color: var(--text);
             text-decoration: none;
             border-radius: 8px;
-            font-weight: bold;
-            font-size: 14px;
-            transition: background 0.2s;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.2s ease;
+            margin-left: auto;
         }
 
         .back-link:hover {
             background: var(--pink);
             color: #000;
+            transform: translateX(-3px);
         }
 
+        /* Stats Bar */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 18px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 3px;
+            height: 100%;
+            background: var(--pink);
+        }
+
+        .stat-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 26px;
+            font-weight: 800;
+            color: #fff;
+        }
+
+        /* User Grid */
         .user-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-            gap: 25px;
-            margin-top: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 20px;
         }
 
         .user-card {
             background: var(--card);
-            border: 2px solid var(--border);
-            border-radius: 16px;
-            padding: 25px;
-            transition: border-color 0.3s;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
         }
 
         .user-card:hover {
             border-color: var(--pink);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
         }
 
         .user-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid var(--border);
+            padding: 18px 20px;
+            background: linear-gradient(135deg, rgba(219, 97, 162, 0.1) 0%, transparent 100%);
+            border-bottom: 1px solid var(--border);
         }
 
         .user-name {
-            font-size: 20px;
-            font-weight: 900;
+            font-size: 18px;
+            font-weight: 800;
             color: var(--pink);
-            text-transform: uppercase;
         }
 
         .song-count {
-            font-size: 14px;
+            font-size: 12px;
             color: var(--muted);
             font-family: monospace;
-            font-weight: bold;
+            background: var(--bg);
+            padding: 4px 10px;
+            border-radius: 20px;
         }
 
+        /* User Insights */
+        .user-insights {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1px;
+            background: var(--border);
+            margin-bottom: 1px;
+        }
+
+        .insight-item {
+            background: var(--card);
+            padding: 12px 15px;
+            font-size: 12px;
+        }
+
+        .insight-label {
+            color: var(--muted);
+            text-transform: uppercase;
+            font-size: 9px;
+            letter-spacing: 1px;
+            margin-bottom: 3px;
+        }
+
+        .insight-value {
+            color: #fff;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .insight-value.green {
+            color: var(--green);
+        }
+
+        .insight-value.yellow {
+            color: var(--yellow);
+        }
+
+        /* Rankings List */
         .rankings-list {
-            max-height: 600px;
+            max-height: 400px;
             overflow-y: auto;
-            padding-right: 10px;
+            padding: 15px;
         }
 
         .rankings-list::-webkit-scrollbar {
-            width: 8px;
+            width: 6px;
         }
 
         .rankings-list::-webkit-scrollbar-track {
-            background: var(--bg);
-            border-radius: 4px;
+            background: transparent;
         }
 
         .rankings-list::-webkit-scrollbar-thumb {
             background: var(--border);
-            border-radius: 4px;
+            border-radius: 3px;
         }
 
         .rankings-list::-webkit-scrollbar-thumb:hover {
@@ -167,77 +267,111 @@
         .rank-item {
             display: flex;
             align-items: center;
-            gap: 15px;
-            padding: 10px;
-            margin-bottom: 8px;
+            gap: 12px;
+            padding: 8px 10px;
+            margin-bottom: 4px;
             background: var(--bg);
-            border-radius: 8px;
-            transition: background 0.2s;
+            border-radius: 6px;
+            transition: all 0.15s ease;
         }
 
         .rank-item:hover {
-            background: #1c2128;
+            background: #21262d;
+            padding-left: 14px;
+        }
+
+        .rank-item.top-3 {
+            background: linear-gradient(90deg, rgba(219, 97, 162, 0.15) 0%, var(--bg) 100%);
         }
 
         .rank-number {
-            font-size: 18px;
-            font-weight: 900;
+            font-size: 14px;
+            font-weight: 800;
             color: var(--pink);
-            min-width: 45px;
+            min-width: 35px;
             text-align: right;
-            font-family: monospace;
+            font-family: 'Consolas', monospace;
+        }
+
+        .rank-number.gold {
+            color: #ffd700;
+        }
+
+        .rank-number.silver {
+            color: #c0c0c0;
+        }
+
+        .rank-number.bronze {
+            color: #cd7f32;
         }
 
         .song-name {
             flex: 1;
-            font-size: 15px;
+            font-size: 13px;
             color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .loading {
             text-align: center;
-            padding: 100px 20px;
-            font-size: 24px;
+            padding: 80px 20px;
+            font-size: 18px;
             color: var(--muted);
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border);
+            border-top-color: var(--pink);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         .error {
-            background: var(--red);
-            color: #fff;
+            background: rgba(248, 81, 73, 0.15);
+            border: 1px solid var(--red);
+            color: var(--red);
             padding: 20px;
-            border-radius: 12px;
+            border-radius: 10px;
             margin: 20px 0;
             text-align: center;
-            font-weight: bold;
+            font-weight: 600;
         }
 
-        .stats {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            background: var(--bg);
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 25px;
-        }
-
-        .stat-item {
-            font-size: 14px;
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
             color: var(--muted);
         }
 
-        .stat-value {
-            font-size: 24px;
-            font-weight: 900;
-            color: var(--pink);
-            display: block;
+        .empty-state svg {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 15px;
+            opacity: 0.5;
         }
     </style>
 </head>
 
 <body>
     <header>
-        <h1>📊 Individual User Rankings</h1>
+        <h1>
+            <span>📊</span>
+            Individual User Rankings
+        </h1>
         <div class="controls">
             <div class="selector-wrapper">
                 <label>Franchise</label>
@@ -251,57 +385,97 @@
             </div>
             <div class="selector-wrapper">
                 <label>View</label>
-                <select id="subgroup-select">
+                <select id="subgroup-select" onchange="loadRankings()">
                     <option value="All Songs">All Songs</option>
                 </select>
             </div>
-            <a href="index.html" class="back-link">← Back to Main</a>
+            <a href="index.html" class="back-link">← Back to Dashboard</a>
         </div>
     </header>
 
     <div id="stats-container"></div>
     <div id="content">
-        <div class="loading">Loading user rankings...</div>
+        <div class="loading">Loading user rankings</div>
     </div>
 
     <script>
         const API = "http://localhost:8000/api/v1";
+        let allSubgroups = [];
+
+        async function init() {
+            await fetchSubgroups();
+            loadRankings();
+        }
+
+        async function fetchSubgroups() {
+            const franchises = ["liella", "aqours", "u's", "nijigasaki", "hasunosora"];
+            const results = await Promise.all(
+                franchises.map(f => fetch(`${API}/subgroups?franchise=${f}`).then(r => r.json()).catch(() => []))
+            );
+            allSubgroups = results.flat();
+            updateSubgroupDropdown();
+        }
+
+        function updateSubgroupDropdown() {
+            const f = document.getElementById('franchise-select').value;
+            const sel = document.getElementById('subgroup-select');
+            const filtered = allSubgroups.filter(sg => sg.franchise === f);
+            sel.innerHTML = filtered.map(s => `<option value="${s.name}">${s.name}</option>`).join("");
+            if (filtered.some(s => s.name === "All Songs")) sel.value = "All Songs";
+        }
 
         async function loadRankings() {
+            updateSubgroupDropdown();
             const franchise = document.getElementById('franchise-select').value;
             const subgroup = document.getElementById('subgroup-select').value;
             const content = document.getElementById('content');
-            const stats = document.getElementById('stats-container');
+            const statsContainer = document.getElementById('stats-container');
 
-            content.innerHTML = '<div class="loading">Loading rankings...</div>';
-            stats.innerHTML = '';
+            content.innerHTML = '<div class="loading">Loading rankings</div>';
+            statsContainer.innerHTML = '';
 
             try {
-                const response = await fetch(`${API}/users/rankings?franchise=${franchise}&subgroup=${encodeURIComponent(subgroup)}`);
+                const [rankingsRes, spiceRes] = await Promise.all([
+                    fetch(`${API}/users/rankings?franchise=${franchise}&subgroup=${encodeURIComponent(subgroup)}`),
+                    fetch(`${API}/analysis/spice?franchise=${franchise}`)
+                ]);
 
-                if (!response.ok) {
-                    throw new Error(`API returned ${response.status}`);
-                }
+                if (!rankingsRes.ok) throw new Error(`API returned ${rankingsRes.status}`);
 
-                const data = await response.json();
+                const data = await rankingsRes.json();
+                const spiceData = spiceRes.ok ? await spiceRes.json() : { results: [] };
+                const spiceMap = {};
+                (spiceData.results || []).forEach(u => spiceMap[u.username] = u.global_spice);
 
-                // Display stats
-                stats.innerHTML = `
-                    <div class="stats">
-                        <div class="stat-item">
-                            <span class="stat-value">${data.total_users}</span>
-                            Total Users
+                // Calculate aggregate stats
+                const avgSongsRanked = data.users.length > 0
+                    ? Math.round(data.users.reduce((a, u) => a + u.total_songs, 0) / data.users.length)
+                    : 0;
+
+                // Stats Bar
+                statsContainer.innerHTML = `
+                    <div class="stats-bar">
+                        <div class="stat-card">
+                            <div class="stat-label">Total Users</div>
+                            <div class="stat-value">${data.total_users}</div>
                         </div>
-                        <div class="stat-item">
-                            <span class="stat-value">${data.franchise}</span>
-                            Franchise
+                        <div class="stat-card">
+                            <div class="stat-label">Franchise</div>
+                            <div class="stat-value">${capitalize(data.franchise)}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Avg. Songs Ranked</div>
+                            <div class="stat-value">${avgSongsRanked}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Subgroup</div>
+                            <div class="stat-value" style="font-size:18px">${subgroup}</div>
                         </div>
                     </div>
                 `;
 
-                // Display user cards
                 if (data.users.length === 0) {
-                    content.innerHTML = '<div class="loading">No rankings found</div>';
+                    content.innerHTML = '<div class="empty-state"><p>No rankings found for this selection.</p></div>';
                     return;
                 }
 
@@ -312,17 +486,41 @@
                     const card = document.createElement('div');
                     card.className = 'user-card';
 
-                    const rankingsList = user.rankings.map(r => `
-                        <div class="rank-item">
-                            <div class="rank-number">#${r.rank}</div>
-                            <div class="song-name">${r.song_name}</div>
-                        </div>
-                    `).join('');
+                    // Find user's #1 pick
+                    const topPick = user.rankings.length > 0 ? user.rankings[0].song_name : 'N/A';
+
+                    // User spice level
+                    const spice = spiceMap[user.username] || 'N/A';
+
+                    const rankingsList = user.rankings.map((r, i) => {
+                        let rankClass = '';
+                        let itemClass = '';
+                        if (i === 0) { rankClass = 'gold'; itemClass = 'top-3'; }
+                        else if (i === 1) { rankClass = 'silver'; itemClass = 'top-3'; }
+                        else if (i === 2) { rankClass = 'bronze'; itemClass = 'top-3'; }
+
+                        return `
+                            <div class="rank-item ${itemClass}">
+                                <div class="rank-number ${rankClass}">#${r.rank}</div>
+                                <div class="song-name">${r.song_name}</div>
+                            </div>
+                        `;
+                    }).join('');
 
                     card.innerHTML = `
                         <div class="user-header">
                             <div class="user-name">${user.username}</div>
                             <div class="song-count">${user.total_songs} songs</div>
+                        </div>
+                        <div class="user-insights">
+                            <div class="insight-item">
+                                <div class="insight-label">Top Pick</div>
+                                <div class="insight-value green">${truncate(topPick, 20)}</div>
+                            </div>
+                            <div class="insight-item">
+                                <div class="insight-label">Spice Level</div>
+                                <div class="insight-value yellow">${spice}</div>
+                            </div>
                         </div>
                         <div class="rankings-list">
                             ${rankingsList}
@@ -341,8 +539,15 @@
             }
         }
 
-        // Load on page load
-        loadRankings();
+        function capitalize(str) {
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
+        function truncate(str, len) {
+            return str.length > len ? str.substring(0, len) + '…' : str;
+        }
+
+        init();
     </script>
 </body>
 

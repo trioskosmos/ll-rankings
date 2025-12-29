@@ -7,88 +7,93 @@
     <title>Master Rankings Suite</title>
     <style>
         :root {
-            /* Dimmed Gray Palette */
-            --bg: #22272e;
-            --card: #2d333b;
-            --border: #444c56;
-            --pink: #f852ad;
-            --green: #57ab5a;
+            /* Premium Dark Theme */
+            --bg: #0d1117;
+            --card: #161b22;
+            --border: #30363d;
+            --pink: #db61a2;
+            /* Softer premium pink */
+            --green: #3fb950;
             --red: #f85149;
-            --text: #adbac7;
-            --muted: #768390;
-            --font-size-base: 22px;
+            --yellow: #d29922;
+            --purple: #a371f7;
+            --text: #c9d1d9;
+            --muted: #8b949e;
+            --font-size-base: 16px;
+            /* Reset to standard accessible size */
         }
 
-        * {
-            box-sizing: border-box;
-        }
+        /* ... Reset ... */
 
         body {
-            font-family: -apple-system, system-ui, sans-serif;
+            font-family: 'Segoe UI', -apple-system, sans-serif;
+            /* Cleaner font stack */
             background: var(--bg);
             color: var(--text);
             margin: 0;
             font-size: var(--font-size-base);
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
             overflow-x: hidden;
+            letter-spacing: 0.02em;
         }
 
-        /* HEADER */
+        /* --- CONTROLS & HEADER --- */
+        select {
+            background: #21262d;
+            /* Distinct background */
+            color: #fff;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        /* Fix for invisible text in some browsers */
+        option {
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        /* --- LAYOUT --- */
+        * {
+            box-sizing: border-box;
+        }
+
         header {
             background: var(--card);
-            border-bottom: 2px solid var(--border);
-            padding: 15px;
+            border-bottom: 1px solid var(--border);
+            padding: 15px 20px;
             display: flex;
-            flex-direction: column;
+            flex-wrap: wrap;
             gap: 15px;
-            flex-shrink: 0;
-        }
-
-        @media (min-width: 1024px) {
-            header {
-                flex-direction: row;
-                align-items: center;
-                padding: 20px 40px;
-                justify-content: space-between;
-            }
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
         .header-left {
             display: flex;
-            flex-direction: column;
+            flex-wrap: wrap;
             gap: 15px;
-        }
-
-        @media (min-width: 1024px) {
-            .header-left {
-                flex-direction: row;
-                align-items: center;
-            }
+            align-items: center;
         }
 
         h1 {
-            font-size: 20px;
+            font-size: 18px;
             margin: 0;
-            text-transform: uppercase;
             color: #fff;
             letter-spacing: 1px;
-            white-space: nowrap;
+            text-transform: uppercase;
         }
 
         .selector-group {
             display: flex;
-            flex-direction: column;
             gap: 10px;
-            width: 100%;
-        }
-
-        @media (min-width: 600px) {
-            .selector-group {
-                flex-direction: row;
-                width: auto;
-            }
+            flex-wrap: wrap;
         }
 
         .selector-wrapper {
@@ -96,8 +101,8 @@
             align-items: center;
             gap: 8px;
             background: var(--bg);
-            padding: 10px 15px;
-            border-radius: 8px;
+            padding: 8px 12px;
+            border-radius: 6px;
             border: 1px solid var(--border);
         }
 
@@ -105,152 +110,137 @@
             font-size: 9px;
             text-transform: uppercase;
             color: var(--muted);
-            font-weight: bold;
-        }
-
-        select {
-            background: transparent;
-            color: #fff;
-            border: none;
-            font-size: 14px;
-            font-weight: bold;
-            outline: none;
-            cursor: pointer;
-            width: 100%;
+            font-weight: 700;
+            letter-spacing: 1px;
         }
 
         .nav {
             display: flex;
-            gap: 20px;
-            overflow-x: auto;
-            padding-bottom: 5px;
-            width: 100%;
-            justify-content: flex-start;
-        }
-
-        @media (min-width: 1024px) {
-            .nav {
-                width: auto;
-                margin-left: auto;
-                overflow: visible;
-                padding-bottom: 0;
-            }
+            gap: 8px;
+            margin-left: auto;
+            flex-wrap: wrap;
         }
 
         .nav-item {
             cursor: pointer;
             color: var(--muted);
-            font-size: 13px;
-            font-weight: bold;
+            font-size: 12px;
+            font-weight: 600;
             text-transform: uppercase;
-            white-space: nowrap;
-            padding: 5px 0;
-            border-bottom: 3px solid transparent;
+            padding: 8px 14px;
+            border-radius: 6px;
+            background: transparent;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item:hover {
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.05);
         }
 
         .nav-item.active {
             color: var(--pink);
-            border-bottom-color: var(--pink);
+            background: rgba(219, 97, 162, 0.1);
+            border-color: var(--pink);
         }
 
-        /* GRID LAYOUT */
+        /* --- MAIN CONTENT --- */
         main {
-            flex: 1;
-            padding: 15px;
-            padding-bottom: 120px;
-            overflow-y: auto;
-        }
-
-        @media (min-width: 1024px) {
-            main {
-                padding: 40px;
-            }
+            padding: 25px;
+            padding-bottom: 100px;
+            max-width: 1800px;
+            margin: 0 auto;
         }
 
         .grid {
             display: grid;
-            grid-template-columns: 100%;
-            gap: 30px;
-            width: 100%;
+            grid-template-columns: 1fr;
+            gap: 25px;
         }
 
-        @media (min-width: 1500px) {
+        @media (min-width: 1200px) {
             .grid {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
+                grid-template-columns: repeat(2, 1fr);
             }
         }
 
         .card {
             background: var(--card);
-            border: 2px solid var(--border);
-            border-radius: 16px;
-            padding: 25px;
-            width: 100%;
-            min-width: 0;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            transition: border-color 0.2s ease;
+        }
+
+        .card:hover {
+            border-color: #444c56;
         }
 
         h3 {
             margin: 0 0 15px 0;
             color: #fff;
-            font-size: 16px;
+            font-size: 13px;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            border-bottom: 1px solid var(--border);
+            letter-spacing: 1.5px;
             padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
         }
 
-        /* TABLES */
+        /* --- TABLES --- */
         .table-container {
-            width: 100%;
             overflow-x: auto;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            table-layout: fixed;
         }
 
         th {
             text-align: left;
-            padding: 12px 5px;
+            padding: 10px 8px;
             color: var(--muted);
-            border-bottom: 2px solid var(--border);
-            text-transform: uppercase;
             font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--border);
         }
 
         td {
-            padding: 15px 5px;
-            border-bottom: 1px solid var(--border);
-            font-size: 16px;
-            word-wrap: break-word;
+            padding: 12px 8px;
+            border-bottom: 1px solid rgba(48, 54, 61, 0.5);
+            font-size: 14px;
             vertical-align: middle;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
         }
 
         .col-rank {
             width: 50px;
             font-weight: 800;
             color: var(--pink);
+            font-family: 'Consolas', monospace;
         }
 
         .col-metric {
-            width: 85px;
+            width: 80px;
             text-align: right;
-            font-family: monospace;
-            font-weight: bold;
+            font-family: 'Consolas', monospace;
+            font-weight: 600;
         }
 
         .col-fight {
-            width: 180px;
-            font-size: 12px;
+            width: 160px;
+            font-size: 11px;
             color: var(--muted);
             font-style: italic;
         }
 
-        /* MATRIX */
+        /* --- MATRIX --- */
         #matrix-scroll-wrapper {
-            width: 100%;
             overflow-x: auto;
         }
 
@@ -262,51 +252,60 @@
         }
 
         .cell {
-            aspect-ratio: 1/1;
+            aspect-ratio: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 2px;
+            border-radius: 3px;
             font-size: 11px;
-            font-weight: bold;
-            min-width: 55px;
+            font-weight: 700;
+            min-width: 50px;
         }
 
         .m-label {
             font-size: 10px;
             color: var(--muted);
-            padding: 10px;
-            font-weight: bold;
+            padding: 8px;
+            font-weight: 600;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
-        /* FIXED FOOTER */
+        /* --- FOOTER --- */
         footer {
             position: fixed;
             bottom: 0;
             left: 0;
             width: 100%;
-            background: #1c2128;
-            border-top: 2px solid var(--border);
-            padding: 12px 20px;
+            background: var(--card);
+            border-top: 1px solid var(--border);
+            padding: 12px 25px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 15px;
-            z-index: 1000;
+            z-index: 100;
+        }
+
+        .footer-right {
+            display: flex;
+            gap: 10px;
         }
 
         .btn-footer {
             background: var(--bg);
             color: var(--text);
             border: 1px solid var(--border);
-            padding: 10px 18px;
+            padding: 10px 16px;
             border-radius: 6px;
-            font-size: 13px;
+            font-size: 12px;
+            font-weight: 600;
             cursor: pointer;
-            font-weight: bold;
+            transition: all 0.2s ease;
+        }
+
+        .btn-footer:hover {
+            background: var(--border);
         }
 
         .btn-submit-action {
@@ -315,30 +314,89 @@
             border: none;
         }
 
-        #engine-log {
-            font-size: 12px;
-            font-family: monospace;
-            color: var(--muted);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+        .btn-submit-action:hover {
+            background: #e54d93;
         }
 
-        /* VISUALS */
+        #engine-log {
+            font-size: 11px;
+            font-family: 'Consolas', monospace;
+            color: var(--muted);
+        }
+
+        /* --- VISUALS --- */
         .bar-bg {
-            width: 100%;
-            height: 16px;
-            background: #1c2128;
-            margin-top: 5px;
-            border-radius: 8px;
+            height: 18px;
+            background: #21262d;
+            border-radius: 4px;
             overflow: hidden;
         }
 
         .bar-fill {
             height: 100%;
+            background: linear-gradient(90deg, var(--pink) 0%, var(--purple) 100%);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        /* --- DASHBOARD GRID --- */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 18px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 18px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 140px;
+            transition: all 0.2s ease;
+        }
+
+        .stat-card:hover {
+            border-color: var(--pink);
+            transform: translateY(-2px);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 3px;
+            height: 100%;
             background: var(--pink);
-            border-radius: 8px;
-            transition: width 0.6s ease;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--muted);
+            letter-spacing: 1px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1.2;
+            margin-bottom: 4px;
+        }
+
+        .stat-sub {
+            font-size: 13px;
+            color: var(--pink);
+            font-weight: 600;
+            margin-top: auto;
         }
 
         /* --- SUBMISSION PAGE DESIGN --- */
@@ -489,63 +547,191 @@
                 </div>
                 <div class="selector-wrapper">
                     <label>View</label>
-                    <select id="view-subgroup" onchange="syncData()"></select>
+                    <select id="view-subgroup" onchange="changeSubgroupView()"></select>
                 </div>
             </div>
         </div>
         <div class="nav">
-            <div class="nav-item active" id="btn-leader" onclick="tab('leader')">Consensus</div>
+            <div class="nav-item active" id="btn-dash" onclick="tab('dash')">Dashboard</div>
+            <div class="nav-item" id="btn-leader" onclick="tab('leader')">Rankings</div>
             <div class="nav-item" id="btn-more" onclick="tab('more')">Analysis</div>
             <div class="nav-item" id="btn-opps" onclick="tab('opps')">Divergence</div>
-            <div class="nav-item" id="btn-spice" onclick="tab('spice')">Spice Meter</div>
+            <div class="nav-item" id="btn-rivals" onclick="tab('rivals')">Rivals</div>
+            <div class="nav-item" id="btn-spice" onclick="tab('spice')">Spice</div>
             <div class="nav-item" onclick="window.location.href='users.html'">Users</div>
         </div>
     </header>
 
     <main>
-        <div id="view-leader" class="card">
-            <h3>Community Consensus</h3>
+        <!-- DASHBOARD VIEW -->
+        <div id="view-dash" class="grid">
+            <div class="dashboard-grid" id="dashboard-stats">
+                <div class="stat-card">
+                    <div class="stat-label">👑 Current #1</div>
+                    <div class="stat-value" id="d-top-song">Loading...</div>
+                    <div class="stat-sub" id="d-top-score">-- avg rank</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">🔥 Most Controversial</div>
+                    <div class="stat-value" id="d-cont-song">Loading...</div>
+                    <div class="stat-sub" id="d-cont-score">High Disagreement</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">🌶️ Spiciest User</div>
+                    <div class="stat-value" id="d-spice-user">Loading...</div>
+                    <div class="stat-sub" id="d-spice-val">-- Spice</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">😴 Sleeper Hit</div>
+                    <div class="stat-value" id="d-sleep-song">Loading...</div>
+                    <div class="stat-sub" id="d-sleep-user">--</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">🤝 Most Agreed</div>
+                    <div class="stat-value" id="d-agreed-song">Loading...</div>
+                    <div class="stat-sub" id="d-agreed-score">Low Controversy</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">📊 Total Songs</div>
+                    <div class="stat-value" id="d-total-songs">--</div>
+                    <div class="stat-sub">In current view</div>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="card">
+                    <h3>🏆 Top 5 Songs</h3>
+                    <div class="table-container" id="c-dash-top5"></div>
+                </div>
+                <div class="card">
+                    <h3>📉 Bottom 5 Songs</h3>
+                    <div class="table-container" id="c-dash-bottom5"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FULL RANKINGS VIEW -->
+        <div id="view-leader" class="card hidden">
+            <h3>Full Community Consensus</h3>
             <div class="table-container" id="c-leaderboard"></div>
         </div>
+
+        <!-- ANALYSIS VIEW -->
         <div id="view-more" class="grid hidden">
-            <div class="card">
-                <h3>Top/Bottom 10</h3>
-                <div class="table-container" id="c-universal"></div>
+            <div class="dashboard-grid">
+                <div class="card">
+                    <h3>Most Disputed</h3>
+                    <div class="table-container" id="c-disputed"></div>
+                </div>
+                <div class="card">
+                    <h3>Controversial Tracks</h3>
+                    <div class="table-container" id="c-controversy"></div>
+                </div>
             </div>
+
             <div class="card">
-                <h3>Most Disputed</h3>
-                <div class="table-container" id="c-disputed"></div>
-            </div>
-            <div class="card">
-                <h3>Subunit Power</h3>
+                <h3>Subunit Power Rankings</h3>
                 <div class="table-container" id="c-subunits"></div>
             </div>
-            <div class="card">
-                <h3>Controversial Tracks</h3>
-                <div class="table-container" id="c-controversy"></div>
+
+            <div class="dashboard-grid">
+                <div class="card">
+                    <h3>Sleeper Picks</h3>
+                    <div class="table-container" id="c-sleeper"></div>
+                </div>
+                <div class="card">
+                    <h3>Consistent Tracks</h3>
+                    <div class="table-container" id="c-consistent"></div>
+                </div>
             </div>
-            <div class="card">
-                <h3>Sleepers</h3>
-                <div class="table-container" id="c-sleeper"></div>
-            </div>
-            <div class="card">
-                <h3>Consistent</h3>
-                <div class="table-container" id="c-consistent"></div>
-            </div>
+
             <div class="card">
                 <h3>Outliers</h3>
                 <div class="table-container" id="c-outliers"></div>
             </div>
+            <div class="card">
+                <h3>Top/Bottom 10</h3>
+                <div class="table-container" id="c-universal"></div>
+            </div>
         </div>
+
+        <!-- DIVERGENCE VIEW -->
         <div id="view-opps" class="card hidden">
             <h3>User Divergence Matrix</h3>
             <div id="matrix-scroll-wrapper">
                 <div id="c-matrix"></div>
             </div>
         </div>
+
+        <!-- SPICE VIEW -->
         <div id="view-spice" class="card hidden">
-            <h3>Global Spice breakdown</h3>
+            <h3>Global Spice Breakdown</h3>
             <div id="c-spice"></div>
+        </div>
+
+        <!-- RIVALS VIEW -->
+        <div id="view-rivals" class="card hidden">
+            <h3 style="border:none; text-align:center; font-size:18px;">👥 Head-to-Head Duel</h3>
+
+            <div class="selector-group"
+                style="margin-bottom:30px; justify-content:center; align-items:center; gap:20px;">
+                <select id="duel-user-a" onchange="runDuel()"
+                    style="width:200px; padding:12px; font-size:16px; background:var(--card); border:2px solid var(--border);"></select>
+                <div style="font-weight:900; color:var(--red); font-size:24px; font-style:italic;">VS</div>
+                <select id="duel-user-b" onchange="runDuel()"
+                    style="width:200px; padding:12px; font-size:16px; background:var(--card); border:2px solid var(--border);"></select>
+            </div>
+
+            <div id="duel-results" class="hidden">
+                <div style="text-align:center; margin-bottom:40px;">
+                    <div
+                        style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:2px; font-weight:700; margin-bottom:10px;">
+                        Compatibility Score</div>
+                    <div id="duel-score"
+                        style="font-size:56px; line-height:1; font-weight:900; color:#fff; text-shadow:0 0 30px rgba(219,97,162,0.3);">
+                        --%</div>
+                    <div id="duel-msg" style="color:var(--pink); font-size:14px; font-weight:600; margin-top:5px;">--
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom:20px; border-color:var(--red);">
+                    <h3 style="color:var(--red); border-color:rgba(248,81,73,0.3);">⚔️ Biggest Disagreements</h3>
+                    <div class="table-container" id="duel-disputes"></div>
+                </div>
+            </div>
+
+            <div style="margin-top:40px; padding-top:30px; border-top:1px solid var(--border); text-align:center;">
+                <h3 style="border:none; margin-bottom:20px;">💘 Find Your Match</h3>
+                <div style="display:flex; gap:10px; align-items:center; justify-content:center; margin-bottom:20px;">
+                    <select id="match-finder-user" style="width:200px;"></select>
+                    <button class="btn-footer btn-submit-action" onclick="findMatches()"
+                        style="padding:10px 20px;">Analyze</button>
+                </div>
+                <div id="match-results" class="grid" style="grid-template-columns: 1fr 1fr; gap:20px; text-align:left;">
+                </div>
+            </div>
+
+            <div style="margin-top:20px; padding-top:20px; border-top:1px solid var(--border); text-align:center;">
+                <h3 style="border:none; margin-bottom:10px;">💖 Oshi Detector</h3>
+                <div style="font-size:12px; color:var(--muted); margin-bottom:15px;">Who do you <i>really</i> love the
+                    most? (Based on average rank)</div>
+                <div style="display:flex; gap:10px; align-items:center; justify-content:center; margin-bottom:15px;">
+                    <select id="bias-user"
+                        style="width:200px; padding:10px; background:var(--card); border:1px solid var(--border); color:#fff; border-radius:6px;"></select>
+                    <button class="btn-footer btn-submit-action" onclick="analyzeBias()"
+                        style="padding:10px 20px;">Detect</button>
+                </div>
+                <div id="bias-results" class="grid"
+                    style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:15px;"></div>
+            </div>
+
+            <div style="margin-top:20px; padding-top:20px; border-top:1px solid var(--border); text-align:center;">
+                <h3 style="border:none; margin-bottom:10px;">🌌 Taste Constellation</h3>
+                <div style="font-size:12px; color:var(--muted); margin-bottom:15px;">Visualizing community factions.
+                    Closer nodes = Shared taste.</div>
+                <canvas id="taste-canvas"
+                    style="width:100%; height:400px; background: radial-gradient(circle at center, #1b2028 0%, #0d1117 100%); border-radius:12px; border:1px solid var(--border)"></canvas>
+            </div>
         </div>
     </main>
 
@@ -594,9 +780,15 @@
 
     <script>
         const API = "http://localhost:8000/api/v1";
-        let activeTab = 'leader', allSubgroups = [];
+        let activeTab = 'dash', allSubgroups = [];
 
-        async function init() { await fetchMasterSubgroups(); syncData(); }
+        // Data cache to prevent redundant API calls
+        let dataCache = { key: '', ranks: null, cont: null, takes: null, spice: null, loaded: false };
+
+        async function init() {
+            await fetchMasterSubgroups();
+            tab('dash'); // Force dashboard view logic on startup
+        }
 
         async function fetchMasterSubgroups() {
             const franchises = ["liella", "aqours", "u's", "nijigasaki", "hasunosora"];
@@ -612,31 +804,163 @@
             if (filtered.some(s => s.name === "All Songs")) sel.value = "All Songs";
         }
 
-        function changeFranchiseView() { wipeUI(); updateSubgroupDropdown(); syncData(); }
-        function wipeUI() { ['c-leaderboard', 'c-universal', 'c-disputed', 'c-subunits', 'c-controversy', 'c-sleeper', 'c-consistent', 'c-outliers', 'c-matrix', 'c-spice'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = "Refreshing..."; }); }
-        function tab(name) { activeTab = name; document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active')); document.getElementById(`btn-${name}`).classList.add('active'); document.querySelectorAll('main > div').forEach(v => v.classList.add('hidden')); document.getElementById(`view-${name}`).classList.remove('hidden'); syncData(); }
+        function changeFranchiseView() {
+            dataCache = { key: '', ranks: null, cont: null, takes: null, spice: null, loaded: false }; // Clear cache
+            wipeUI();
+            updateSubgroupDropdown();
+            syncData(true); // Force fetch
+        }
 
-        async function syncData() {
+        function changeSubgroupView() {
+            dataCache = { key: '', ranks: null, cont: null, takes: null, spice: null, loaded: false }; // Clear cache
+            wipeUI();
+            syncData(true); // Force fetch
+        }
+
+        function wipeUI() {
+            const ids = ['c-leaderboard', 'c-universal', 'c-disputed', 'c-subunits', 'c-controversy', 'c-sleeper', 'c-consistent', 'c-outliers', 'c-matrix', 'c-spice', 'c-dash-top5', 'c-dash-bottom5', 'duel-disputes', 'match-results'];
+            ids.forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = "Refreshing..."; });
+            ['d-top-song', 'd-cont-song', 'd-spice-user', 'd-sleep-song', 'd-agreed-song', 'd-total-songs'].forEach(id => document.getElementById(id).innerHTML = "...");
+            document.getElementById('duel-results').classList.add('hidden');
+        }
+
+        function tab(name) {
+            activeTab = name;
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.getElementById(`btn-${name}`).classList.add('active');
+            document.querySelectorAll('main > div').forEach(v => v.classList.add('hidden'));
+            document.getElementById(`view-${name}`).classList.remove('hidden');
+            syncData(false); // Don't force, use cache if available
+        }
+
+        async function syncData(forceFetch = false) {
             const sub = document.getElementById('view-subgroup').value, f = document.getElementById('view-franchise').value;
             if (!sub) return;
-            try {
-                const [ranks, cont, takes, spice] = await Promise.all([
-                    fetch(`${API}/analysis/rankings?franchise=${f}&subgroup=${sub}`).then(r => r.ok ? r.json() : null),
-                    fetch(`${API}/analysis/controversy?franchise=${f}&subgroup=${sub}`).then(r => r.ok ? r.json() : null),
-                    fetch(`${API}/analysis/takes?franchise=${f}&subgroup=${sub}`).then(r => r.ok ? r.json() : null),
-                    fetch(`${API}/analysis/spice?franchise=${f}`).then(r => r.ok ? r.json() : null)
-                ]);
-                if (!ranks) return;
-                renderLeaderboard(ranks.rankings);
-                if (activeTab === 'more') {
-                    renderUniversal(ranks.rankings, cont?.results || []); renderDisputed(takes?.takes || []);
-                    renderSubunitPopularity(ranks.rankings, cont?.results || [], f); renderControversy(cont?.results || []);
-                    renderConsistent(cont?.results || []); renderSleepers(takes?.takes || []); renderOutliers(spice?.results || []);
+
+            const cacheKey = `${f}|${sub}`;
+            let ranks, cont, takes, spice;
+
+            // Check if we have cached data for this franchise/subgroup
+            if (!forceFetch && dataCache.loaded && dataCache.key === cacheKey) {
+                // Use cached data
+                ranks = dataCache.ranks;
+                cont = dataCache.cont;
+                takes = dataCache.takes;
+                spice = dataCache.spice;
+            } else {
+                // Fetch fresh data
+                try {
+                    [ranks, cont, takes, spice] = await Promise.all([
+                        fetch(`${API}/analysis/rankings?franchise=${f}&subgroup=${sub}`).then(r => r.ok ? r.json() : null),
+                        fetch(`${API}/analysis/controversy?franchise=${f}&subgroup=${sub}`).then(r => r.ok ? r.json() : null),
+                        fetch(`${API}/analysis/takes?franchise=${f}&subgroup=${sub}`).then(r => r.ok ? r.json() : null),
+                        fetch(`${API}/analysis/spice?franchise=${f}`).then(r => r.ok ? r.json() : null)
+                    ]);
+
+                    // Store in cache
+                    dataCache = { key: cacheKey, ranks, cont, takes, spice, loaded: true };
+                } catch (e) {
+                    console.error('Fetch error:', e);
+                    return;
                 }
-                if (activeTab === 'opps') renderMatrix(sub, f);
-                if (activeTab === 'spice') renderSpice(spice?.results || []);
-            } catch (e) { }
+            }
+
+            if (!ranks || !ranks.rankings) return;
+
+            // Always update Dashboard Stats (if available)
+            updateDashboard(ranks.rankings, cont?.results, takes?.takes, spice?.results);
+
+            // Always render full leaderboard data in background (so it's ready)
+            renderLeaderboard(ranks.rankings);
+
+            // Conditional rendering for active tabs to save DOM cycles
+            if (activeTab === 'more') {
+                renderUniversal(ranks.rankings, cont?.results || []); renderDisputed(takes?.takes || []);
+                renderSubunitPopularity(ranks.rankings, cont?.results || [], f); renderControversy(cont?.results || []);
+                renderConsistent(cont?.results || []); renderSleepers(takes?.takes || []); renderOutliers(spice?.results || []);
+            }
+            if (activeTab === 'opps') renderMatrix(sub, f);
+            if (activeTab === 'spice') renderSpice(spice?.results || []);
+            if (activeTab === 'rivals') fetchUserList();
         }
+
+        function updateDashboard(ranks, cont, takes, spice) {
+            // 1. Top Song
+            if (ranks.length > 0) {
+                const top = ranks[0];
+                document.getElementById('d-top-song').innerHTML = truncate(top.song_name, 22);
+                document.getElementById('d-top-score').innerHTML = `${top.average} avg rank`;
+
+                // Total songs count
+                document.getElementById('d-total-songs').innerHTML = ranks.length;
+
+                // Render Top 5 and Bottom 5
+                renderDashTop5(ranks.slice(0, 5));
+                renderDashBottom5(ranks.slice(-5).reverse());
+            }
+
+            // 2. Controversial
+            if (cont && cont.length > 0) {
+                const c = cont[0];
+                document.getElementById('d-cont-song').innerHTML = truncate(c.song_name, 22);
+                document.getElementById('d-cont-score').innerHTML = `${c.controversy_score} score`;
+
+                // Most Agreed (lowest controversy)
+                const agreed = [...cont].sort((a, b) => a.controversy_score - b.controversy_score)[0];
+                if (agreed) {
+                    document.getElementById('d-agreed-song').innerHTML = truncate(agreed.song_name, 22);
+                    document.getElementById('d-agreed-score').innerHTML = `${agreed.controversy_score} score`;
+                }
+            }
+
+            // 3. Spiciest User
+            if (spice && spice.length > 0) {
+                const s = spice[0];
+                document.getElementById('d-spice-user').innerHTML = s.username;
+                document.getElementById('d-spice-val').innerHTML = `${s.global_spice} spice`;
+            }
+
+            // 4. Sleeper Hit
+            if (takes && takes.length > 0) {
+                const sleeper = [...takes].sort((a, b) => a.score - b.score)[0];
+                if (sleeper && sleeper.score < 0) {
+                    document.getElementById('d-sleep-song').innerHTML = truncate(sleeper.song_name, 22);
+                    document.getElementById('d-sleep-user').innerHTML = `Loved by ${sleeper.username}`;
+                }
+            }
+        }
+
+        function truncate(str, len) {
+            return str.length > len ? str.substring(0, len) + '…' : str;
+        }
+
+        function renderDashTop5(ranks) {
+            const el = document.getElementById('c-dash-top5');
+            if (!el) return;
+            el.innerHTML = `<table>` +
+                ranks.map((s, i) => `
+                    <tr>
+                        <td class="col-rank" style="color:${i === 0 ? '#ffd700' : i === 1 ? '#c0c0c0' : i === 2 ? '#cd7f32' : 'var(--pink)'}">#${i + 1}</td>
+                        <td>${s.song_name}</td>
+                        <td class="col-metric" style="color:var(--green)">${s.average}</td>
+                    </tr>
+                `).join('') + `</table>`;
+        }
+
+        function renderDashBottom5(ranks) {
+            const el = document.getElementById('c-dash-bottom5');
+            if (!el) return;
+            const total = parseInt(document.getElementById('d-total-songs')?.innerHTML) || 100;
+            el.innerHTML = `<table>` +
+                ranks.map((s, i) => `
+                    <tr>
+                        <td class="col-rank" style="color:var(--red)">#${total - i}</td>
+                        <td>${s.song_name}</td>
+                        <td class="col-metric" style="color:var(--red)">${s.average}</td>
+                    </tr>
+                `).join('') + `</table>`;
+        }
+
 
         function renderLeaderboard(ranks) {
             document.getElementById('c-leaderboard').innerHTML = `<table><colgroup><col class="col-rank"><col><col class="col-metric"><col class="col-metric"></colgroup><tr><th>#</th><th>Song Name</th><th>Avg</th><th>Pts</th></tr>` +
@@ -685,8 +1009,243 @@
                 const d = await r.json(), u = Object.keys(d.matrix).sort(), max = Math.max(...Object.values(d.matrix).flatMap(o => Object.values(o))) || 1;
                 wrap.style.gridTemplateColumns = `150px repeat(${u.length}, 1fr)`;
                 wrap.innerHTML = `<div></div>` + u.map(n => `<div class="m-label">${n}</div>`).join('');
-                u.forEach(u1 => { wrap.innerHTML += `<div class="m-label" style="text-align:left">${u1}</div>`; u.forEach(u2 => { const v = d.matrix[u1][u2], op = Math.pow(v / max, 1.8); wrap.innerHTML += `<div class="cell" style="background:rgba(248, 82, 173, ${op}); color:${op > 0.5 ? '#000' : '#fff'}; border-bottom:1px solid #1c2128;">${v}</div>`; }); });
+                u.forEach(u1 => { wrap.innerHTML += `<div class="m-label" style="text-align:left">${u1}</div>`; u.forEach(u2 => { const v = d.matrix[u1][u2], op = Math.pow(v / max, 1.8); wrap.innerHTML += `<div class="cell" style="background:rgba(219, 97, 162, ${op}); color:${op > 0.5 ? '#fff' : '#8b949e'}; border-bottom:1px solid #0d1117;">${v}</div>`; }); });
             } catch (e) { wrap.innerHTML = "Error."; }
+        }
+
+        /* --- RIVALS LOGIC --- */
+        let allUsers = [];
+
+        async function fetchUserList() {
+            const f = document.getElementById('view-franchise').value, sub = document.getElementById('view-subgroup').value;
+            try {
+                // Use divergence endpoint to get reliable user list
+                const r = await fetch(`${API}/analysis/divergence?franchise=${f}&subgroup=${sub}`);
+                const d = await r.json();
+                allUsers = Object.keys(d.matrix).sort();
+                // Init Graph
+                setTimeout(() => typeof initConstellation === 'function' && initConstellation(d.matrix), 500);
+
+                const opts = allUsers.map(u => `<option value="${u}">${u}</option>`).join('');
+                ['duel-user-a', 'duel-user-b', 'match-finder-user', 'bias-user'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el && !el.innerHTML) {  // Only populate if empty to preserve selection
+                        const old = el.value;
+                        el.innerHTML = '<option value="">Select User</option>' + opts;
+                        if (old && allUsers.includes(old)) el.value = old;
+                    } else if (el && el.innerHTML === "") {
+                        el.innerHTML = '<option value="">Select User</option>' + opts;
+                    }
+                });
+            } catch (e) { }
+        }
+
+        async function runDuel() {
+            const u1 = document.getElementById('duel-user-a').value;
+            const u2 = document.getElementById('duel-user-b').value;
+            if (!u1 || !u2 || u1 === u2) {
+                document.getElementById('duel-results').classList.add('hidden');
+                return;
+            }
+
+            const f = document.getElementById('view-franchise').value, sub = document.getElementById('view-subgroup').value;
+            document.getElementById('duel-score').innerHTML = "...";
+            document.getElementById('duel-results').classList.remove('hidden');
+
+            try {
+                const res = await fetch(`${API}/analysis/head-to-head?franchise=${f}&subgroup=${sub}&user_a=${u1}&user_b=${u2}`);
+                const data = await res.json();
+
+                // Render Score
+                const sc = data.score;
+                document.getElementById('duel-score').innerHTML = `${sc}%`;
+                document.getElementById('duel-score').style.color = sc > 75 ? 'var(--green)' : sc < 40 ? 'var(--red)' : '#fff';
+                document.getElementById('duel-msg').innerHTML = sc > 85 ? "BEST FRIENDS FOREVER 💖" : sc > 60 ? "Solid Compatibility 👍" : sc < 30 ? "MORTAL ENEMIES 💀" : "It's Complicated 🤷";
+
+                // Render Disputes
+                const disputes = data.diffs.slice(0, 10);
+                document.getElementById('duel-disputes').innerHTML = `<table>
+                    <colgroup><col><col style="width:80px"><col style="width:80px"><col style="width:60px"></colgroup>
+                    <tr><th>Song</th><th>${u1}</th><th>${u2}</th><th>Diff</th></tr>` +
+                    disputes.map(d => `
+                        <tr>
+                            <td>${d.name}</td>
+                            <td style="color:${d.r1 < d.r2 ? 'var(--green)' : 'var(--muted)'}">#${d.r1}</td>
+                            <td style="color:${d.r2 < d.r1 ? 'var(--green)' : 'var(--muted)'}">#${d.r2}</td>
+                            <td style="font-weight:bold; color:var(--red)">${Math.round(d.diff)}</td>
+                        </tr>`).join('') + `</table>`;
+
+            } catch (e) { console.error(e); document.getElementById('duel-score').innerHTML = "Err"; }
+        }
+
+        async function findMatches() {
+            const u = document.getElementById('match-finder-user').value;
+            if (!u) return;
+            const f = document.getElementById('view-franchise').value, sub = document.getElementById('view-subgroup').value;
+            const res = document.getElementById('match-results');
+            res.innerHTML = "Scanning database...";
+
+            try {
+                const r = await fetch(`${API}/analysis/user-match?franchise=${f}&subgroup=${sub}&user=${u}`);
+                const data = await r.json();
+
+                const renderCard = (title, list, color) => `
+                    <div class="card" style="border-color:${color}">
+                        <h3 style="color:${color}; border-color:${color}; margin-bottom:10px;">${title}</h3>
+                        ${list.map(x => `<div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.05)">
+                            <span style="font-weight:600">${x.user}</span>
+                            <span style="font-family:Consolas; opacity:0.7">Div: ${x.div.toFixed(2)}</span>
+                        </div>`).join('')}
+                    </div>
+                `;
+
+                res.innerHTML = renderCard("❤️ Soulmates", data.soulmates, "var(--green)") +
+                    renderCard("💀 Nemeses", data.nemeses, "var(--red)");
+            } catch (e) { res.innerHTML = "Error finding matches."; }
+        }
+
+        async function analyzeBias() {
+            const u = document.getElementById('bias-user').value;
+            if (!u) return;
+            const f = document.getElementById('view-franchise').value;
+            const res = document.getElementById('bias-results');
+            res.innerHTML = "Computing bias...";
+
+            try {
+                const r = await fetch(`${API}/analysis/oshi-bias?franchise=${f}&user=${u}`);
+                const d = await r.json();
+
+                if (d.error) { res.innerHTML = d.error; return; }
+
+                let html = '';
+                d.biases.forEach((b, i) => {
+                    html += `
+                     <div class="stat-card" style="padding:15px; border-color:${i === 0 ? 'var(--pink)' : 'var(--border)'}">
+                        <div style="font-size:10px; opacity:0.7; text-transform:uppercase; letter-spacing:1px;">${i === 0 ? '🏆 OSHI' : 'Favored Member'}</div>
+                        <div style="font-size:16px; font-weight:bold; color:#fff; margin:5px 0;">${b.name}</div>
+                        <div style="font-size:24px; font-weight:900; color:${i === 0 ? 'var(--pink)' : 'var(--green)'}">+${b.bias}</div>
+                        <div style="font-size:11px; opacity:0.5; margin-top:5px;">Avg Rank #${b.avg_rank} (${b.count} songs)</div>
+                     </div>`;
+                });
+                res.innerHTML = html || "No significant bias found (You love everyone equally?).";
+            } catch (e) { console.error(e); res.innerHTML = "Error."; }
+        }
+
+
+
+        /* --- CONSTELLATION GRAPH --- */
+        let graphCtx = null, graphNodes = [], graphEdges = [], graphAnimParams = { w: 0, h: 0 };
+
+        function initConstellation(matrix) {
+            const cvs = document.getElementById('taste-canvas');
+            if (!cvs || !matrix) return;
+            // Resize logic
+            const rect = cvs.getBoundingClientRect();
+            cvs.width = rect.width; cvs.height = rect.height;
+            graphCtx = cvs.getContext('2d');
+            graphAnimParams.w = cvs.width; graphAnimParams.h = cvs.height;
+
+            const users = Object.keys(matrix);
+            // Initialize Nodes
+            graphNodes = users.map(u => ({
+                id: u,
+                x: Math.random() * cvs.width,
+                y: Math.random() * cvs.height,
+                vx: 0, vy: 0,
+                color: `hsl(${Math.random() * 360}, 70%, 60%)`
+            }));
+
+            // Initialize Edges (Connect if divergence < Threshold)
+            // Calculate avg divergence to set threshold
+            let sum = 0, count = 0;
+            users.forEach(u1 => users.forEach(u2 => { if (u1 !== u2) { sum += matrix[u1][u2]; count++; } }));
+            const avg = count ? sum / count : 20;
+            const threshold = avg * 0.8; // Connect stronger than average pairs
+
+            graphEdges = [];
+            for (let i = 0; i < users.length; i++) {
+                for (let j = i + 1; j < users.length; j++) {
+                    const u1 = users[i], u2 = users[j];
+                    const div = matrix[u1][u2];
+                    if (div < threshold) {
+                        graphEdges.push({ source: i, target: j, strength: 1 - (div / threshold) });
+                    }
+                }
+            }
+
+            requestAnimationFrame(updateGraph);
+        }
+
+        function updateGraph() {
+            if (!graphCtx) return;
+            const { w, h } = graphAnimParams;
+
+            // Physics Step
+            // Repulsion
+            for (let i = 0; i < graphNodes.length; i++) {
+                for (let j = i + 1; j < graphNodes.length; j++) {
+                    const dx = graphNodes[i].x - graphNodes[j].x;
+                    const dy = graphNodes[i].y - graphNodes[j].y;
+                    const d2 = dx * dx + dy * dy + 0.1;
+                    const dist = Math.sqrt(d2);
+                    const force = 500 / d2;
+                    const fx = (dx / dist) * force;
+                    const fy = (dy / dist) * force;
+                    graphNodes[i].vx += fx; graphNodes[i].vy += fy;
+                    graphNodes[j].vx -= fx; graphNodes[j].vy -= fy;
+                }
+            }
+
+            // Attraction
+            graphEdges.forEach(e => {
+                const n1 = graphNodes[e.source], n2 = graphNodes[e.target];
+                const dx = n2.x - n1.x, dy = n2.y - n1.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                const force = (dist - 100) * 0.05 * e.strength; // Spring length 100
+                const fx = (dx / dist) * force, fy = (dy / dist) * force;
+                n1.vx += fx; n1.vy += fy;
+                n2.vx -= fx; n2.vy -= fy;
+            });
+
+            // Center Gravity
+            graphNodes.forEach(n => {
+                n.vx += (w / 2 - n.x) * 0.01;
+                n.vy += (h / 2 - n.y) * 0.01;
+                // Damping
+                n.vx *= 0.9; n.vy *= 0.9;
+                n.x += n.vx; n.y += n.vy;
+
+                // Bounds
+                if (n.x < 10) n.x = 10; if (n.x > w - 10) n.x = w - 10;
+                if (n.y < 10) n.y = 10; if (n.y > h - 10) n.y = h - 10;
+            });
+
+            // Draw
+            graphCtx.clearRect(0, 0, w, h);
+
+            // Edges
+            graphCtx.lineWidth = 1;
+            graphEdges.forEach(e => {
+                const n1 = graphNodes[e.source], n2 = graphNodes[e.target];
+                graphCtx.strokeStyle = `rgba(219, 97, 162, ${e.strength * 0.5})`;
+                graphCtx.beginPath();
+                graphCtx.moveTo(n1.x, n1.y);
+                graphCtx.lineTo(n2.x, n2.y);
+                graphCtx.stroke();
+            });
+
+            // Nodes
+            graphNodes.forEach(n => {
+                graphCtx.fillStyle = n.color;
+                graphCtx.beginPath();
+                graphCtx.arc(n.x, n.y, 6, 0, Math.PI * 2);
+                graphCtx.fill();
+                graphCtx.fillStyle = "#fff";
+                graphCtx.font = "10px sans-serif";
+                graphCtx.fillText(n.id, n.x + 8, n.y + 3);
+            });
+
+            requestAnimationFrame(updateGraph);
         }
 
         function renderSpice(results) {
