@@ -1,0 +1,100 @@
+Rankings Suite
+Franchise
+View
+Consensus
+Analysis
+Divergence
+Spice Meter
+User Divergence Matrix
+Coolguy
+Dyrea
+Honobruh
+HooKnows
+Neptune
+Rumi
+Trios
+Wumbo
+kusa
+Coolguy
+0
+38.71
+55.45
+43.03
+49.11
+48.59
+55.56
+44.57
+50.86
+Dyrea
+38.71
+0
+52.41
+43.31
+51.67
+52.19
+52
+47.06
+47.1
+Honobruh
+55.45
+52.41
+0
+47.77
+50.93
+52.78
+51.01
+54.96
+56.84
+HooKnows
+43.03
+43.31
+47.77
+0
+46
+51.05
+52.32
+40.74
+53.77
+Neptune
+49.11
+51.67
+50.93
+46
+0
+50.35
+54.08
+53.88
+54.41
+Rumi
+48.59
+52.19
+52.78
+51.05
+50.35
+0
+48.96
+45.46
+56.34
+Trios
+55.56
+52
+51.01
+52.32
+54.08
+48.96
+0
+50.96
+54.72
+[0] (500,500)<div class='modal-card' scrollable='true'>Rankings Submission />
+	[1] (882,88)<span class='close-btn'>× />
+	Rankings Submission
+	[2] (493,207)<label >1. Select Franchise />
+	[3] (493,282)<select class='modal-select' id='sub-franchise' />
+	[4] (493,377)<label >2. Your Name />
+	[5] (493,451)<input class='modal-input' id='in-user' placeholder='Username' />
+	[6] (493,544)<label >3. Ranked List (Format: 1. Song - Artist) />
+	[7] (493,823)<textarea class='modal-textarea' id='in-list' placeholder='1. Starlight Prologue - Liella!
+2. 始まりは君の空 - Liella!' />
+READY
+Recompute
+Submit

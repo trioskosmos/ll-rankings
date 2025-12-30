@@ -523,6 +523,162 @@
             cursor: not-allowed;
         }
 
+        /* --- USERS PAGE STYLES --- */
+        .user-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 20px;
+        }
+
+        .user-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .user-card:hover {
+            border-color: var(--pink);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .user-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 20px;
+            background: linear-gradient(135deg, rgba(219, 97, 162, 0.1) 0%, transparent 100%);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .user-name {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--pink);
+        }
+
+        .song-count {
+            font-size: 12px;
+            color: var(--muted);
+            font-family: monospace;
+            background: var(--bg);
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
+        .user-insights {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1px;
+            background: var(--border);
+            margin-bottom: 1px;
+        }
+
+        .insight-item {
+            background: var(--card);
+            padding: 12px 15px;
+            font-size: 12px;
+        }
+
+        .insight-label {
+            color: var(--muted);
+            text-transform: uppercase;
+            font-size: 9px;
+            letter-spacing: 1px;
+            margin-bottom: 3px;
+        }
+
+        .insight-value {
+            color: #fff;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .insight-value.green {
+            color: var(--green);
+        }
+
+        .insight-value.yellow {
+            color: var(--yellow);
+        }
+
+        .rankings-list {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .rankings-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .rankings-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .rankings-list::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        .rankings-list::-webkit-scrollbar-thumb:hover {
+            background: var(--pink);
+        }
+
+        .rank-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 10px;
+            margin-bottom: 4px;
+            background: var(--bg);
+            border-radius: 6px;
+            transition: all 0.15s ease;
+        }
+
+        .rank-item:hover {
+            background: #21262d;
+            padding-left: 14px;
+        }
+
+        .rank-item.top-3 {
+            background: linear-gradient(90deg, rgba(219, 97, 162, 0.15) 0%, var(--bg) 100%);
+        }
+
+        .rank-number {
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--pink);
+            min-width: 35px;
+            text-align: right;
+            font-family: 'Consolas', monospace;
+        }
+
+        .rank-number.gold {
+            color: #ffd700;
+        }
+
+        .rank-number.silver {
+            color: #c0c0c0;
+        }
+
+        .rank-number.bronze {
+            color: #cd7f32;
+        }
+
+        .song-name {
+            flex: 1;
+            font-size: 13px;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
         .hidden {
             display: none !important;
         }
@@ -558,7 +714,7 @@
             <div class="nav-item" id="btn-opps" onclick="tab('opps')">Divergence</div>
             <div class="nav-item" id="btn-rivals" onclick="tab('rivals')">Rivals</div>
             <div class="nav-item" id="btn-spice" onclick="tab('spice')">Spice</div>
-            <div class="nav-item" onclick="window.location.href='users.html'">Users</div>
+            <div class="nav-item" id="btn-users" onclick="tab('users')">Users</div>
         </div>
     </header>
 
@@ -670,67 +826,189 @@
         </div>
 
         <!-- RIVALS VIEW -->
-        <div id="view-rivals" class="card hidden">
-            <h3 style="border:none; text-align:center; font-size:18px;">👥 Head-to-Head Duel</h3>
-
-            <div class="selector-group"
-                style="margin-bottom:30px; justify-content:center; align-items:center; gap:20px;">
-                <select id="duel-user-a" onchange="runDuel()"
-                    style="width:200px; padding:12px; font-size:16px; background:var(--card); border:2px solid var(--border);"></select>
-                <div style="font-weight:900; color:var(--red); font-size:24px; font-style:italic;">VS</div>
-                <select id="duel-user-b" onchange="runDuel()"
-                    style="width:200px; padding:12px; font-size:16px; background:var(--card); border:2px solid var(--border);"></select>
+        <div id="view-rivals" class="main-view hidden" style="padding:0; background:transparent;">
+            <!-- Sub Navigation -->
+            <div style="display:flex; justify-content:center; gap:15px; margin-bottom:20px;">
+                <button id="rtab-constellation" class="nav-btn active" onclick="switchRivalTab('constellation')"
+                    style="background:var(--pink); color:#000; border:none;">Taste Constellation</button>
+                <button id="rtab-matchmaking" class="nav-btn" onclick="switchRivalTab('matchmaking')"
+                    style="background:transparent; border:1px solid var(--border);">Matchmaking</button>
             </div>
 
-            <div id="duel-results" class="hidden">
-                <div style="text-align:center; margin-bottom:40px;">
-                    <div
-                        style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:2px; font-weight:700; margin-bottom:10px;">
-                        Compatibility Score</div>
-                    <div id="duel-score"
-                        style="font-size:56px; line-height:1; font-weight:900; color:#fff; text-shadow:0 0 30px rgba(219,97,162,0.3);">
-                        --%</div>
-                    <div id="duel-msg" style="color:var(--pink); font-size:14px; font-weight:600; margin-top:5px;">--
+            <!-- TAB 1: CONSTELLATION -->
+            <div id="rview-constellation" class="card">
+                <h3 style="border:none; margin-bottom:10px; text-align:center;">🌌 Taste Constellation</h3>
+                <div style="font-size:12px; color:var(--muted); margin-bottom:15px; text-align:center;">
+                    Visualizing 147-dimensional taste differences in 2D space.
+                    <button id="toggle-3d" onclick="toggle3D()"
+                        style="margin-left:10px; padding:4px 10px; font-size:10px; font-weight:bold; vertical-align:middle; background:transparent; border:1px solid var(--pink); color:var(--pink); border-radius:4px; cursor:pointer; text-transform:uppercase;">Switch
+                        to 3D</button>
+                </div>
+
+                <canvas id="taste-canvas"
+                    style="width:100%; height:600px; background: radial-gradient(circle at center, #1b2028 0%, #0d1117 100%); border-radius:12px; border:1px solid var(--border); margin-bottom:30px;"></canvas>
+
+                <!-- LAYMAN EXPLANATION -->
+                <div
+                    style="background:rgba(255,255,255,0.03); border-radius:12px; padding:25px; border:1px solid var(--border);">
+                    <h4 style="margin-top:0; color:var(--pink);">How to read this graph</h4>
+                    <p style="font-size:14px; color:#ccc; line-height:1.6; margin-bottom:20px;">
+                        This map visualizes the "Social Geography" of taste.
+                        <b>Distance = Disagreement</b>. The further apart two users are, the more they disagree on
+                        rankings.
+                    </p>
+
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:25px;">
+                        <!-- Concept 1: The Main Divide -->
+                        <!-- Concept 1: The Main Divide -->
+                        <div>
+                            <strong
+                                style="color:#fff; display:block; margin-bottom:8px; border-bottom:1px solid var(--pink); padding-bottom:5px;">1.
+                                The Main Divide (X-Axis)</strong>
+                            <p style="font-size:13px; color:var(--muted); margin:0;">
+                                This line represents the <b>single biggest difference</b> in opinion across the whole
+                                group.
+                                <br><br>
+                                <b style="color:var(--pink); cursor:pointer;">Click the "X" Label</b> on the graph to
+                                see exactly which songs are causing this split.
+                                (Usually, people on the left love a certain style, while people on the right prefer
+                                another).
+                            </p>
+                        </div>
+
+                        <!-- Concept 2: The Nuance -->
+                        <div>
+                            <strong
+                                style="color:#fff; display:block; margin-bottom:8px; border-bottom:1px solid var(--pink); padding-bottom:5px;">2.
+                                The Nuance (Y-Axis)</strong>
+                            <p style="font-size:13px; color:var(--muted); margin:0;">
+                                This difference distinguishes people who might agree on the big stuff but disagree on
+                                specific details.
+                                <br><br>
+                                <b style="color:var(--pink); cursor:pointer;">Click the "Y" Label</b> to see the songs
+                                driving these finer distinctions.
+                            </p>
+                        </div>
+
+                        <!-- Concept 3: The Layout -->
+                        <div>
+                            <strong
+                                style="color:#fff; display:block; margin-bottom:8px; border-bottom:1px solid var(--pink); padding-bottom:5px;">3.
+                                The Layout</strong>
+                            <p style="font-size:13px; color:var(--muted); margin:0;">
+                                <b>Distance &approx; Disagreement</b>.<br>
+                                Users close together typically share very similar tastes. Users far apart rarely agree.
+                                Look for clusters!
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: MATCHMAKING -->
+            <div id="rview-matchmaking" class="hidden">
+                <!-- Head to Head -->
+                <div class="card" style="margin-bottom:20px;">
+                    <h3 style="border:none; text-align:center; font-size:18px;">👥 Head-to-Head Duel</h3>
+                    <div class="selector-group"
+                        style="margin-bottom:30px; justify-content:center; align-items:center; gap:20px;">
+                        <select id="duel-user-a" onchange="runDuel()"
+                            style="width:200px; padding:12px; font-size:16px; background:var(--card); border:2px solid var(--border);"></select>
+                        <div style="font-weight:900; color:var(--red); font-size:24px; font-style:italic;">VS</div>
+                        <select id="duel-user-b" onchange="runDuel()"
+                            style="width:200px; padding:12px; font-size:16px; background:var(--card); border:2px solid var(--border);"></select>
+                    </div>
+                    <div id="duel-results" class="hidden">
+                        <div style="text-align:center; margin-bottom:40px;">
+                            <div
+                                style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:2px; font-weight:700; margin-bottom:10px;">
+                                Compatibility Score</div>
+                            <div id="duel-score"
+                                style="font-size:56px; line-height:1; font-weight:900; color:#fff; text-shadow:0 0 30px rgba(219,97,162,0.3);">
+                                --%</div>
+                            <div id="duel-msg"
+                                style="color:var(--pink); font-size:14px; font-weight:600; margin-top:5px;">--</div>
+                        </div>
+                        <div class="card"
+                            style="margin-bottom:20px; border-color:var(--red); background:rgba(20,20,20,0.5);">
+                            <h3 style="color:var(--red); border-color:rgba(248,81,73,0.3);">⚔️ Biggest Disagreements
+                            </h3>
+                            <div class="table-container" id="duel-disputes"></div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="card" style="margin-bottom:20px; border-color:var(--red);">
-                    <h3 style="color:var(--red); border-color:rgba(248,81,73,0.3);">⚔️ Biggest Disagreements</h3>
-                    <div class="table-container" id="duel-disputes"></div>
+                <!-- Match Finder -->
+                <div class="card" style="margin-bottom:20px;">
+                    <h3 style="border:none; margin-bottom:20px; text-align: center;">💘 Find Your Match</h3>
+                    <div
+                        style="display:flex; gap:10px; align-items:center; justify-content:center; margin-bottom:20px;">
+                        <select id="match-finder-user"
+                            style="width:200px; padding:10px; border-radius:6px; background:#1c2128; color:white; border:1px solid #444;"></select>
+                        <button class="btn-footer btn-submit-action" onclick="findMatches()"
+                            style="padding:10px 20px;">Analyze</button>
+                    </div>
+                    <div id="match-results" class="grid"
+                        style="grid-template-columns: 1fr 1fr; gap:20px; text-align:left;"></div>
+                </div>
+
+                <!-- Oshi Detector -->
+                <div class="card">
+                    <h3 style="border:none; margin-bottom:10px; text-align: center;">💖 Oshi Detector</h3>
+                    <div style="font-size:12px; color:var(--muted); margin-bottom:15px; text-align: center;">Who do you
+                        <i>really</i> love the most? (Based on average rank)
+                    </div>
+                    <div
+                        style="display:flex; gap:10px; align-items:center; justify-content:center; margin-bottom:15px;">
+                        <select id="bias-user"
+                            style="width:200px; padding:10px; background:var(--card); border:1px solid var(--border); color:#fff; border-radius:6px;"></select>
+                        <button class="btn-footer btn-submit-action" onclick="analyzeBias()"
+                            style="padding:10px 20px;">Detect</button>
+                    </div>
+                    <div id="bias-results" class="grid"
+                        style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:15px;"></div>
                 </div>
             </div>
+        </div>
 
-            <div style="margin-top:40px; padding-top:30px; border-top:1px solid var(--border); text-align:center;">
-                <h3 style="border:none; margin-bottom:20px;">💘 Find Your Match</h3>
-                <div style="display:flex; gap:10px; align-items:center; justify-content:center; margin-bottom:20px;">
-                    <select id="match-finder-user" style="width:200px;"></select>
-                    <button class="btn-footer btn-submit-action" onclick="findMatches()"
-                        style="padding:10px 20px;">Analyze</button>
-                </div>
-                <div id="match-results" class="grid" style="grid-template-columns: 1fr 1fr; gap:20px; text-align:left;">
-                </div>
-            </div>
+        <script>
+            function switchRivalTab(tab) {
+                // Update Buttons
+                document.getElementById('rtab-constellation').className = tab === 'constellation' ? 'nav-btn active' : 'nav-btn';
+                document.getElementById('rtab-constellation').style.background = tab === 'constellation' ? 'var(--pink)' : 'transparent';
+                document.getElementById('rtab-constellation').style.color = tab === 'constellation' ? '#000' : 'var(--muted)';
+                document.getElementById('rtab-constellation').style.borderColor = tab === 'constellation' ? 'transparent' : 'var(--border)';
 
-            <div style="margin-top:20px; padding-top:20px; border-top:1px solid var(--border); text-align:center;">
-                <h3 style="border:none; margin-bottom:10px;">💖 Oshi Detector</h3>
-                <div style="font-size:12px; color:var(--muted); margin-bottom:15px;">Who do you <i>really</i> love the
-                    most? (Based on average rank)</div>
-                <div style="display:flex; gap:10px; align-items:center; justify-content:center; margin-bottom:15px;">
-                    <select id="bias-user"
-                        style="width:200px; padding:10px; background:var(--card); border:1px solid var(--border); color:#fff; border-radius:6px;"></select>
-                    <button class="btn-footer btn-submit-action" onclick="analyzeBias()"
-                        style="padding:10px 20px;">Detect</button>
-                </div>
-                <div id="bias-results" class="grid"
-                    style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:15px;"></div>
-            </div>
+                document.getElementById('rtab-matchmaking').className = tab === 'matchmaking' ? 'nav-btn active' : 'nav-btn';
+                document.getElementById('rtab-matchmaking').style.background = tab === 'matchmaking' ? 'var(--pink)' : 'transparent';
+                document.getElementById('rtab-matchmaking').style.color = tab === 'matchmaking' ? '#000' : 'var(--muted)';
+                document.getElementById('rtab-matchmaking').style.borderColor = tab === 'matchmaking' ? 'transparent' : 'var(--border)';
 
-            <div style="margin-top:20px; padding-top:20px; border-top:1px solid var(--border); text-align:center;">
-                <h3 style="border:none; margin-bottom:10px;">🌌 Taste Constellation</h3>
-                <div style="font-size:12px; color:var(--muted); margin-bottom:15px;">Visualizing community factions.
-                    Closer nodes = Shared taste.</div>
-                <canvas id="taste-canvas"
-                    style="width:100%; height:400px; background: radial-gradient(circle at center, #1b2028 0%, #0d1117 100%); border-radius:12px; border:1px solid var(--border)"></canvas>
+                // Update Views
+                document.getElementById('rview-constellation').classList.toggle('hidden', tab !== 'constellation');
+                document.getElementById('rview-matchmaking').classList.toggle('hidden', tab !== 'matchmaking');
+
+                // Trigger Resize/Redraw if Constellation
+                if (tab === 'constellation') {
+                    setTimeout(() => {
+                        const cvs = document.getElementById('taste-canvas');
+                        if (cvs) {
+                            cvs.width = cvs.parentElement.clientWidth;
+                            // Height fixed usually, but we can reset
+                            if (typeof drawGraph === 'function') drawGraph();
+                        }
+                    }, 50);
+                }
+            }
+        </script>
+
+        <!-- USERS VIEW -->
+        <div id="view-users" class="hidden">
+            <div id="users-stats-container"></div>
+            <div id="users-content">
+                <div style="text-align: center; padding: 80px 20px; font-size: 18px; color: var(--muted);">
+                    Loading user rankings...
+                </div>
             </div>
         </div>
     </main>
@@ -882,6 +1160,7 @@
             if (activeTab === 'opps') renderMatrix(sub, f);
             if (activeTab === 'spice') renderSpice(spice?.results || []);
             if (activeTab === 'rivals') fetchUserList();
+            if (activeTab === 'users') loadUsers();
         }
 
         function updateDashboard(ranks, cont, takes, spice) {
@@ -1023,8 +1302,8 @@
                 const r = await fetch(`${API}/analysis/divergence?franchise=${f}&subgroup=${sub}`);
                 const d = await r.json();
                 allUsers = Object.keys(d.matrix).sort();
-                // Init Graph
-                setTimeout(() => typeof initConstellation === 'function' && initConstellation(d.matrix), 500);
+                // Init Graph with full data (for loading calculations)
+                setTimeout(() => typeof initConstellation === 'function' && initConstellation(d), 500);
 
                 const opts = allUsers.map(u => `<option value="${u}">${u}</option>`).join('');
                 ['duel-user-a', 'duel-user-b', 'match-finder-user', 'bias-user'].forEach(id => {
@@ -1135,118 +1414,470 @@
 
         /* --- CONSTELLATION GRAPH --- */
         let graphCtx = null, graphNodes = [], graphEdges = [], graphAnimParams = { w: 0, h: 0 };
+        let graphHover = null, graphDrag = null, graphMouse = { x: 0, y: 0 };
 
-        function initConstellation(matrix) {
+        // --- Math Helpers for MDS ---
+        const MathLib = {
+            mean: (arr) => arr.reduce((a, b) => a + b, 0) / arr.length,
+            pearson: (x, y) => {
+                const n = x.length;
+                if (n !== y.length || n === 0) return 0;
+                const mx = MathLib.mean(x), my = MathLib.mean(y);
+                let num = 0, dx2 = 0, dy2 = 0;
+                for (let i = 0; i < n; i++) {
+                    const dx = x[i] - mx, dy = y[i] - my;
+                    num += dx * dy;
+                    dx2 += dx * dx;
+                    dy2 += dy * dy;
+                }
+                return (dx2 === 0 || dy2 === 0) ? 0 : num / Math.sqrt(dx2 * dy2);
+            },
+            jacobi: (A, tol = 1e-8, maxIter = 100) => {
+                const n = A.length;
+                let V = Array(n).fill(0).map((_, i) => Array(n).fill(0).map((_, j) => i === j ? 1 : 0));
+                let D = A.map(row => [...row]);
+                for (let iter = 0; iter < maxIter; iter++) {
+                    let maxVal = 0, p = 0, q = 0;
+                    for (let i = 0; i < n - 1; i++) for (let j = i + 1; j < n; j++) if (Math.abs(D[i][j]) > maxVal) { maxVal = Math.abs(D[i][j]); p = i; q = j; }
+                    if (maxVal < tol) break;
+                    const phi = 0.5 * Math.atan2(2 * D[p][q], D[q][q] - D[p][p]);
+                    const c = Math.cos(phi), s = Math.sin(phi);
+                    for (let i = 0; i < n; i++) {
+                        let t = D[i][p]; D[i][p] = c * t - s * D[i][q]; D[i][q] = s * t + c * D[i][q];
+                        t = V[i][p]; V[i][p] = c * t - s * V[i][q]; V[i][q] = s * t + c * V[i][q];
+                    }
+                    for (let i = 0; i < n; i++) {
+                        D[p][i] = D[i][p]; D[q][i] = D[i][q];
+                    }
+                    D[p][p] = c * D[p][p] * c - 2 * s * D[p][q] * c + s * D[q][q] * s;
+                    D[q][q] = s * D[p][p] * s + 2 * s * D[p][q] * c + c * D[q][q] * c;
+                    D[p][q] = D[q][p] = 0;
+                }
+                const eig = D.map((r, i) => ({ val: r[i], vec: V.map(row => row[i]) }));
+                return eig.sort((a, b) => b.val - a.val);
+            },
+            mds: (distMatrix) => {
+                const n = distMatrix.length;
+                const D2 = distMatrix.map(row => row.map(v => v * v));
+                const rowMeans = D2.map(r => MathLib.mean(r));
+                const colMeans = Array(n).fill(0).map((_, i) => MathLib.mean(D2.map(r => r[i])));
+                const matrixMean = MathLib.mean(rowMeans);
+                const B = Array(n).fill(0).map((_, i) => Array(n).fill(0).map((_, j) =>
+                    -0.5 * (D2[i][j] - rowMeans[i] - colMeans[j] + matrixMean)
+                ));
+                const eig = MathLib.jacobi(B);
+
+                // Calculate variance explained by top 2 dimensions
+                const positiveEigs = eig.filter(e => e.val > 0).map(e => e.val);
+                const totalVar = positiveEigs.reduce((a, b) => a + b, 0);
+                const explainedVar = (positiveEigs.length >= 2 && totalVar > 0)
+                    ? ((positiveEigs[0] + positiveEigs[1]) / totalVar) * 100
+                    : 100;
+
+                const X = eig[0].val > 0 ? eig[0].vec.map(v => v * Math.sqrt(eig[0].val)) : Array(n).fill(0);
+                const Y = eig[1].val > 0 ? eig[1].vec.map(v => v * Math.sqrt(eig[1].val)) : Array(n).fill(0);
+                const Z = (eig[2] && eig[2].val > 0) ? eig[2].vec.map(v => v * Math.sqrt(eig[2].val)) : Array(n).fill(0);
+
+                return {
+                    coords: X.map((x, i) => ({ x, y: Y[i], z: Z[i] })),
+                    varianceExplained: Math.round(explainedVar)
+                };
+            }
+        };
+
+        let graphVarianceExplained = 0; // Store for legend
+        let graphPC1Songs = []; // Top 3 songs defining X-axis
+        let graphPC2Songs = []; // Top 3 songs defining Y-axis
+
+        function initConstellation(data) {
+            // data = { matrix: {...}, rankings: {...}, song_names: {...} }
+            const matrixData = data.matrix;
+            const songRankings = data.rankings || {};
+            const songNames = data.song_names || {};
             const cvs = document.getElementById('taste-canvas');
-            if (!cvs || !matrix) return;
-            // Resize logic
+            if (!cvs || !matrixData) return;
             const rect = cvs.getBoundingClientRect();
             cvs.width = rect.width; cvs.height = rect.height;
             graphCtx = cvs.getContext('2d');
-            graphAnimParams.w = cvs.width; graphAnimParams.h = cvs.height;
 
-            const users = Object.keys(matrix);
-            // Initialize Nodes
-            graphNodes = users.map(u => ({
+            const users = Object.keys(matrixData);
+            const distMatrix = users.map(u1 => users.map(u2 => matrixData[u1][u2]));
+
+            let mdsResult;
+            try { mdsResult = MathLib.mds(distMatrix); } catch (e) { console.error("MDS Failed", e); return; }
+
+            const coords = mdsResult.coords;
+            graphVarianceExplained = mdsResult.varianceExplained;
+
+            let maxDist = 0;
+            coords.forEach(p => {
+                const d = Math.max(Math.abs(p.x), Math.abs(p.y));
+                if (d > maxDist) maxDist = d;
+            });
+
+            const padding = 60;
+            const w = cvs.width, h = cvs.height;
+
+            // Scale to fit the furthest point within the canvas (keeping origin at center)
+            const fitScale = (Math.min(w, h) / 2 - padding) / (maxDist || 1);
+
+            // Use Uniform Scaling to preserve Aspect Ratio (Distance = Divergence)
+            // Engineers expect Euclidean space to be consistent.
+            const scale = fitScale;
+
+            graphNodes = users.map((u, i) => ({
                 id: u,
-                x: Math.random() * cvs.width,
-                y: Math.random() * cvs.height,
-                vx: 0, vy: 0,
-                color: `hsl(${Math.random() * 360}, 70%, 60%)`
+                x: coords[i].x * scale + w / 2,
+                y: coords[i].y * scale + h / 2,
+
+                // 3D Real World Coords (Centered)
+                realX: coords[i].x * scale,
+                realY: coords[i].y * scale,
+                realZ: coords[i].z * scale,
+
+                color: `hsl(${280 + ((i * 40) % 80)}, 70%, 60%)`,
+                initials: u.substring(0, 2).toUpperCase(),
+                pc1: coords[i].x, // Store raw PC coords for loading calc
+                pc2: coords[i].y,
+                pc3: coords[i].z
             }));
 
-            // Initialize Edges (Connect if divergence < Threshold)
-            // Calculate avg divergence to set threshold
-            let sum = 0, count = 0;
-            users.forEach(u1 => users.forEach(u2 => { if (u1 !== u2) { sum += matrix[u1][u2]; count++; } }));
-            const avg = count ? sum / count : 20;
-            const threshold = avg * 0.8; // Connect stronger than average pairs
+            // Compute Song Loadings (Pearson correlation of song ranks with PC scores)
+            const pc1Coords = graphNodes.map(n => n.pc1);
+            const pc2Coords = graphNodes.map(n => n.pc2);
 
-            graphEdges = [];
-            for (let i = 0; i < users.length; i++) {
-                for (let j = i + 1; j < users.length; j++) {
-                    const u1 = users[i], u2 = users[j];
-                    const div = matrix[u1][u2];
-                    if (div < threshold) {
-                        graphEdges.push({ source: i, target: j, strength: 1 - (div / threshold) });
-                    }
-                }
+            const songLoadings = [];
+            for (const [songId, userRanks] of Object.entries(songRankings)) {
+                // Build rank vector aligned with users array
+                const rankVec = users.map(u => userRanks[u] ?? 0);
+
+                // Pearson correlation with PC1
+                const r1 = MathLib.pearson(rankVec, pc1Coords);
+                const r2 = MathLib.pearson(rankVec, pc2Coords);
+
+                songLoadings.push({
+                    id: songId,
+                    name: songNames[songId] || songId.substring(0, 8),
+                    pc1: r1,
+                    pc2: r2
+                });
             }
 
-            requestAnimationFrame(updateGraph);
+            // Helper to generate "Vs" labels
+            const getAxisLabel = (loadings, axisName) => {
+                const sorted = [...loadings].sort((a, b) => Math.abs(b[axisName]) - Math.abs(a[axisName]));
+                if (sorted.length < 1) return `${axisName.toUpperCase()}: Variance`;
+                const s1 = sorted[0];
+                const s2 = sorted[1];
+
+                // If only 1 song or 2nd is weak, just show top
+                if (!s2 || Math.abs(s2[axisName]) < 0.3) {
+                    return `${axisName.toUpperCase()}: Polarized by "${s1.name}"`;
+                }
+                // If signs oppose, it's a VS
+                if (Math.sign(s1[axisName]) !== Math.sign(s2[axisName])) {
+                    return `${axisName.toUpperCase()}: "${s1.name}" vs "${s2.name}"`;
+                } else {
+                    return `${axisName.toUpperCase()}: Driven by "${s1.name}" & "${s2.name}"`;
+                }
+            };
+
+            window.graphAxisLabels = {
+                x: getAxisLabel(songLoadings, 'pc1'),
+                y: getAxisLabel(songLoadings, 'pc2')
+            };
+
+            // Store full data for drill-down
+            window.graphAxisData = {
+                pc1: [...songLoadings].sort((a, b) => Math.abs(b.pc1) - Math.abs(a.pc1)),
+                pc2: [...songLoadings].sort((a, b) => Math.abs(b.pc2) - Math.abs(a.pc2))
+            };
+
+            // Global helper for showing details (simple alert for now, can be modal later)
+            window.showAxisDetails = (title, data, key) => {
+                const top10 = data.slice(0, 10);
+                const msg = top10.map((s, i) => `${i + 1}. ${s.name} (${s[key] > 0 ? '+' : ''}${s[key].toFixed(2)})`).join('\n');
+                alert(`${title} Drivers (Pearson Correlation):\n\n${msg}\n\n(High magnitude = Strong driver of this axis)`);
+            };
+
+            // Click Handler for Drill-Down
+            cvs.onclick = e => {
+                const r = cvs.getBoundingClientRect();
+                const x = e.clientX - r.left, y = e.clientY - r.top;
+                const w = cvs.width, h = cvs.height;
+                const cx = w / 2, cy = h / 2;
+
+                // Click X-Axis Label (Right area)
+                if (x > w - 300 && Math.abs(y - cy) < 40) {
+                    window.showAxisDetails('X-Axis', window.graphAxisData.pc1, 'pc1');
+                }
+                // Click Y-Axis Label (Top center area)
+                else if (Math.abs(x - cx) < 200 && y < 60) {
+                    window.showAxisDetails('Y-Axis', window.graphAxisData.pc2, 'pc2');
+                }
+            };
+
+            // Find top polarizing songs for each axis (keep for reference)
+            graphPC1Songs = window.graphAxisData.pc1.slice(0, 3).map(s => s.name);
+            graphPC2Songs = window.graphAxisData.pc2.slice(0, 3).map(s => s.name);
+
+            // No edges needed (user requested removal)
+
+            // Events
+            cvs.onmousemove = e => {
+                const r = cvs.getBoundingClientRect();
+                const mx = e.clientX - r.left, my = e.clientY - r.top;
+
+                // Node Hover
+                graphHover = graphNodes.find(n => Math.hypot(n.x - mx, n.y - my) < 12);
+
+                // Axis Hover
+                const w = cvs.width, h = cvs.height, cx = w / 2, cy = h / 2;
+                window.graphHoverLabel = null;
+                if (mx > w - 300 && Math.abs(my - cy) < 40) window.graphHoverLabel = 'x';
+                else if (Math.abs(mx - cx) < 200 && my < 60) window.graphHoverLabel = 'y';
+
+                // Cursor
+                cvs.style.cursor = (graphHover || window.graphHoverLabel) ? 'pointer' : 'default';
+
+                if (typeof drawGraph === 'function') drawGraph();
+            };
+
+            if (typeof drawGraph === 'function') drawGraph();
         }
 
-        function updateGraph() {
-            if (!graphCtx) return;
-            const { w, h } = graphAnimParams;
+        function drawGraph() {
+            if (!graphCtx || window.graphIs3D) return;
+            const cvs = document.getElementById('taste-canvas');
+            const w = cvs.width, h = cvs.height;
 
-            // Physics Step
-            // Repulsion
-            for (let i = 0; i < graphNodes.length; i++) {
-                for (let j = i + 1; j < graphNodes.length; j++) {
-                    const dx = graphNodes[i].x - graphNodes[j].x;
-                    const dy = graphNodes[i].y - graphNodes[j].y;
-                    const d2 = dx * dx + dy * dy + 0.1;
-                    const dist = Math.sqrt(d2);
-                    const force = 500 / d2;
-                    const fx = (dx / dist) * force;
-                    const fy = (dy / dist) * force;
-                    graphNodes[i].vx += fx; graphNodes[i].vy += fy;
-                    graphNodes[j].vx -= fx; graphNodes[j].vy -= fy;
-                }
-            }
-
-            // Attraction
-            graphEdges.forEach(e => {
-                const n1 = graphNodes[e.source], n2 = graphNodes[e.target];
-                const dx = n2.x - n1.x, dy = n2.y - n1.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                const force = (dist - 100) * 0.05 * e.strength; // Spring length 100
-                const fx = (dx / dist) * force, fy = (dy / dist) * force;
-                n1.vx += fx; n1.vy += fy;
-                n2.vx -= fx; n2.vy -= fy;
-            });
-
-            // Center Gravity
-            graphNodes.forEach(n => {
-                n.vx += (w / 2 - n.x) * 0.01;
-                n.vy += (h / 2 - n.y) * 0.01;
-                // Damping
-                n.vx *= 0.9; n.vy *= 0.9;
-                n.x += n.vx; n.y += n.vy;
-
-                // Bounds
-                if (n.x < 10) n.x = 10; if (n.x > w - 10) n.x = w - 10;
-                if (n.y < 10) n.y = 10; if (n.y > h - 10) n.y = h - 10;
-            });
-
-            // Draw
             graphCtx.clearRect(0, 0, w, h);
 
-            // Edges
+            // Background Structure (to make it look less random)
+            const cx = w / 2, cy = h / 2;
+
+            graphCtx.save();
+            graphCtx.strokeStyle = 'rgba(219, 97, 162, 0.1)'; // Theme pink, very faint
             graphCtx.lineWidth = 1;
-            graphEdges.forEach(e => {
-                const n1 = graphNodes[e.source], n2 = graphNodes[e.target];
-                graphCtx.strokeStyle = `rgba(219, 97, 162, ${e.strength * 0.5})`;
-                graphCtx.beginPath();
-                graphCtx.moveTo(n1.x, n1.y);
-                graphCtx.lineTo(n2.x, n2.y);
-                graphCtx.stroke();
-            });
+            graphCtx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+            graphCtx.font = '9px Inter, monospace';
+            graphCtx.textAlign = 'center';
+            graphCtx.textBaseline = 'middle';
 
-            // Nodes
+            // Find the global max distance for grid scaling (from graphNodes)
+            // graphNodes are already centered at cx, cy
+            let maxNodeDist = 0;
             graphNodes.forEach(n => {
-                graphCtx.fillStyle = n.color;
+                maxNodeDist = Math.max(maxNodeDist, Math.abs(n.x - cx), Math.abs(n.y - cy));
+            });
+            // Round up to nearest 100 for nice grid
+            const gridStep = 100;
+            const maxGrid = Math.ceil(maxNodeDist / gridStep) * gridStep + gridStep;
+
+            // Concentric circles (Radar style) with labels
+            for (let r = gridStep; r <= maxGrid; r += gridStep) {
                 graphCtx.beginPath();
-                graphCtx.arc(n.x, n.y, 6, 0, Math.PI * 2);
-                graphCtx.fill();
-                graphCtx.fillStyle = "#fff";
-                graphCtx.font = "10px sans-serif";
-                graphCtx.fillText(n.id, n.x + 8, n.y + 3);
+                graphCtx.arc(cx, cy, r, 0, Math.PI * 2);
+                graphCtx.stroke();
+                // Axis labels
+                graphCtx.fillText(r, cx + r, cy);
+                graphCtx.fillText(-r, cx - r, cy);
+            }
+
+            // Crosshairs with Labels
+            graphCtx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            graphCtx.beginPath(); graphCtx.moveTo(0, cy); graphCtx.lineTo(w, cy); graphCtx.stroke();
+            graphCtx.beginPath(); graphCtx.moveTo(cx, 0); graphCtx.lineTo(cx, h); graphCtx.stroke();
+
+            // Axis Labels (with Defining Songs)
+            // Axis Labels (with Defining Songs)
+            graphCtx.font = 'italic 10px Inter, sans-serif';
+
+            // X-Axis
+            graphCtx.textAlign = 'right';
+            const pc1Label = window.graphAxisLabels ? window.graphAxisLabels.x : (graphPC1Songs.length ? `X: Polarized by "${graphPC1Songs[0]}"` : "X: Primary Variance");
+            graphCtx.fillStyle = (window.graphHoverLabel === 'x') ? '#fff' : 'rgba(255, 255, 255, 0.4)';
+            graphCtx.fillText(pc1Label, w - 10, cy - 6);
+            if (window.graphHoverLabel === 'x') {
+                const m = graphCtx.measureText(pc1Label);
+                graphCtx.fillRect(w - 10 - m.width, cy - 4, m.width, 1);
+            }
+
+            // Y-Axis
+            graphCtx.textAlign = 'center';
+            const pc2Label = window.graphAxisLabels ? window.graphAxisLabels.y : (graphPC2Songs.length ? `Y: Polarized by "${graphPC2Songs[0]}"` : "Y: Secondary Variance");
+            graphCtx.fillStyle = (window.graphHoverLabel === 'y') ? '#fff' : 'rgba(255, 255, 255, 0.4)';
+            graphCtx.fillText(pc2Label, cx, 20);
+            if (window.graphHoverLabel === 'y') {
+                const m = graphCtx.measureText(pc2Label);
+                graphCtx.fillRect(cx - m.width / 2, 22, m.width, 1);
+            }
+
+            // Origin Label
+            graphCtx.textAlign = 'center';
+            graphCtx.fillText("0", cx + 5, cy + 10);
+
+            // Legend / Explanation
+            graphCtx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            graphCtx.font = 'bold 12px Inter, sans-serif';
+            graphCtx.textAlign = 'left'; graphCtx.textBaseline = 'bottom';
+            graphCtx.fillText("TASTE CONSTELLATION (Multidimensional Scaling)", 20, h - 75);
+
+            graphCtx.font = '10px Inter, sans-serif'; graphCtx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+            graphCtx.fillText("• Center (0,0): Community Consensus (Average Taste)", 20, h - 55);
+            graphCtx.fillText("• Distance: RMS Taste Divergence (Length of difference vector)", 20, h - 40);
+            graphCtx.fillText("• Projection: Top 2 Principal Components (PC1 & PC2) of variance", 20, h - 25);
+            graphCtx.fillText(`• 2D Accuracy: ${graphVarianceExplained}% (captures nearly all structure)`, 20, h - 10);
+            graphCtx.restore();
+
+            // No Edges (removed per user feedback)
+
+            // Nodes (smaller for less overlap)
+            graphNodes.forEach(n => {
+                graphCtx.shadowBlur = 0;
+                // Border
+                graphCtx.fillStyle = '#161b22';
+                graphCtx.beginPath(); graphCtx.arc(n.x, n.y, 12, 0, Math.PI * 2); graphCtx.fill();
+                // Color
+                graphCtx.fillStyle = n.color;
+                graphCtx.beginPath(); graphCtx.arc(n.x, n.y, 10, 0, Math.PI * 2); graphCtx.fill();
+
+                // Label (Full Name) - draw below the node
+                graphCtx.fillStyle = "rgba(255, 255, 255, 0.8)";
+                graphCtx.font = "bold 9px Inter, sans-serif";
+                graphCtx.textAlign = "center"; graphCtx.textBaseline = "top";
+                graphCtx.fillText(n.id, n.x, n.y + 14);
+
+                // Hover glow
+                if (graphHover === n) {
+                    graphCtx.shadowBlur = 15; graphCtx.shadowColor = n.color;
+                }
+            });
+        }
+
+        // 3D Visualizer Logic
+        window.graphIs3D = false;
+        window.graphRotation = 0;
+        let graphAnimFrame = null;
+
+        window.toggle3D = () => {
+            window.graphIs3D = !window.graphIs3D;
+            const btn = document.getElementById('toggle-3d');
+            const cvs = document.getElementById('taste-canvas');
+            if (window.graphIs3D) {
+                btn.innerHTML = "SWITCH TO 2D";
+                btn.style.background = "var(--pink)";
+                btn.style.color = "#000";
+                // Start Loop
+                window.graphRotation = 0;
+                if (graphAnimFrame) cancelAnimationFrame(graphAnimFrame);
+                animate3D();
+            } else {
+                btn.innerHTML = "SWITCH TO 3D";
+                btn.style.background = "transparent";
+                btn.style.color = "var(--pink)";
+                if (graphAnimFrame) cancelAnimationFrame(graphAnimFrame);
+                drawGraph(); // Draw 2D
+                cvs.style.cursor = 'default';
+            }
+        };
+
+        function animate3D() {
+            if (!window.graphIs3D) return;
+            window.graphRotation += 0.005;
+            drawGraph3D();
+            graphAnimFrame = requestAnimationFrame(animate3D);
+        }
+
+        window.drawGraph3D = () => {
+            if (!graphCtx) return;
+            const cvs = document.getElementById('taste-canvas');
+            const w = cvs.width, h = cvs.height;
+            const cx = w / 2, cy = h / 2;
+
+            graphCtx.clearRect(0, 0, w, h);
+
+            // 3D Config
+            const fov = 500;
+            const cameraZ = 600;
+            const cos = Math.cos(window.graphRotation);
+            const sin = Math.sin(window.graphRotation);
+
+            // Project Helper
+            const project = (x, y, z) => {
+                const x3 = x * cos - z * sin;
+                const y3 = y;
+                const z3 = x * sin + z * cos;
+                const depth = z3;
+                const dist = cameraZ - depth;
+                if (dist <= 0) return null;
+                const scale = fov / dist;
+                return { x: x3 * scale + cx, y: y3 * scale + cy, scale, depth };
+            };
+
+            // Draw Title
+            graphCtx.fillStyle = 'rgba(255,255,255,0.5)';
+            graphCtx.font = '12px Inter';
+            graphCtx.textAlign = 'left'; graphCtx.textBaseline = 'top';
+            graphCtx.fillText("3D Mode - Rotating (Z-Axis Depth)", 20, 20);
+
+            // Draw Axes
+            const axisLen = 300;
+            const axes = [
+                { s: [-axisLen, 0, 0], e: [axisLen, 0, 0], c: '#ff4444', l: 'X' },
+                { s: [0, -axisLen, 0], e: [0, axisLen, 0], c: '#44ff44', l: 'Y' },
+                { s: [0, 0, -axisLen], e: [0, 0, axisLen], c: '#4488ff', l: 'Z' }
+            ];
+
+            axes.forEach(ax => {
+                const p1 = project(...ax.s);
+                const p2 = project(...ax.e);
+                if (p1 && p2) {
+                    graphCtx.beginPath();
+                    graphCtx.strokeStyle = ax.c;
+                    graphCtx.lineWidth = 1; graphCtx.globalAlpha = 0.5;
+                    graphCtx.moveTo(p1.x, p1.y);
+                    graphCtx.lineTo(p2.x, p2.y);
+                    graphCtx.stroke();
+                    graphCtx.globalAlpha = 1;
+                    // Label
+                    graphCtx.fillStyle = ax.c;
+                    graphCtx.font = 'bold 12px Inter';
+                    graphCtx.textAlign = 'center';
+                    graphCtx.fillText(ax.l, p2.x, p2.y);
+                }
             });
 
-            requestAnimationFrame(updateGraph);
-        }
+            // Draw Nodes
+            const projected = graphNodes.map(n => {
+                const p = project(n.realX, n.realY, n.realZ);
+                return p ? { ...n, x2d: p.x, y2d: p.y, scale: p.scale, depth: p.depth } : { ...n, scale: 0 };
+            });
+
+            // Sort: draw furthest first
+            projected.sort((a, b) => a.scale - b.scale);
+
+            projected.forEach(n => {
+                if (n.scale <= 0) return;
+
+                const size = Math.max(1, 8 * n.scale);
+                graphCtx.beginPath();
+                graphCtx.fillStyle = n.color;
+                // Fade distant nodes
+                graphCtx.globalAlpha = Math.min(1, Math.max(0.1, n.scale));
+                graphCtx.arc(n.x2d, n.y2d, size, 0, Math.PI * 2);
+                graphCtx.fill();
+
+                // Text for closer nodes
+                if (n.scale > 0.8) {
+                    graphCtx.fillStyle = '#fff';
+                    graphCtx.font = `bold ${Math.max(9, 12 * n.scale)}px Inter`;
+                    graphCtx.textAlign = 'center';
+                    graphCtx.fillText(n.initials, n.x2d, n.y2d + size + 5);
+                }
+                graphCtx.globalAlpha = 1;
+            });
+        };
 
         function renderSpice(results) {
             if (!results || !results.length) return;
@@ -1303,6 +1934,124 @@
                 log.innerHTML = `<span style="color:var(--red)">CONNECTION ERROR.</span>`;
                 btn.disabled = false;
             }
+        }
+
+        async function loadUsers() {
+            const franchise = document.getElementById('view-franchise').value;
+            const subgroup = document.getElementById('view-subgroup').value;
+            const content = document.getElementById('users-content');
+            const statsContainer = document.getElementById('users-stats-container');
+
+            content.innerHTML = '<div style="text-align: center; padding: 80px 20px; font-size: 18px; color: var(--muted);">Loading rankings...</div>';
+            statsContainer.innerHTML = '';
+
+            try {
+                const [rankingsRes, spiceRes] = await Promise.all([
+                    fetch(`${API}/users/rankings?franchise=${franchise}&subgroup=${encodeURIComponent(subgroup)}`),
+                    fetch(`${API}/analysis/spice?franchise=${franchise}`)
+                ]);
+
+                if (!rankingsRes.ok) throw new Error(`API returned ${rankingsRes.status}`);
+
+                const data = await rankingsRes.json();
+                const spiceData = spiceRes.ok ? await spiceRes.json() : { results: [] };
+                const spiceMap = {};
+                (spiceData.results || []).forEach(u => spiceMap[u.username] = u.global_spice);
+
+                // Calculate aggregate stats
+                const avgSongsRanked = data.users.length > 0
+                    ? Math.round(data.users.reduce((a, u) => a + u.total_songs, 0) / data.users.length)
+                    : 0;
+
+                // Stats Bar
+                statsContainer.innerHTML = `
+                    <div class="dashboard-grid" style="margin-bottom: 25px;">
+                        <div class="stat-card">
+                            <div class="stat-label">Total Users</div>
+                            <div class="stat-value">${data.total_users}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Franchise</div>
+                            <div class="stat-value">${capitalize(data.franchise)}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Avg. Songs Ranked</div>
+                            <div class="stat-value">${avgSongsRanked}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Subgroup</div>
+                            <div class="stat-value" style="font-size:18px">${subgroup}</div>
+                        </div>
+                    </div>
+                `;
+
+                if (data.users.length === 0) {
+                    content.innerHTML = '<div style="text-align: center; padding: 60px 20px; color: var(--muted);"><p>No rankings found for this selection.</p></div>';
+                    return;
+                }
+
+                const grid = document.createElement('div');
+                grid.className = 'user-grid';
+
+                data.users.forEach(user => {
+                    const card = document.createElement('div');
+                    card.className = 'user-card';
+
+                    // Find user's #1 pick
+                    const topPick = user.rankings.length > 0 ? user.rankings[0].song_name : 'N/A';
+
+                    // User spice level
+                    const spice = spiceMap[user.username] || 'N/A';
+
+                    const rankingsList = user.rankings.map((r, i) => {
+                        let rankClass = '';
+                        let itemClass = '';
+                        if (i === 0) { rankClass = 'gold'; itemClass = 'top-3'; }
+                        else if (i === 1) { rankClass = 'silver'; itemClass = 'top-3'; }
+                        else if (i === 2) { rankClass = 'bronze'; itemClass = 'top-3'; }
+
+                        return `
+                            <div class="rank-item ${itemClass}">
+                                <div class="rank-number ${rankClass}">#${r.rank}</div>
+                                <div class="song-name">${r.song_name}</div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    card.innerHTML = `
+                        <div class="user-header">
+                            <div class="user-name">${user.username}</div>
+                            <div class="song-count">${user.total_songs} songs</div>
+                        </div>
+                        <div class="user-insights">
+                            <div class="insight-item">
+                                <div class="insight-label">Top Pick</div>
+                                <div class="insight-value green">${truncate(topPick, 20)}</div>
+                            </div>
+                            <div class="insight-item">
+                                <div class="insight-label">Spice Level</div>
+                                <div class="insight-value yellow">${spice}</div>
+                            </div>
+                        </div>
+                        <div class="rankings-list">
+                            ${rankingsList}
+                        </div>
+                    `;
+
+                    grid.appendChild(card);
+                });
+
+                content.innerHTML = '';
+                content.appendChild(grid);
+
+            } catch (error) {
+                console.error('Error loading rankings:', error);
+                content.innerHTML = `<div style="background: rgba(248, 81, 73, 0.15); border: 1px solid var(--red); color: var(--red); padding: 20px; border-radius: 10px; margin: 20px 0; text-align: center; font-weight: 600;">Failed to load rankings: ${error.message}</div>`;
+            }
+        }
+
+        function capitalize(str) {
+            return str.charAt(0).toUpperCase() + str.slice(1);
         }
 
         async function recompute() {

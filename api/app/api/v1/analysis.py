@@ -104,16 +104,39 @@ async def get_divergence_matrix(
                 computed_at=datetime.utcnow(),
                 based_on_submissions=len(subgroup_obj.submissions),
             ),
-            matrix=data,
+            matrix=data["matrix"],
+            rankings=data.get("rankings"),
+            song_names=data.get("song_names"),
         )
 
-    return DivergenceMatrixResponse(
-        metadata=AnalysisMetadata(
-            computed_at=result.computed_at,
-            based_on_submissions=result.based_on_submissions,
-        ),
-        matrix=result.result_data,
-    )
+    # Handle cached results (legacy check)
+    cached = result.result_data
+    # If it's the new format, it has "matrix" key. If old, the top level is the matrix.
+    # We can check if "matrix" is in the keys, but user names might be keys too.
+    # A safe heuristic: New format keys are "matrix", "rankings", "song_names".
+    # Old format keys are usernames (strings).
+    is_new_format = "matrix" in cached and isinstance(cached["matrix"], dict)
+    
+    if is_new_format:
+        return DivergenceMatrixResponse(
+            metadata=AnalysisMetadata(
+                computed_at=result.computed_at,
+                based_on_submissions=result.based_on_submissions,
+            ),
+            matrix=cached["matrix"],
+            rankings=cached.get("rankings"),
+            song_names=cached.get("song_names"),
+        )
+    else:
+        return DivergenceMatrixResponse(
+            metadata=AnalysisMetadata(
+                computed_at=result.computed_at,
+                based_on_submissions=result.based_on_submissions,
+            ),
+            matrix=cached,
+            rankings=None,
+            song_names=None,
+        )
 
 
 @router.get("/analysis/controversy", response_model=ControversyResponse)

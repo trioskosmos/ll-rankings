@@ -62,6 +62,8 @@ class AnalysisMetadata(BaseModel):
 class DivergenceMatrixResponse(BaseModel):
     metadata: AnalysisMetadata
     matrix: Dict[str, Dict[str, float]]
+    rankings: Optional[Dict[str, Dict[str, float]]] = None
+    song_names: Optional[Dict[str, str]] = None
 
 
 class ControversySongResult(BaseModel):

@@ -56,9 +56,22 @@ class RankingsImporter:
                 logger.error(f"Subgroup '{subgroup_name}' not found")
                 return 0
             
-            # Build song name -> ID map
+            # Build song name -> ID map with normalized keys
             songs = db.query(Song).filter_by(franchise_id=franchise.id).all()
-            song_by_name = {song.name: song.id for song in songs}
+            
+            def normalize_name(name: str) -> str:
+                """Normalize song name by replacing smart quotes and other variations"""
+                # Replace smart/curly quotes with straight quotes
+                # U+2018 (') and U+2019 (') -> straight apostrophe
+                # U+201C (") and U+201D (") -> straight double quote
+                name = name.replace('\u2018', "'").replace('\u2019', "'")
+                name = name.replace('\u201c', '"').replace('\u201d', '"')
+                return name.strip()
+            
+            song_by_name = {normalize_name(song.name): song.id for song in songs}
+            # Also keep original names for exact matching
+            for song in songs:
+                song_by_name[song.name] = song.id
             
             logger.info(f"Loading rankings from {csv_path}")
             
@@ -84,9 +97,7 @@ class RankingsImporter:
                 if len(row) < 2:
                     continue
                 
-                # Skip instruction rows
-                if row[0].startswith("👉") or "CLICK SYNC" in row[0]:
-                    continue
+
                 
                 # Process each user's ranking for this position
                 for col_idx, entry in enumerate(row[1:], start=1):
@@ -99,8 +110,8 @@ class RankingsImporter:
                     if not song_name:
                         continue
                     
-                    # Find song ID
-                    song_id = song_by_name.get(song_name)
+                    # Find song ID (try normalized name first, then exact match)
+                    song_id = song_by_name.get(normalize_name(song_name)) or song_by_name.get(song_name)
                     if not song_id:
                         logger.debug(f"Song '{song_name}' not found in database for user {username}")
                         continue
