@@ -155,14 +155,8 @@
 
         .grid {
             display: grid;
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
             gap: 25px;
-        }
-
-        @media (min-width: 1200px) {
-            .grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
         }
 
         .card {
@@ -769,10 +763,12 @@
         <div class="nav">
             <div class="nav-item active" id="btn-dash" onclick="tab('dash')">Dashboard</div>
             <div class="nav-item" id="btn-leader" onclick="tab('leader')">Rankings</div>
+            <div class="nav-item" id="btn-tiers" onclick="tab('tiers')">Tiers</div>
+            <div class="nav-item" id="btn-aff" onclick="tab('aff')">Affinity</div>
             <div class="nav-item" id="btn-more" onclick="tab('more')">Analysis</div>
             <div class="nav-item" id="btn-opps" onclick="tab('opps')">Divergence</div>
             <div class="nav-item" id="btn-constellation" onclick="tab('constellation')">Constellation</div>
-            <div class="nav-item" id="btn-oshi" onclick="tab('oshi')">Oshi Detector</div>
+            <div class="nav-item" id="btn-oshi" onclick="tab('oshi')" style="display:none">Oshi Detector</div>
             <div class="nav-item" id="btn-spice" onclick="tab('spice')">Spice</div>
             <div class="nav-item" id="btn-users" onclick="tab('users')">Users</div>
         </div>
@@ -792,7 +788,7 @@
                     <div class="stat-value" id="d-cont-song">Loading...</div>
                     <div class="stat-sub" id="d-cont-score">High Disagreement</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" id="card-spice" style="transition: transform 0.2s;">
                     <div class="stat-label">🌶️ Spiciest User</div>
                     <div class="stat-value" id="d-spice-user">Loading...</div>
                     <div class="stat-sub" id="d-spice-val">-- Spice</div>
@@ -903,6 +899,34 @@
                 <h3 onclick="showMetricExplanation('outliers')"
                     style="cursor:help; border-bottom:1px dashed var(--muted);">Outliers (Spice Meter) ℹ️</h3>
                 <div class="table-container" id="c-outliers"></div>
+            </div>
+        </div>
+
+        <!-- VIEW: TIERS -->
+        <div id="view-tiers" class="grid hidden">
+            <div class="card" style="grid-column: 1 / -1;">
+                <h3>Tier Distribution</h3>
+                <div id="c-tier-bar"
+                    style="height:40px; border-radius:8px; overflow:hidden; display:flex; margin-bottom:20px;"></div>
+                <div id="c-tier-lists" class="grid"
+                    style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:15px; margin-top:20px;">
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: AFFINITY -->
+        <div id="view-aff" class="grid hidden">
+            <div class="card" style="grid-column: 1 / -1;">
+                <h3>Subgroup Affinity (Bias)</h3>
+                <p style="font-size:12px; color:var(--muted); margin-top:-10px; margin-bottom:20px;">Identifying songs
+                    that this specific subgroup loves/hates disproportionately compared to the Global Average.</p>
+                <div id="c-affinity"></div>
+            </div>
+            <div class="card">
+                <h3>Unique Favorites</h3>
+                <p style="font-size:12px; color:var(--muted); margin-top:-10px; margin-bottom:20px;">Songs ranked
+                    significantly higher by this group than any other group.</p>
+                <div id="c-unique-favs"></div>
             </div>
         </div>
 
@@ -1082,11 +1106,14 @@
                 btn.style.background = 'var(--pink)';
                 btn.style.color = '#000';
                 btn.style.borderColor = 'var(--pink)';
+                document.getElementById('btn-oshi').style.display = 'block';
             } else {
                 btn.innerHTML = 'Basic Mode';
                 btn.style.background = 'transparent';
                 btn.style.color = 'var(--muted)';
                 btn.style.borderColor = 'var(--border)';
+                document.getElementById('btn-oshi').style.display = 'none';
+                if (activeTab === 'oshi') tab('dash');
             }
             // Re-render current tab with new limits
             if (dataCache.loaded) {
@@ -1172,29 +1199,48 @@
                 ranks = dataCache.ranks;
                 cont = dataCache.cont;
                 takes = dataCache.takes;
-                spice = dataCache.spice;
             } else {
-                // Fetch fresh data
+                // Fetch fresh data with timeout
                 try {
-                    [ranks, cont, takes, spice] = await Promise.all([
-                        fetch(`${API}/analysis/rankings?franchise=${f}&subgroup=${sub}`).then(r => r.ok ? r.json() : null),
-                        fetch(`${API}/analysis/controversy?franchise=${f}&subgroup=${sub}`).then(r => r.ok ? r.json() : null),
-                        fetch(`${API}/analysis/takes?franchise=${f}&subgroup=${sub}`).then(r => r.ok ? r.json() : null),
-                        fetch(`${API}/analysis/spice?franchise=${f}`).then(r => r.ok ? r.json() : null)
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
+                    [ranks, cont, takes] = await Promise.all([
+                        fetch(`${API}/analysis/rankings?franchise=${f}&subgroup=${sub}`, { signal: controller.signal }).then(r => r.ok ? r.json() : null),
+                        fetch(`${API}/analysis/controversy?franchise=${f}&subgroup=${sub}`, { signal: controller.signal }).then(r => r.ok ? r.json() : null),
+                        fetch(`${API}/analysis/takes?franchise=${f}&subgroup=${sub}`, { signal: controller.signal }).then(r => r.ok ? r.json() : null)
                     ]);
 
-                    // Store in cache
-                    dataCache = { key: cacheKey, ranks, cont, takes, spice, loaded: true };
+                    clearTimeout(timeoutId);
+
+                    const oldSpice = dataCache.spice; // Preserve spice if exists
+                    dataCache = { key: cacheKey, ranks, cont, takes, spice: oldSpice, loaded: true };
                 } catch (e) {
                     console.error('Fetch error:', e);
+                    if (e.name === 'AbortError') {
+                        const ids = ['c-leaderboard', 'c-universal', 'c-disputed', 'c-subunits', 'c-controversy', 'c-sleeper', 'c-consistent', 'c-outliers', 'c-matrix', 'c-spice', 'c-dash-top5', 'c-dash-bottom5'];
+                        ids.forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = "Request timed out. Please refresh."; });
+                    }
                     return;
                 }
             }
 
-            if (!ranks || !ranks.rankings) return;
 
-            // Always update Dashboard Stats (if available)
-            updateDashboard(ranks.rankings, cont?.results, takes?.takes, spice?.results);
+            // Render tabs that don't depend on specific subgroup rankings first
+            if (activeTab === 'spice' || activeTab === 'dash') fetchSpiceData();
+            if (activeTab === 'oshi') fetchUserList();
+            if (activeTab === 'users') loadUsers();
+
+            if (!ranks || !ranks.rankings) {
+                // If on a rankings-dependent tab, we might want to show a message
+                if (['leader', 'more', 'opps'].includes(activeTab)) {
+                    console.warn("Rankings not available for this subgroup.");
+                }
+                return;
+            }
+
+            // Always update Dashboard Stats (if available) - Spice updated via its own fetch if needed
+            updateDashboard(ranks.rankings, cont?.results, takes?.takes, null);
 
             // Always render full leaderboard data in background (so it's ready)
             renderLeaderboard(ranks.rankings);
@@ -1204,14 +1250,11 @@
                 renderUniversal(ranks.rankings, cont?.results || []); renderDisputed(takes?.takes || []);
                 renderSubunitPopularity(ranks.rankings, cont?.results || [], f); renderControversy(cont?.results || []);
                 renderConsistent(cont?.results || []); renderSleepers(takes?.takes || []);
-                renderHaters(takes?.takes || []); renderOutliers(spice?.results || []);
+                renderHaters(takes?.takes || []);
             }
             if (activeTab === 'opps') renderMatrix(sub, f);
-            if (activeTab === 'spice') renderSpice(spice?.results || []);
-
-            // New Tab Logic (Constellation handled at top)
-            if (activeTab === 'oshi') fetchUserList();
-            if (activeTab === 'users') loadUsers();
+            if (activeTab === 'tiers') renderTierStats(ranks.rankings);
+            if (activeTab === 'aff') renderAffinity(ranks.rankings);
 
             // Render dashboard constellation when on dashboard tab
             if (activeTab === 'dash') {
@@ -1222,12 +1265,12 @@
         // Re-render current tab with cached data (used when mode changes)
         function renderCurrentTab() {
             if (!dataCache.loaded) return;
-            const { ranks, cont, takes, spice } = dataCache;
+            const { ranks, cont, takes } = dataCache;
             const f = document.getElementById('view-franchise').value;
             const sub = document.getElementById('view-subgroup').value;
 
             if (ranks?.rankings) {
-                updateDashboard(ranks.rankings, cont?.results, takes?.takes, spice?.results);
+                updateDashboard(ranks.rankings, cont?.results, takes?.takes, null);
                 renderLeaderboard(ranks.rankings);
             }
             if (activeTab === 'more' && ranks?.rankings) {
@@ -1238,10 +1281,10 @@
                 renderConsistent(cont?.results || []);
                 renderSleepers(takes?.takes || []);
                 renderHaters(takes?.takes || []);
-                renderOutliers(spice?.results || []);
             }
             if (activeTab === 'opps') renderMatrix(sub, f);
-            if (activeTab === 'spice') renderSpice(spice?.results || []);
+            if (activeTab === 'opps') renderMatrix(sub, f);
+            if (activeTab === 'spice' || activeTab === 'dash') fetchSpiceData();
             if (activeTab === 'constellation' || activeTab === 'oshi') fetchUserList();
         }
 
@@ -1276,11 +1319,20 @@
             }
 
             // 3. Spiciest User
-            if (spice && spice.length > 0) {
-                const s = spice[0];
-                document.getElementById('d-spice-user').innerHTML = s.username;
+            // This will now rely on the dataCache.spice which is fetched by fetchSpiceData
+            if (dataCache.spice && dataCache.spice.results && dataCache.spice.results.length > 0) {
+                const s = dataCache.spice.results[0];
+                const card = document.getElementById('card-spice');
+                if (card) {
+                    card.onclick = () => showSpiceDetail(s.username);
+                    card.style.cursor = 'pointer';
+                    card.onmouseover = () => card.style.transform = 'scale(1.02)';
+                    card.onmouseout = () => card.style.transform = 'scale(1)';
+                }
+                document.getElementById('d-spice-user').innerText = s.username;
                 document.getElementById('d-spice-val').innerHTML = `${s.global_spice} spice`;
             }
+
 
             // 4. Sleeper Hit
             if (takes && takes.length > 0) {
@@ -1405,17 +1457,6 @@
                                 onmouseover="this.style.transform='translateX(-50%) scale(1.4)'; this.style.zIndex='100';"
                                 onmouseout="this.style.transform='translateX(-50%) scale(1)'; this.style.zIndex='${10 + i}';"
                                 onclick="event.stopPropagation(); showUserComparison('${user}', '${user}')"></div>`;
-                }).join('')}
-
-                        <!-- Tick marks -->
-                        ${[minRank, Math.round(minRank + range * 0.25), Math.round(minRank + range * 0.5), Math.round(minRank + range * 0.75), maxRank].filter((v, i, a) => a.indexOf(v) === i).map(tick => {
-                    const pct = (tick - minRank) / range;
-                    return `
-                            <div style="position:absolute; top:67px; left:calc(25px + ${pct} * (100% - 50px)); transform:translateX(-50%); text-align:center;">
-                                <div style="width:1px; height:10px; background:var(--muted); opacity:0.5;"></div>
-                                <div style="font-size:11px; font-weight:700; color:var(--muted); margin-top:4px;">${tick}</div>
-                            </div>
-                        `;
                 }).join('')}
                     </div>
                     <div style="display:flex; justify-content:space-between; margin-top:-10px; padding:0 25px;">
@@ -1567,15 +1608,38 @@
             content.innerHTML = `
                 <div style="text-align:center; padding:10px 0 20px 0; border-bottom:1px solid var(--border); margin-bottom:15px;">
                     <div style="font-size:32px; font-weight:900; color:var(--pink)">${rms}% <span style="font-size:12px; font-weight:600; color:var(--muted); vertical-align:middle;">DIVERGENCE</span></div>
+                    
+                    ${(() => {
+                    let wins = 0, losses = 0, ties = 0;
+                    diffs.forEach(d => {
+                        if (d.r1 < d.r2) wins++;
+                        else if (d.r1 > d.r2) losses++;
+                        else ties++;
+                    });
+                    const total = wins + losses + ties;
+
+                    return `
+                        <div style="margin-top:15px; background:rgba(0,0,0,0.2); padding:10px; border-radius:8px;">
+                            <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:700; text-transform:uppercase; color:var(--muted); margin-bottom:5px;">
+                                <span>${u1} Higher (${wins})</span>
+                                <span>${u2} Higher (${losses})</span>
+                            </div>
+                            <div style="height:8px; display:flex; border-radius:4px; overflow:hidden;">
+                                <div style="width:${(wins / total) * 100}%; background:var(--green);"></div>
+                                <div style="width:${(ties / total) * 100}%; background:var(--muted);"></div>
+                                <div style="width:${(losses / total) * 100}%; background:var(--pink);"></div>
+                            </div>
+                        </div>
+                        `;
+                })()}
                 </div>
 
                 <div class="comp-tabs">
-                    <div class="comp-tab ${activeTab === 'u1' ? 'active' : ''}" onclick="switchCompTab('u1')">${u1}'s Order</div>
-                    <div class="comp-tab ${activeTab === 'dis' ? 'active' : ''}" onclick="switchCompTab('dis')">Disagreements</div>
-                    <div class="comp-tab ${activeTab === 'agr' ? 'active' : ''}" onclick="switchCompTab('agr')">Agreements</div>
-                    <div class="comp-tab ${activeTab === 'math' ? 'active' : ''}" onclick="switchCompTab('math')">Math Breakdown</div>
-                </div>
-
+            <div class="comp-tab ${activeTab === 'u1' ? 'active' : ''}" onclick="switchCompTab('u1')">${u1}'s Order</div>
+            <div class="comp-tab ${activeTab === 'dis' ? 'active' : ''}" onclick="switchCompTab('dis')">Disagreements</div>
+            <div class="comp-tab ${activeTab === 'agr' ? 'active' : ''}" onclick="switchCompTab('agr')">Agreements</div>
+            <div class="comp-tab ${activeTab === 'math' ? 'active' : ''}" onclick="switchCompTab('math')">🧮 How It's Calculated</div>
+        </div>
                 <div style="margin-top:10px;">
                     ${tableHtml}
                 </div>
@@ -1589,8 +1653,9 @@
                 const c = controversy.find(x => x.song_name === songName);
                 return c ? Math.max(0, 100 - ((c.cv * c.avg_rank) * 2.5)).toFixed(1) : "0.0";
             };
-            const rows = [...top, ...btm].map((s, i) => `<tr onclick="showSongDistribution('${s.song_name.replace(/'/g, "\\'")}')" style="cursor:pointer;" class="clickable-row"><td class="col-rank" style="color:${i < limit ? 'var(--green)' : 'var(--red)'}">${i < limit ? 'TOP' : 'BTM'}</td><td>${s.song_name}</td><td class="col-metric" style="color:var(--pink)">${s.average}</td><td class="col-metric">${mapAgreement(s.song_name)}%</td></tr>`).join('');
-            document.getElementById('c-universal').innerHTML = `<table><colgroup><col class="col-rank"><col><col class="col-metric"><col class="col-metric"></colgroup><tr><th>Type</th><th>Song</th><th>Avg</th><th>Agr</th></tr>${rows}</table>`;
+            const rows = [...top, ...btm].map((s, i) => `< tr onclick = "showSongDistribution('${s.song_name.replace(/'/g, "\\'")}') " style="cursor: pointer; " class="clickable - row"><td class="col - rank" style="color:${i < limit ? 'var(--green)' : 'var(--red)'} ">${i < limit ? 'TOP' : 'BTM'}</td><td>${s.song_name}</td><td class="col - metric" style="color: var(--pink)">${s.average}</td><td class="col - metric">${mapAgreement(s.song_name)}%</td></tr>`).join('');
+            document.getElementById('c-universal').innerHTML = `<table><colgroup><col class="col-rank"><col><col class="col-metric"><col class="col-metric"></colgroup><thead><tr><th>Type</th><th>Song</th><th>Avg</th><th>Agr</th></tr></thead>${rows}</table>` +
+                (!window.advancedMode && ranks.length > limit * 2 ? `<div style="padding:10px; text-align:center; font-size:11px; color:var(--muted); background:rgba(0,0,0,0.2); border-top:1px solid rgba(255,255,255,0.05);">Showing top/bottom ${limit} of ${ranks.length} songs. Enable Advanced Mode for full list.</div>` : '');
         }
 
         function renderDisputed(takes) {
@@ -1600,8 +1665,15 @@
             const res = Object.keys(songGroups).map(name => {
                 const g = songGroups[name].sort((a, b) => a.user_rank - b.user_rank);
                 return { name, fight: `${g[0].username} vs ${g[g.length - 1].username}`, diff: Math.abs(g[g.length - 1].user_rank - g[0].user_rank) };
-            }).sort((a, b) => b.diff - a.diff).slice(0, limit);
-            document.getElementById('c-disputed').innerHTML = `<table><colgroup><col><col class="col-fight"><col class="col-metric"></colgroup><tr><th>Song</th><th>Fight</th><th class="col-metric">Diff</th></tr>` + res.map(r => `<tr onclick="showSongDistribution('${r.name.replace(/'/g, "\\'")}')" style="cursor:pointer;" class="clickable-row"><td>${r.name}</td><td class="col-fight">${r.fight}</td><td class="col-metric" style="color:var(--pink)">${r.diff}</td></tr>`).join('') + `</table>`;
+            }).sort((a, b) => b.diff - a.diff);
+
+            const displayRes = res.slice(0, limit);
+
+            document.getElementById('c-disputed').innerHTML = `<table><colgroup><col><col class="col-fight"><col class="col-metric"></colgroup>` +
+                `<thead><tr><th style="text-align:left; padding-left:10px;">Song</th><th style="padding-left:10px;">Fight</th><th class="col-metric">Diff</th></tr></thead>` +
+                displayRes.map(r => `<tr onclick="showSongDistribution('${r.name.replace(/'/g, "\\'")}')" style="cursor:pointer" class="clickable-row"><td style="padding:4px 10px;">${r.name}</td><td class="col-fight" style="padding-left:10px;">${r.fight}</td><td class="col-metric" style="color:var(--pink); font-weight:bold;">${r.diff}</td></tr>`).join('') +
+                `</table>` +
+                (!window.advancedMode && res.length > limit ? `<div style="padding:10px; text-align:center; font-size:11px; color:var(--muted); background:rgba(0,0,0,0.2); border-top:1px solid rgba(255,255,255,0.05);">Showing top ${limit} of ${res.length} disputes. Enable Advanced Mode for full list.</div>` : '');
         }
 
         function showMetricExplanation(type) {
@@ -1709,31 +1781,425 @@
         }
         function renderHaters(takes) {
             const limit = getLimit(10, 50);
-            const haters = takes.filter(t => t.score > 15).slice(0, limit);
-            document.getElementById('c-haters').innerHTML = `<table><colgroup><col><col class="col-metric"><col class="col-metric"></colgroup><tr><th>Song</th><th class="col-metric">Hater</th><th class="col-metric">Gap</th></tr>` + haters.map(t => `<tr onclick="showSongDistribution('${t.song_name.replace(/'/g, "\\'")}')" style="cursor:pointer;" class="clickable-row"><td>${t.song_name}</td><td class="col-metric">${t.username.substring(0, 8)}</td><td class="col-metric" style="color:var(--red)">${Math.abs(t.delta).toFixed(1)}</td></tr>`).join('') + `</table>`;
+            const allHaters = takes.filter(t => t.score > 15);
+            const displayHaters = allHaters.slice(0, limit);
+
+            document.getElementById('c-haters').innerHTML = `<table><colgroup><col><col class="col-metric"><col class="col-metric"></colgroup>` +
+                `<thead><tr><th style="padding-left:10px; text-align:left;">Song</th><th class="col-metric">Hater</th><th class="col-metric">Gap</th></tr></thead>` +
+                displayHaters.map(t => `<tr onclick="showSongDistribution('${t.song_name.replace(/'/g, "\\'")}')" style="cursor:pointer;" class="clickable-row"><td style="padding:4px 10px;">${t.song_name}</td><td class="col-metric">${t.username.substring(0, 8)}</td><td class="col-metric" style="color:var(--red); font-weight:bold;">${Math.abs(t.delta).toFixed(1)}</td></tr>`).join('') +
+                `</table>` +
+                (!window.advancedMode && allHaters.length > limit ? `<div style="padding:10px; text-align:center; font-size:11px; color:var(--muted); background:rgba(0,0,0,0.2); border-top:1px solid rgba(255,255,255,0.05);">Showing top ${limit} of ${allHaters.length} haters. Enable Advanced Mode for full list.</div>` : '');
         }
-        function renderOutliers(results) {
-            if (!results || !results.length) return;
-            const limit = getLimit(10, results.length);
-            const s = results.map(u => u.global_spice), min = Math.min(...s), max = Math.max(...s), r = (max - min) || 1;
-            document.getElementById('c-outliers').innerHTML = `<table><colgroup><col><col class="col-metric"></colgroup><tr><th>User</th><th class="col-metric">Spice</th></tr>` + results.slice(0, limit).map(u => `<tr><td style="font-weight:bold">${u.username}</td><td class="metric"><div class="bar-bg" style="width:180px"><div class="bar-fill" style="width:${((u.global_spice - min) / r) * 100}%"></div><div style="font-size:10px; margin-top:-14px; margin-left:5px;">${u.global_spice}</div></div></td></tr>`).join('') + `</table>`;
+
+        async function fetchSpiceData(force = false) {
+            const f = document.getElementById('view-franchise').value;
+            const sub = document.getElementById('view-subgroup').value;
+            const cacheKey = `spice_${f}`;
+
+            // If we have cached data for this franchise, use it unless forced
+            if (!force && dataCache.spice && dataCache.spiceKey === cacheKey) {
+                renderSpice(dataCache.spice.results);
+                return;
+            }
+
+            const el = document.getElementById('c-spice');
+            if (el) el.innerHTML = '<div style="padding:60px; text-align:center;"><div class="spinner"></div><div style="margin-top:20px; color:var(--muted); letter-spacing:1px; font-size:12px; text-transform:uppercase;">Mixing the spice...</div></div>';
+
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+                const res = await fetch(`${API}/analysis/spice?franchise=${f}`, { signal: controller.signal });
+                clearTimeout(timeoutId);
+
+                if (!res.ok) throw new Error("API Error");
+
+                const data = await res.json();
+
+                // Update global cache
+                dataCache.spice = data;
+                dataCache.spiceKey = cacheKey;
+
+                if (activeTab === 'spice') renderSpice(data.results);
+
+                // Also update dashboard card if we are on dashboard
+                if (activeTab === 'dash' && data.results.length > 0) {
+                    const s = data.results[0];
+                    const card = document.getElementById('card-spice');
+                    if (card) {
+                        // Ensure click handler is attached
+                        card.onclick = () => window.showSpiceDetail(s.username);
+                        card.title = "View Spice Details";
+                    }
+                    const valEl = document.getElementById('d-spice-val');
+                    if (valEl) valEl.innerHTML = `${s.global_spice.toFixed(2)} spice`;
+                    const subEl = document.getElementById('d-spice-user');
+                    if (subEl) subEl.innerHTML = `<span style="font-weight:bold">${s.username}</span>`;
+                }
+
+            } catch (e) {
+                console.error("Spice fetch error:", e);
+                if (el) el.innerHTML = `<div style="padding:40px; text-align:center; color:var(--red);">
+                    <div style="font-size:24px; margin-bottom:10px;">⚠️</div>
+                    <div>Failed to load spice data.</div>
+                    <button onclick="fetchSpiceData(true)" style="margin-top:15px; background:var(--card-bg); border:1px solid var(--border); color:var(--text); padding:8px 16px; border-radius:4px; cursor:pointer;">Retry Request</button>
+                </div>`;
+            }
         }
 
         function renderSpice(results) {
             const el = document.getElementById('c-spice');
-            if (!el || !results || !results.length) {
-                if (el) el.innerHTML = 'No spice data available.';
+            if (!el) return;
+
+            if (!results || !results.length) {
+                el.innerHTML = '<div style="padding:40px; color:var(--muted); text-align:center;">No spice data available for this franchise.</div>';
                 return;
             }
-            const limit = getLimit(15, results.length);
-            const data = results.slice(0, limit);
-            const s = data.map(u => u.global_spice), min = Math.min(...s), max = Math.max(...s), r = (max - min) || 1;
 
-            el.innerHTML = `<table><colgroup><col><col class="col-metric"><col class="col-metric"></colgroup><tr><th>User</th><th class="col-metric">Global Spice</th><th>Distribution</th></tr>` +
-                data.map(u => `<tr>
+            const sub = document.getElementById('view-subgroup').value;
+            const isAll = sub === 'All Songs';
+            const showAdvanced = window.advancedMode;
+
+            // Header with Refresh Button
+            const headerHtml = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <div>
+                        <h3 style="margin:0; font-size:18px; color:var(--pink);">🔥 Spiciest Users <span style="font-size:14px; opacity:0.6; margin-left:10px;">${sub}</span></h3>
+                        <div style="font-size:11px; color:var(--muted); margin-top:4px;">Users with the most controversial ${isAll ? 'overall' : 'group'} takes</div>
+                    </div>
+                    <button onclick="fetchSpiceData(true)" style="background:transparent; border:1px solid var(--border); color:var(--muted); padding:6px 12px; border-radius:4px; cursor:pointer; font-size:12px; transition:all 0.2s;" onmouseover="this.style.color='var(--text)'; this.style.borderColor='var(--text)'" onmouseout="this.style.color='var(--muted)'; this.style.borderColor='var(--border)'">
+                        ↻ Refresh
+                    </button>
+                </div>
+            `;
+
+            // Process results based on subgroup
+            let filtered = results.map(u => ({
+                username: u.username,
+                score: isAll ? u.global_spice : (u.group_breakdown ? u.group_breakdown[sub] : null),
+                global: u.global_spice, // Keep global for context
+                raw: u // Keep raw for advanced
+            })).filter(u => u.score !== null && u.score !== undefined);
+
+            if (filtered.length === 0) {
+                el.innerHTML = headerHtml + `<div style="padding:40px; color:var(--muted); text-align:center; background:var(--card-bg); border-radius:8px; border:1px solid var(--border);">No spice data found for subgroup "${sub}".</div>`;
+                return;
+            }
+
+            // Sort by the absolute backend score (already normalized to 0-100)
+            filtered.sort((a, b) => b.score - a.score);
+
+            // PODIUM (Top 3)
+            const top3 = filtered.slice(0, 3);
+            const rest = filtered.slice(3, 23); // Top 20 after top 3
+
+            let podiumHtml = '<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:15px; margin-bottom:25px;">';
+            const medals = ['🥇', '🥈', '🥉'];
+
+            top3.forEach((u, idx) => {
+                podiumHtml += `
+                    <div onclick="window.showSpiceDetail('${u.username.replace(/'/g, "\\'")}')" style="background:linear-gradient(135deg, var(--card-bg) 0%, rgba(255,105,180,0.05) 100%); border:1px solid ${idx === 0 ? 'var(--gold)' : 'var(--border)'}; border-radius:12px; padding:20px; text-align:center; cursor:pointer; transition:transform 0.2s;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'">
+                        <div style="font-size:24px; margin-bottom:10px;">${medals[idx]}</div>
+                        <div style="font-weight:bold; font-size:16px; margin-bottom:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${u.username}</div>
+                        <div style="font-size:24px; font-weight:900; color:var(--pink);">${u.score.toFixed(1)}</div>
+                        <div style="font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Spice Score</div>
+                        <div style="font-size:10px; color:var(--muted);">(out of 100)</div>
+                    </div>
+                `;
+            });
+            podiumHtml += '</div>';
+
+            // LIST (The rest) - Use absolute scores for bars (capped at 100 for visual)
+            let tableHtml = `<div style="background:var(--card-bg); border:1px solid var(--border); border-radius:8px; overflow:hidden;">
+                <table style="width:100%; border-collapse:collapse;">
+                <thead style="background:rgba(255,255,255,0.02); border-bottom:1px solid var(--border);">
+                    <tr>
+                        <th style="padding:12px 15px; text-align:left; font-size:11px; color:var(--muted); text-transform:uppercase;">Rank</th>
+                        <th style="padding:12px 15px; text-align:left; font-size:11px; color:var(--muted); text-transform:uppercase;">User</th>
+                        <th style="padding:12px 15px; text-align:center; font-size:11px; color:var(--muted); text-transform:uppercase;">Spice</th>
+                        ${showAdvanced && !isAll ? `<th style="padding:12px 15px; text-align:center; font-size:11px; color:var(--muted); text-transform:uppercase;">Global</th>` : ''}
+                        <th style="padding:12px 15px; width:40%;"></th>
+                    </tr>
+                </thead><tbody>`;
+
+            tableHtml += rest.map((u, idx) => `
+                <tr onclick="window.showSpiceDetail('${u.username.replace(/'/g, "\\'")}')" style="cursor:pointer; border-bottom:1px solid rgba(255,255,255,0.03);" class="clickable-row">
+                    <td style="padding:10px 15px; color:var(--muted); font-family:monospace;">#${idx + 4}</td>
+                    <td style="padding:10px 15px; font-weight:600;">${u.username}</td>
+                    <td style="padding:10px 15px; text-align:center; color:var(--pink); font-weight:bold;">${u.score.toFixed(1)}</td>
+                    ${showAdvanced && !isAll ? `<td style="padding:10px 15px; text-align:center; color:var(--muted); font-size:12px;">${u.global.toFixed(1)}</td>` : ''}
+                    <td style="padding:10px 15px;"><div class="bar-bg" style="width:100%; height:6px;"><div class="bar-fill" style="width:${Math.min(u.score, 100)}%"></div></div></td>
+                </tr>
+            `).join('');
+
+            tableHtml += '</tbody></table></div>';
+
+            // Calculate theoretical maximum spice
+            // With proper normalization, max spice = 100 (perfectly inverted rankings)
+            const songCount = sub === 'All Songs' ? 147 : (allSubgroups.find(s => s.name === sub)?.songs?.length || 20);
+
+            const maxSpiceHtml = `
+                <div style="margin-top:30px; padding:20px; background:linear-gradient(135deg, rgba(255,105,180,0.05) 0%, rgba(147,112,219,0.05) 100%); border:1px solid rgba(255,105,180,0.2); border-radius:12px;">
+                    <h4 style="margin:0 0 15px; font-size:16px; color:var(--pink); display:flex; align-items:center; gap:10px;">
+                        🧮 Theoretical Maximum Spice
+                    </h4>
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:15px;">
+                        <div style="background:rgba(0,0,0,0.2); padding:15px; border-radius:8px; text-align:center;">
+                            <div style="font-size:28px; font-weight:900; color:var(--pink);">100</div>
+                            <div style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-top:5px;">Max Possible Score</div>
+                        </div>
+                        <div style="background:rgba(0,0,0,0.2); padding:15px; border-radius:8px; text-align:center;">
+                            <div style="font-size:28px; font-weight:900; color:var(--text);">${songCount}</div>
+                            <div style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-top:5px;">Songs in ${sub}</div>
+                        </div>
+                        <div style="background:rgba(0,0,0,0.2); padding:15px; border-radius:8px; text-align:center;">
+                            <div style="font-size:28px; font-weight:900; color:var(--gold);">${filtered.length > 0 ? filtered[0].score.toFixed(0) : 0}%</div>
+                            <div style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-top:5px;">Top User Score</div>
+                        </div>
+                    </div>
+                    <div style="margin-top:15px; font-size:11px; color:var(--muted); line-height:1.6;">
+                        <strong>Formula:</strong> Spice = (RMS / max_RMS) × 100. Perfectly inverted rankings = 100.
+                    </div>
+                </div>
+            `;
+
+            el.innerHTML = headerHtml + podiumHtml + tableHtml + maxSpiceHtml;
+        }
+
+        // Explicitly attach to window to ensure global accessibility
+        window.showSpiceDetail = async function (username) {
+            console.log("Showing spice detail for:", username);
+            const modal = document.getElementById('song-modal');
+            const content = document.getElementById('song-modal-content');
+            if (!modal || !content) return;
+
+            content.innerHTML = '<div style="padding:40px; text-align:center;"><div class="spinner"></div><div style="margin-top:20px; color:var(--muted);">Analyzing spice levels...</div></div>';
+            modal.classList.remove('hidden');
+            modal.style.display = 'flex';
+
+            try {
+                // Fetch fresh spice data for this user
+                const f = document.getElementById('view-franchise').value;
+                const sub = document.getElementById('view-subgroup').value;
+
+                // Get pre-loaded spice data from cache first to show something immediate
+                const cachedUser = dataCache.spice?.results?.find(u => u.username === username);
+                let scoreDisplay = 'N/A';
+
+                if (cachedUser) {
+                    if (sub === 'All Songs') {
+                        scoreDisplay = cachedUser.global_spice.toFixed(2);
+                    } else if (cachedUser.group_breakdown && cachedUser.group_breakdown[sub]) {
+                        scoreDisplay = cachedUser.group_breakdown[sub].toFixed(2);
+                    }
+                }
+
+                const res = await fetch(`${API}/analysis/spice?franchise=${f}&_t=${Date.now()}`);
+                const data = await res.json();
+                // Update cache with fresh data
+                dataCache.spice = data;
+                const userResult = data.results.find(u => u.username === username);
+
+                if (!userResult) {
+                    content.innerHTML = '<div style="padding:20px; text-align:center;">User data not found.</div>';
+                    return;
+                }
+
+                // Filter extreme picks by the CURRENTLY SELECTED SUBGROUP if not "All Songs"
+                let allPicks = userResult.extreme_picks || [];
+
+                // Check if we should show global or local picks
+                const showGlobal = window.spiceDetailShowGlobal || false;
+                let picks = allPicks;
+
+                console.log(`Total picks: ${allPicks.length}, Current subgroup: "${sub}", Show global: ${showGlobal}`);
+
+                if (!showGlobal && sub !== 'All Songs') {
+                    picks = allPicks.filter(p => p.group === sub);
+                    console.log(`Filtered to ${picks.length} picks for "${sub}"`);
+                }
+
+                // Sort picks by deviation (descending)
+                picks.sort((a, b) => b.deviation - a.deviation);
+
+                // Limit to top 5 unless in advanced mode
+                if (!window.advancedMode) {
+                    picks = picks.slice(0, 5);
+                }
+
+                const showGroupColumn = showGlobal || sub === 'All Songs';
+
+                // Calculate song count for this group
+                const groupSongCount = sub === 'All Songs' ? 147 : (allSubgroups.find(s => s.name === sub)?.songs?.length || allPicks.filter(p => p.group === sub).length || 20);
+
+                // Tab state
+                const activeTab = window.spiceModalTab || 'picks';
+
+                content.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px;">
+                        <div>
+                            <h2 style="margin:0; font-size:24px; color:var(--text);">${username}</h2>
+                            <div style="color:var(--muted); font-size:14px; margin-top:5px;">Spice Analysis (${sub})</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:32px; font-weight:900; color:var(--pink); line-height:1;">${scoreDisplay}</div>
+                            <div style="font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:1px;">Spice Score</div>
+                            ${window.advancedMode && sub !== 'All Songs' && cachedUser ?
+                        `<div style="font-size:12px; color:var(--muted); margin-top:5px;">Global: <span style="color:var(--text);">${cachedUser.global_spice.toFixed(2)}</span></div>`
+                        : ''}
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom:15px; display:flex; gap:5px; border-bottom:1px solid var(--border); padding-bottom:10px;">
+                        <button onclick="window.spiceModalTab='picks'; window.showSpiceDetail('${username.replace(/'/g, "\\'")}')" 
+                            style="padding:8px 16px; font-size:12px; font-weight:600; border:none; border-radius:4px 4px 0 0; cursor:pointer; background:${activeTab === 'picks' ? 'var(--pink)' : 'transparent'}; color:${activeTab === 'picks' ? '#000' : 'var(--muted)'};">
+                            🔥 Extreme Picks
+                        </button>
+                        <button onclick="window.spiceModalTab='math'; window.showSpiceDetail('${username.replace(/'/g, "\\'")}')" 
+                            style="padding:8px 16px; font-size:12px; font-weight:600; border:none; border-radius:4px 4px 0 0; cursor:pointer; background:${activeTab === 'math' ? 'var(--pink)' : 'transparent'}; color:${activeTab === 'math' ? '#000' : 'var(--muted)'};">
+                            📐 How It's Calculated
+                        </button>
+                    </div>
+
+                    ${activeTab === 'math' ? `
+                    <div style="padding:20px; background:var(--card-bg); border:1px solid var(--border); border-radius:12px;">
+                        <h3 style="margin:0 0 15px; color:var(--pink);">Spice Score Formula</h3>
+                        
+                        <div style="background:rgba(0,0,0,0.3); padding:20px; border-radius:8px; font-family:monospace; margin-bottom:20px;">
+                            <div style="font-size:18px; color:var(--text); text-align:center;">
+                                Spice = (RMS ÷ Max_RMS) × 100
+                            </div>
+                        </div>
+
+                        <div style="font-size:13px; color:var(--muted); line-height:1.8;">
+                            <p><strong style="color:var(--text);">Where:</strong></p>
+                            <ul style="padding-left:20px; margin:10px 0;">
+                                <li><strong>RMS</strong> = Root Mean Square of your deviations</li>
+                                <li><strong>Max_RMS</strong> = Theoretical max RMS (${groupSongCount}/√3 ≈ ${(groupSongCount / Math.sqrt(3)).toFixed(1)})</li>
+                                <li><strong>Deviation</strong> = |Your Rank − Average Rank|</li>
+                            </ul>
+
+                            <p style="margin-top:15px;"><strong style="color:var(--text);">Step by Step for ${username}:</strong></p>
+                            <ol style="padding-left:20px; margin:10px 0;">
+                                <li>For each song, calculate: (Your Rank − Avg Rank)²</li>
+                                <li>Sum all squared deviations</li>
+                                <li>Divide by number of songs (${groupSongCount}) and take square root → <strong>RMS</strong></li>
+                                <li>Calculate <strong>Max_RMS</strong> = ${groupSongCount} ÷ √3 ≈ ${(groupSongCount / Math.sqrt(3)).toFixed(1)}</li>
+                                <li>Normalize: (RMS ÷ Max_RMS) × 100 = <strong style="color:var(--pink);">${scoreDisplay}</strong></li>
+                            </ol>
+
+                            <div style="margin-top:20px; padding:15px; background:rgba(255,105,180,0.1); border-radius:8px;">
+                                <strong style="color:var(--pink);">Maximum Possible:</strong><br>
+                                If you ranked every song exactly opposite to the community average, your Spice Score would be exactly <strong>100</strong>.
+                            </div>
+                        </div>
+                    </div>
+                    ` : `
+
+                    ${sub !== 'All Songs' && window.advancedMode ? `
+                        <div style="margin-bottom:15px; display:flex; align-items:center; gap:10px;">
+                            <span style="font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:1px;">Showing:</span>
+                            <button 
+                                onclick="window.spiceDetailShowGlobal = false; window.showSpiceDetail('${username.replace(/'/g, "\\'")}')" 
+                                style="padding:6px 12px; font-size:11px; font-weight:600; border-radius:4px; cursor:pointer; transition:all 0.2s; border:1px solid var(--border); background:${!showGlobal ? 'var(--pink)' : 'transparent'}; color:${!showGlobal ? '#000' : 'var(--text)'};"
+                            >
+                                ${sub} Only
+                            </button>
+                            <button 
+                                onclick="window.spiceDetailShowGlobal = true; window.showSpiceDetail('${username.replace(/'/g, "\\'")}')" 
+                                style="padding:6px 12px; font-size:11px; font-weight:600; border-radius:4px; cursor:pointer; transition:all 0.2s; border:1px solid var(--border); background:${showGlobal ? 'var(--pink)' : 'transparent'}; color:${showGlobal ? '#000' : 'var(--text)'};"
+                            >
+                                All Groups
+                            </button>
+                        </div>
+                    ` : (sub !== 'All Songs' ? `
+                        <div style="margin-bottom:15px; font-size:12px; color:var(--muted);">
+                            Showing extreme picks for <span style="color:var(--pink); font-weight:600;">${sub}</span> only
+                        </div>
+                    ` : '')}
+
+                    <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:12px; overflow:hidden;">
+                        <table style="width:100%; border-collapse:collapse;">
+                            <thead style="background:rgba(255,255,255,0.03); border-bottom:1px solid var(--border);">
+                                <tr>
+                                    <th style="padding:12px 15px; text-align:left; font-size:12px; color:var(--muted); text-transform:uppercase;">Song</th>
+                                    ${showGroupColumn ? `<th style="padding:12px 15px; text-align:center; font-size:12px; color:var(--muted); text-transform:uppercase;">Group</th>` : ''}
+                                    <th style="padding:12px 15px; text-align:center; font-size:12px; color:var(--muted); text-transform:uppercase;">Rank</th>
+                                    <th style="padding:12px 15px; text-align:center; font-size:12px; color:var(--muted); text-transform:uppercase;">Avg</th>
+                                    <th style="padding:12px 15px; text-align:right; font-size:12px; color:var(--muted); text-transform:uppercase;">Dev</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${picks.map(p => `
+                                    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                                        <td style="padding:10px 15px; font-weight:500;">${p.song}</td>
+                                        ${showGroupColumn ? `<td style="padding:10px 15px; text-align:center; color:var(--muted); font-size:12px;">${p.group}</td>` : ''}
+                                        <td style="padding:10px 15px; text-align:center; font-family:monospace; font-weight:bold; color:${p.user_rank < 10 ? 'var(--gold)' : 'var(--text)'}">${p.user_rank}</td>
+                                        <td style="padding:10px 15px; text-align:center; font-family:monospace; color:var(--muted);">${p.avg_rank}</td>
+                                        <td style="padding:10px 15px; text-align:right; font-family:monospace; font-weight:bold; color:var(--pink);">+${p.deviation}</td>
+                                    </tr>
+                                `).join('')}
+                                ${picks.length === 0 ? `<tr><td colspan="${showGroupColumn ? 5 : 4}" style="padding:30px; text-align:center; color:var(--muted);">No extreme deviations found${!showGlobal && sub !== 'All Songs' ? ` for ${sub}` : ''}.</td></tr>` : ''}
+                            </tbody>
+                        </table>
+                        ${!window.advancedMode && picks.length > 5 ? `<div style="padding:10px; text-align:center; font-size:12px; color:var(--muted); background:rgba(0,0,0,0.2);">Showing top 5 of ${allPicks.filter(p => showGlobal || sub === 'All Songs' || p.group === sub).length} deviations. Enable Advanced Mode for full list.</div>` : ''}
+                    </div>
+
+                    ${window.advancedMode ? `
+                    <div style="margin-top:20px; padding:15px; background:rgba(255,105,180,0.05); border:1px solid rgba(255,105,180,0.2); border-radius:8px;">
+                        <h4 style="margin:0 0 10px; font-size:14px; color:var(--pink);">📊 Theoretical Maximum Spice</h4>
+                        <div style="font-size:12px; color:var(--muted); line-height:1.6;">
+                            <p style="margin:0 0 8px;">For a group with <strong style="color:var(--text);">${sub === 'All Songs' ? allPicks.length + ' songs' : sub}</strong>:</p>
+                            <ul style="margin:5px 0; padding-left:20px;">
+                                <li>Max single deviation: <strong style="color:var(--pink);">~${Math.round((sub === 'All Songs' ? 147 : (allPicks.filter(p => p.group === sub).length || 20)) * 0.9)}</strong> (ranking #1 what everyone else has last)</li>
+                                <li>Max Spice Score: <strong style="color:var(--pink);">~100</strong> (perfectly inverted rankings)</li>
+                                <li>Your current: <strong style="color:var(--text);">${scoreDisplay}</strong> (${(parseFloat(scoreDisplay) || 0) < 30 ? 'relatively mild' : (parseFloat(scoreDisplay) || 0) < 50 ? 'moderately spicy' : 'extremely spicy'})</li>
+                            </ul>
+                        </div>
+                    </div>
+                    ` : ''}
+                `}
+                `;
+
+
+            } catch (e) {
+                console.error("Modal Render Error:", e);
+                content.innerHTML = '<div style="padding:20px; color:var(--red); text-align:center;">Failed to load spice details.</div>';
+            }
+        }
+
+        function renderOutliers(results) {
+            const el = document.getElementById('c-outliers');
+            if (!el) return;
+
+            if (!results || !results.length) {
+                el.innerHTML = '<div style="padding:10px; font-size:12px; color:var(--muted);">No spice data available.</div>';
+                return;
+            }
+
+            const sub = document.getElementById('view-subgroup').value;
+            const isAll = sub === 'All Songs';
+
+            let filtered = results.map(u => ({
+                username: u.username,
+                score: isAll ? u.global_spice : (u.group_breakdown ? u.group_breakdown[sub] : null)
+            })).filter(u => u.score !== null && u.score !== undefined);
+
+            if (filtered.length === 0) {
+                el.innerHTML = '<div style="padding:10px; font-size:12px; color:var(--muted);">No spice data for this group.</div>';
+                return;
+            }
+
+            filtered.sort((a, b) => b.score - a.score);
+
+            const limit = getLimit(10, filtered.length);
+            const data = filtered.slice(0, limit);
+            const scores = data.map(u => u.score), min = Math.min(...scores), max = Math.max(...scores), r = (max - min) || 1;
+
+            el.innerHTML = `<table><colgroup><col><col class="col-metric"></colgroup><tr><th>User</th><th class="col-metric">Spice</th></tr>` +
+                data.map(u => `<tr onclick="window.showSpiceDetail('${u.username.replace(/'/g, "\\'")}')" style="cursor:pointer" class="clickable-row">
                     <td style="font-weight:bold">${u.username}</td>
-                    <td class="col-metric" style="color:var(--pink)">${u.global_spice}</td>
-                    <td><div class="bar-bg" style="width:200px"><div class="bar-fill" style="width:${((u.global_spice - min) / r) * 100}%"></div></div></td>
+                    <td class="metric"><div class="bar-bg" style="width:180px"><div class="bar-fill" style="width:${((u.score - min) / r) * 100}%"></div><div style="font-size:10px; margin-top:-14px; margin-left:5px;">${u.score.toFixed(2)}</div></div></td>
                 </tr>`).join('') + `</table>`;
         }
 
@@ -1764,6 +2230,131 @@
                     });
                 });
             } catch (e) { console.error(e); wrap.innerHTML = "Error."; }
+        }
+
+        function renderTierStats(rankings) {
+            // Tiers: S (1-20), A (21-40), B (41-60), C (61-80), F (81+)
+            const tiers = { S: [], A: [], B: [], C: [], F: [] };
+            rankings.sort((a, b) => a.average - b.average);
+
+            rankings.forEach(r => {
+                if (r.average <= 20) tiers.S.push(r);
+                else if (r.average <= 40) tiers.A.push(r);
+                else if (r.average <= 60) tiers.B.push(r);
+                else if (r.average <= 80) tiers.C.push(r);
+                else tiers.F.push(r);
+            });
+
+            // Render Bar
+            const total = rankings.length;
+            const bar = document.getElementById('c-tier-bar');
+            bar.innerHTML = '';
+
+            if (total === 0) { bar.innerHTML = '<div style="padding:10px; color:var(--muted)">No data</div>'; return; }
+
+            const colors = { S: '#e6cc00', A: '#3fb950', B: '#238636', C: '#8b949e', F: '#f85149' };
+            const labels = { S: 'S (Top 20)', A: 'A (21-40)', B: 'B (41-60)', C: 'C (61-80)', F: 'F (81+)' };
+
+            Object.keys(tiers).forEach(k => {
+                const count = tiers[k].length;
+                if (count > 0) {
+                    const pct = (count / total) * 100;
+                    bar.innerHTML += `<div style="width:${pct}%; background:${colors[k]}; display:flex; align-items:center; justify-content:center; color:#000; font-weight:bold; font-size:11px; cursor:help;" title="${labels[k]}: ${count} songs (${pct.toFixed(1)}%)">${k}</div>`;
+                }
+            });
+
+            // Render Lists
+            const lists = document.getElementById('c-tier-lists');
+            lists.innerHTML = '';
+            Object.keys(tiers).forEach(k => {
+                lists.innerHTML += `
+                    <div style="background:var(--bg); border:1px solid var(--border); border-radius:8px; overflow:hidden;">
+                        <div style="background:${colors[k]}; color:#000; padding:8px; font-weight:bold; text-align:center;">${labels[k]} <span style="font-size:10px; opacity:0.8;">(${tiers[k].length})</span></div>
+                        <div style="max-height:300px; overflow-y:auto;">
+                            ${tiers[k].map((r, i) => `
+                                <div style="padding:6px 10px; border-bottom:1px solid var(--border); font-size:12px; display:flex; justify-content:space-between;">
+                                    <span>${i + 1}. ${r.song_name}</span>
+                                    <span style="color:var(--muted); font-size:10px;">#${r.average}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                 `;
+            });
+        }
+
+        async function renderAffinity(subData) {
+            const wrapAff = document.getElementById('c-affinity');
+            const wrapUnq = document.getElementById('c-unique-favs');
+
+            // Check if we are in "All Songs" or a specific subgroup
+            const currentSub = document.getElementById('view-subgroup').value;
+            const f = document.getElementById('view-franchise').value;
+
+            if (currentSub.toLowerCase().includes('all') || currentSub === '') {
+                wrapAff.innerHTML = '<div style="padding:20px; text-align:center; color:var(--muted);">Select a specific Subgroup to see affinities vs the Global Average.</div>';
+                wrapUnq.innerHTML = '';
+                return;
+            }
+
+            try {
+                // Fetch Global Data for comparison
+                const res = await fetch(`${API}/analysis/rankings?franchise=${f}&subgroup=All%20Songs`); // Assuming 'All Songs' is the global indicator or we need a global endpoint
+                // Note: If 'All Songs' doesn't exist as a "subgroup" name, this might fail. We might need a dedicated global fetch.
+                // Fallback: If fetch fails, we can't do affinity.
+
+                if (!res.ok) throw new Error("Could not fetch global data");
+                const globalData = await res.json();
+
+                // Map Global Avgs
+                const globalAvgs = {};
+                globalData.rankings.forEach(r => globalAvgs[r.song_name] = r.average);
+
+                // Calculate Deltas (Global Avg - Subgroup Avg)
+                // Positive Delta = Subgroup ranks it BETTER (Lower #) than Global.
+                // Ex: Global #50, Subgroup #10. Delta = 40.
+                const affinity = subData.map(r => {
+                    const gAvg = globalAvgs[r.song_name];
+                    if (gAvg === undefined) return null;
+                    return { ...r, delta: gAvg - r.average, global: gAvg };
+                }).filter(x => x).sort((a, b) => b.delta - a.delta); // Sort by highest positive affinity
+
+                // Affinity List (Top 10)
+                const topAff = affinity.slice(0, 15);
+                wrapAff.innerHTML = `<table style="width:100%; font-size:13px;">
+                    <tr style="text-align:left; color:var(--muted);"><th>Song</th><th>Group Rank</th><th>Global Rank</th><th>Bias</th></tr>
+                    ${topAff.map(s => `
+                        <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                            <td style="padding:8px;">${s.song_name}</td>
+                            <td style="color:var(--green); font-weight:bold;">#${s.average}</td>
+                            <td style="color:var(--muted);">#${s.global}</td>
+                            <td style="color:var(--pink); font-weight:bold;">+${s.delta.toFixed(1)}</td>
+                        </tr>
+                    `).join('')}
+                </table>`;
+
+                // Top Unique Favorites (Songs in Global Bottom 50% but Group Top 20%)
+                // Define "Global Bottom": Rank > total/2
+                // Define "Group Top": Rank < total/5
+                const totalSongs = affinity.length;
+                const uniqueFavs = affinity.filter(s => s.global > (totalSongs * 0.4) && s.rank <= (totalSongs * 0.2));
+
+                if (uniqueFavs.length === 0) {
+                    wrapUnq.innerHTML = '<div style="padding:20px; color:var(--muted); font-size:12px;">No specific "Hidden Gems" found (High group rank vs Low global rank).</div>';
+                } else {
+                    wrapUnq.innerHTML = `<div style="display:flex; flex-wrap:wrap; gap:8px;">
+                        ${uniqueFavs.map(s => `
+                            <div style="background:rgba(63, 185, 80, 0.1); border:1px solid var(--green); padding:4px 10px; border-radius:12px; font-size:12px; color:var(--green);">
+                                <b>${s.song_name}</b> <span style="opacity:0.7; font-size:10px;">(G:#${s.global} ➔ L:#${s.average})</span>
+                            </div>
+                        `).join('')}
+                    </div>`;
+                }
+
+            } catch (e) {
+                console.warn(e);
+                wrapAff.innerHTML = '<div style="padding:20px; text-align:center; color:var(--red);">Could not load global comparison data.</div>';
+            }
         }
 
         /* --- RIVALS LOGIC --- */
@@ -1922,6 +2513,25 @@
             }
         }
 
+        async function fetchUserList() {
+            const f = document.getElementById('view-franchise').value;
+            const sub = document.getElementById('view-subgroup').value;
+            const sel = document.getElementById('bias-user');
+            if (!sel) return;
+
+            try {
+                const res = await fetch(`${API}/users/rankings?franchise=${f}&subgroup=${encodeURIComponent(sub)}`);
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data.users && data.users.length > 0) {
+                    const current = sel.value;
+                    sel.innerHTML = data.users.map(u => `<option value="${u.username}">${u.username}</option>`).join('');
+                    if (current && data.users.some(u => u.username === current)) sel.value = current;
+                }
+            } catch (e) { console.error("Error fetching users:", e); }
+        }
+
+        window.lastBiasData = [];
         async function analyzeBias() {
             const u = document.getElementById('bias-user').value;
             if (!u) return;
@@ -1935,20 +2545,97 @@
 
                 if (d.error) { res.innerHTML = d.error; return; }
 
+                window.lastBiasData = d.biases;
+                window.lastBiasGlobalAvg = d.global_avg;
+                const displayList = window.advancedMode ? d.biases : d.biases.slice(0, 5);
+
                 let html = '';
-                d.biases.forEach((b, i) => {
+                displayList.forEach((b, i) => {
+                    const isTop = i === 0;
+                    const biasColor = b.bias > 0 ? (isTop ? 'var(--pink)' : 'var(--green)') : 'var(--red)';
+
                     html += `
-                     <div class="stat-card" style="padding:15px; border-color:${i === 0 ? 'var(--pink)' : 'var(--border)'}">
-                        <div style="font-size:10px; opacity:0.7; text-transform:uppercase; letter-spacing:1px;">${i === 0 ? '🏆 OSHI' : 'Favored Member'}</div>
+                     <div class="stat-card" 
+                          onclick="showMemberBiasDetail(${i})"
+                          style="padding:15px; border-color:${isTop ? 'var(--pink)' : 'var(--border)'}; cursor:pointer; transition:all 0.2s;"
+                          onmouseover="this.style.transform='translateY(-3px)'; this.style.borderColor='var(--pink)'; this.style.boxShadow='0 4px 12px rgba(219,97,162,0.2)'"
+                          onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='${isTop ? 'var(--pink)' : 'var(--border)'}'; this.style.boxShadow='none'">
+                        <div style="font-size:10px; opacity:0.7; text-transform:uppercase; letter-spacing:1px;">${isTop ? '🏆 OSHI' : 'Favored Member'}</div>
                         <div style="font-size:16px; font-weight:bold; color:#fff; margin:5px 0;">${b.name}</div>
-                        <div style="font-size:24px; font-weight:900; color:${i === 0 ? 'var(--pink)' : 'var(--green)'}">+${b.bias}</div>
+                        <div style="font-size:24px; font-weight:900; color:${biasColor}">
+                            ${b.bias > 0 ? '+' : ''}${b.bias}
+                        </div>
                         <div style="font-size:11px; opacity:0.5; margin-top:5px;">Avg Rank #${b.avg_rank} (${b.count} songs)</div>
+                        <div style="font-size:9px; color:var(--pink); margin-top:8px; opacity:0; transition:0.2s;" class="click-hint">Click for song list →</div>
                      </div>`;
                 });
+
+                // Add a hover style via CSS to show the hint
+                const styleId = 'bias-hover-style';
+                if (!document.getElementById(styleId)) {
+                    const style = document.createElement('style');
+                    style.id = styleId;
+                    style.innerHTML = `.stat-card:hover .click-hint { opacity: 0.8 !important; }`;
+                    document.head.appendChild(style);
+                }
+
                 res.innerHTML = html || "No significant bias found (You love everyone equally?).";
             } catch (e) { console.error(e); res.innerHTML = "Error."; }
         }
 
+        window.showMemberBiasDetail = function (index) {
+            const data = window.lastBiasData[index];
+            if (!data) return;
+
+            const modal = document.getElementById('song-modal');
+            const content = document.getElementById('song-modal-content');
+            const title = document.getElementById('song-modal-title');
+
+            title.textContent = `${data.name} Analysis`;
+            modal.classList.remove('hidden');
+            modal.style.display = 'flex';
+
+            content.innerHTML = `
+                <div style="margin-bottom:20px; display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                    <div class="card" style="padding:12px; text-align:center; border-color:var(--pink);">
+                        <div style="font-size:10px; color:var(--muted); text-transform:uppercase; margin-bottom:4px;">Bias Intensity</div>
+                        <div style="font-size:20px; font-weight:900; color:var(--pink)">${data.bias > 0 ? '+' : ''}${data.bias}</div>
+                    </div>
+                    <div class="card" style="padding:12px; text-align:center;">
+                        <div style="font-size:10px; color:var(--muted); text-transform:uppercase; margin-bottom:4px;">Average Rank</div>
+                        <div style="font-size:20px; font-weight:900;">#${data.avg_rank}</div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+                    <h4 style="font-size:14px; color:var(--pink);">Songs Involving ${data.name}</h4>
+                    <span style="font-size:11px; color:var(--muted);">${data.count} songs ranked</span>
+                </div>
+
+                <div style="max-height:350px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; background:rgba(0,0,0,0.2);">
+                    <table style="width:100%; font-size:12px; border-collapse:collapse;">
+                        <thead>
+                            <tr style="background:rgba(255,255,255,0.05); text-align:left;">
+                                <th style="padding:10px; border-bottom:1px solid var(--border);">Song Title</th>
+                                <th style="padding:10px; border-bottom:1px solid var(--border); text-align:center;">Rank</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.songs.map(s => `
+                                <tr hover-style="background:rgba(255,255,255,0.02)">
+                                    <td style="padding:8px 10px; border-bottom:1px solid rgba(255,255,255,0.03);">${s.name}</td>
+                                    <td style="padding:8px 10px; border-bottom:1px solid rgba(255,255,255,0.03); text-align:center; font-weight:bold; color:${s.rank <= 10 ? 'var(--green)' : (s.rank > 50 ? 'var(--red)' : '#fff')}">#${s.rank}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div style="margin-top:15px; padding:10px; background:rgba(255,255,255,0.03); border-radius:6px; font-size:11px; color:var(--muted); line-height:1.4;">
+                    <strong>About Bias:</strong> A positive score means you rank songs involving this member <strong>better</strong> than your global average rank of <strong>${window.lastBiasGlobalAvg || '??'}</strong>.
+                </div>
+            `;
+        };
 
 
         /* --- CONSTELLATION GRAPH --- */
@@ -2780,14 +3467,6 @@
             });
         };
 
-        function renderSpice(results) {
-            if (!results || !results.length) return;
-            const s = results.map(u => u.global_spice), min = Math.min(...s), max = Math.max(...s), r = (max - min) || 1;
-            document.getElementById('c-spice').innerHTML = results.map(u => {
-                const norm = ((u.global_spice - min) / r) * 100;
-                return `<div style="margin-bottom:30px;"><div style="display:flex; justify-content:space-between; font-size:24px;"><strong>${u.username}</strong><span class="metric">${u.global_spice}</span></div><div class="bar-bg" style="height:24px"><div class="bar-fill" style="width:${norm}%"></div></div></div>`;
-            }).join('');
-        }
 
         function toggleSubmission(show) { document.getElementById('submission-overlay').style.display = show ? 'flex' : 'none'; }
 

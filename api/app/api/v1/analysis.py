@@ -238,35 +238,17 @@ async def get_spice_meter(franchise: str, db: Session = Depends(get_db)):
     if not franchise_obj:
         raise HTTPException(status_code=404, detail="Franchise not found")
 
-    result = (
-        db.query(AnalysisResult)
-        .filter(
-            AnalysisResult.franchise_id == franchise_obj.id,
-            AnalysisResult.subgroup_id is None,
-            AnalysisResult.analysis_type == "SPICE",
-        )
-        .first()
+    # Always compute fresh data (no caching for now)
+    data = AnalysisService.compute_spice_meter(str(franchise_obj.id), db)
+    sub_count = (
+        db.query(Submission).filter_by(franchise_id=franchise_obj.id).count()
     )
-
-    if not result:
-        data = AnalysisService.compute_spice_meter(str(franchise_obj.id), db)
-        sub_count = (
-            db.query(Submission).filter_by(franchise_id=franchise_obj.id).count()
-        )
-
-        return SpiceMeterResponse(
-            metadata=AnalysisMetadata(
-                computed_at=datetime.utcnow(), based_on_submissions=sub_count
-            ),
-            results=data,
-        )
 
     return SpiceMeterResponse(
         metadata=AnalysisMetadata(
-            computed_at=result.computed_at,
-            based_on_submissions=result.based_on_submissions,
+            computed_at=datetime.utcnow(), based_on_submissions=sub_count
         ),
-        results=result.result_data,
+        results=data,
     )
 
 

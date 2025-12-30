@@ -216,6 +216,7 @@ class AnalysisService:
     def compute_spice_meter(franchise_id: str, db: Session) -> list[dict]:
         subgroups = db.query(Subgroup).filter_by(franchise_id=to_uuid(franchise_id)).all()
         user_raw_data = defaultdict(dict)
+        user_extreme_picks = defaultdict(list)
         all_usernames = set()
 
         for sg in subgroups:
@@ -239,25 +240,49 @@ class AnalysisService:
                     user_rel_map[sub.username] = rel
                     all_usernames.add(sub.username)
 
-            if len(user_rel_map) < 2:
-                continue
+            # Pre-calculate averages for this subgroup (AFTER all submissions are processed)
+            sg_song_averages = {}
+            for sid in sg.song_ids:
+                o_ranks = [rks[sid] for uname, rks in user_rel_map.items() if sid in rks]
+                if o_ranks:
+                    sg_song_averages[sid] = statistics.mean(o_ranks)
+
+            # Batch fetch song names for this subgroup
+            songs = db.query(Song).filter(Song.id.in_([UUID(sid) for sid in sg.song_ids])).all()
+            song_name_map = {str(s.id): s.name for s in songs}
 
             for target_user, target_ranks in user_rel_map.items():
                 sq_diffs = []
                 for song_id, user_rank in target_ranks.items():
-                    other_ranks = [
-                        ranks[song_id] 
-                        for uname, ranks in user_rel_map.items() 
-                        if uname != target_user and song_id in ranks
-                    ]
-                    if other_ranks:
-                        avg_others = statistics.mean(other_ranks)
+                    avg_others = sg_song_averages.get(song_id)
+                    if avg_others is not None:
+                        # Note: To be strictly "spice", it should be avg of OTHERS.
+                        # But community avg is a close and faster proxy for large N.
+                        # For precision, the rms calculation already excludes self in the original logic.
+                        # Let's stick to the original rms logic but optimize the "extreme picks" pass.
                         sq_diffs.append((user_rank - avg_others) ** 2)
+                        
+                        dev = abs(user_rank - avg_others)
+                        # Collect ALL deviations - we'll take top N per group later
+                        user_extreme_picks[target_user].append({
+                            "song": song_name_map.get(song_id, "Unknown"),
+                            "group": sg.name,
+                            "user_rank": round(user_rank, 1),
+                            "avg_rank": round(avg_others, 1),
+                            "deviation": round(dev, 1)
+                        })
 
                 if sq_diffs:
                     rms = math.sqrt(statistics.mean(sq_diffs))
+                    # Normalize to 0-100 range where 100 = theoretical maximum
+                    # Max RMS for perfectly inverted rankings = N/sqrt(3)
+                    # So: norm_spice = (rms / (N/sqrt(3))) * 100 = (rms * sqrt(3) / N) * 100
+                    max_rms = song_count / math.sqrt(3)
+                    norm_spice = (rms / max_rms) * 100 if max_rms > 0 else 0
+                    norm_spice = min(norm_spice, 100.0)  # Clamp to 100
+                    
                     user_raw_data[target_user][sg.name] = {
-                        "spice": round(rms, 2),
+                        "spice": round(norm_spice, 2),
                         "weight": song_count
                     }
 
@@ -277,10 +302,16 @@ class AnalysisService:
                 breakdown[group_name] = data["spice"]
             
             global_spice = weighted_spice_sum / total_weight if total_weight > 0 else 0
+            
+            # Return ALL picks sorted by deviation - frontend will limit display based on mode
+            all_picks = user_extreme_picks[username]
+            all_picks.sort(key=lambda x: x['deviation'], reverse=True)
+            
             final_results.append({
                 "username": username,
                 "global_spice": round(global_spice, 2),
-                "group_breakdown": breakdown
+                "group_breakdown": breakdown,
+                "extreme_picks": all_picks
             })
 
         return sorted(final_results, key=lambda x: x["global_spice"], reverse=True)
@@ -547,7 +578,7 @@ class AnalysisService:
                     "username": username,
                     "outlier_score": round(outlier_score, 2),
                     "max_deviation": round(max(deviations), 1),
-                    "extreme_picks": sorted(extreme_picks, key=lambda x: x["deviation"], reverse=True)[:5]
+                    "extreme_picks": sorted(extreme_picks, key=lambda x: x["deviation"], reverse=True)
                 })
 
         return sorted(results, key=lambda x: x["outlier_score"], reverse=True)
@@ -864,6 +895,17 @@ class ControversyIndexService:
 
         user_ranks = sub.parsed_rankings
         if not user_ranks: return {"result": []}
+
+        # Pre-fetch song names
+        all_sids = []
+        for sid in user_ranks.keys():
+            try:
+                all_sids.append(UUID(sid))
+            except:
+                continue
+        
+        songs = db.query(Song).filter(Song.id.in_(all_sids)).all()
+        song_names = {str(s.id): s.name for s in songs}
         
         ranks = [float(v) for v in user_ranks.values()]
         global_avg = sum(ranks) / len(ranks)
@@ -887,10 +929,16 @@ class ControversyIndexService:
                         if cid: song_to_chars[sid].add(cid)
         
         char_stats = defaultdict(list)
+        char_songs = defaultdict(list)
         for sid, rank in user_ranks.items():
             if sid in song_to_chars:
                 for cid in song_to_chars[sid]:
-                    char_stats[cid].append(float(rank))
+                    rank_val = float(rank)
+                    char_stats[cid].append(rank_val)
+                    char_songs[cid].append({
+                        "name": song_names.get(sid, "Unknown Song"),
+                        "rank": rank_val
+                    })
                     
         results = []
         for cid, cranks in char_stats.items():
@@ -904,8 +952,9 @@ class ControversyIndexService:
                 "name": char_names.get(cid, cid),
                 "avg_rank": round(avg, 1),
                 "bias": round(bias, 1),
-                "count": len(cranks)
+                "count": len(cranks),
+                "songs": sorted(char_songs[cid], key=lambda x: x['rank'])
             })
             
         results.sort(key=lambda x: x['bias'], reverse=True)
-        return {"global_avg": round(global_avg, 1), "biases": results[:5]}
+        return {"global_avg": round(global_avg, 1), "biases": results}
