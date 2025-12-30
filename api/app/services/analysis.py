@@ -766,7 +766,8 @@ class ControversyIndexService:
          franchise_id: str, subgroup_id: str, target_user: str, db: Session
     ) -> dict:
         # Reuse existing divergence calculation
-        matrix = AnalysisService.compute_divergence_matrix(franchise_id, subgroup_id, db)
+        result = AnalysisService.compute_divergence_matrix(franchise_id, subgroup_id, db)
+        matrix = result.get("matrix", {})
         if target_user not in matrix:
             return {"error": "User not found"}
         

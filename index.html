@@ -308,6 +308,36 @@
             background: var(--border);
         }
 
+        .comp-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 5px;
+        }
+
+        .comp-tab {
+            padding: 6px 12px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--muted);
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .comp-tab:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+        }
+
+        .comp-tab.active {
+            background: var(--pink);
+            color: #000;
+        }
+
         .btn-submit-action {
             background: var(--pink);
             color: #000;
@@ -324,7 +354,32 @@
             color: var(--muted);
         }
 
-        /* --- VISUALS --- */
+        .clickable-row:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .clickable-row:hover td {
+            color: var(--pink) !important;
+        }
+
+        .axis-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 8px;
+        }
+
+        .axis-item:hover {
+            border-color: var(--pink);
+            background: rgba(219, 97, 162, 0.05);
+        }
+
         .bar-bg {
             height: 18px;
             background: #21262d;
@@ -705,6 +760,10 @@
                     <label>View</label>
                     <select id="view-subgroup" onchange="changeSubgroupView()"></select>
                 </div>
+                <button id="mode-toggle" onclick="toggleAdvancedMode()"
+                    style="padding:6px 12px; font-size:10px; font-weight:bold; text-transform:uppercase; background:transparent; border:1px solid var(--border); color:var(--muted); border-radius:4px; cursor:pointer;">
+                    Basic Mode
+                </button>
             </div>
         </div>
         <div class="nav">
@@ -764,50 +823,79 @@
                     <div class="table-container" id="c-dash-bottom5"></div>
                 </div>
             </div>
+
+            <!-- Taste Constellation on Dashboard -->
+            <div class="card" style="grid-column: 1 / -1;">
+                <h3 style="text-align:center;">🌌 Taste Constellation</h3>
+                <canvas id="dash-taste-canvas"
+                    style="width:100%; height:400px; background: radial-gradient(circle at center, #1b2028 0%, #0d1117 100%); border-radius:12px; border:1px solid var(--border);"></canvas>
+            </div>
         </div>
 
         <!-- FULL RANKINGS VIEW -->
         <div id="view-leader" class="card hidden">
             <h3>Full Community Consensus</h3>
+            <p style="font-size:11px; color:var(--muted); margin-bottom:15px;">Click any song to see ranking
+                distribution</p>
             <div class="table-container" id="c-leaderboard"></div>
         </div>
 
+        <!-- SONG DISTRIBUTION MODAL -->
+        <div id="song-modal" class="hidden"
+            style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.85); z-index:1000; display:flex; align-items:center; justify-content:center;"
+            onclick="closeSongModal(event)">
+            <div
+                style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; padding:20px 20px 0 20px;">
+                <h3 id="song-modal-title" style="margin:0; border:none;">Song Distribution</h3>
+                <button onclick="closeSongModal()"
+                    style="background:none; border:none; color:var(--muted); font-size:24px; cursor:pointer;">&times;</button>
+            </div>
+            <div id="song-modal-content"
+                style="padding:0 20px 20px 20px; overflow-y:auto; max-height:calc(80vh - 80px);"></div>
+        </div>
+        </div>
+
         <!-- ANALYSIS VIEW -->
-        <div id="view-more" class="grid hidden">
-            <div class="dashboard-grid">
-                <div class="card">
-                    <h3>Most Disputed</h3>
-                    <div class="table-container" id="c-disputed"></div>
-                </div>
-                <div class="card">
-                    <h3>Controversial Tracks</h3>
-                    <div class="table-container" id="c-controversy"></div>
-                </div>
+        <div id="view-more" class="hidden"
+            style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:20px; align-items:start;">
+            <!-- Row 1: The "Personal Opinions" & "Controversy" Line -->
+            <div class="card">
+                <h3>Most Disputed</h3>
+                <div class="table-container" id="c-disputed"></div>
+            </div>
+            <div class="card">
+                <h3>Sleeper Picks</h3>
+                <div class="table-container" id="c-sleeper"></div>
+            </div>
+            <div class="card">
+                <h3>Hot Takes</h3>
+                <div class="table-container" id="c-haters"></div>
+            </div>
+            <div class="card">
+                <h3>Controversial Tracks</h3>
+                <div class="table-container" id="c-controversy"></div>
             </div>
 
-            <div class="card">
+            <!-- Row 2: Community Trends -->
+            <div class="card" style="grid-column: span 2;">
+                <h3>Consistent Tracks (Consensus)</h3>
+                <div class="table-container" id="c-consistent"></div>
+            </div>
+
+            <!-- Row 3: Universal (Full Span) -->
+            <div class="card" style="grid-column: 1 / -1;">
+                <h3>Top/Bottom 10</h3>
+                <div class="table-container" id="c-universal"></div>
+            </div>
+
+            <!-- Row 4: Secondary Metrics -->
+            <div class="card" style="grid-column: span 2;">
                 <h3>Subunit Power Rankings</h3>
                 <div class="table-container" id="c-subunits"></div>
             </div>
-
-            <div class="dashboard-grid">
-                <div class="card">
-                    <h3>Sleeper Picks</h3>
-                    <div class="table-container" id="c-sleeper"></div>
-                </div>
-                <div class="card">
-                    <h3>Consistent Tracks</h3>
-                    <div class="table-container" id="c-consistent"></div>
-                </div>
-            </div>
-
-            <div class="card">
-                <h3>Outliers</h3>
+            <div class="card" style="grid-column: span 2;">
+                <h3>Outliers (Spice Meter)</h3>
                 <div class="table-container" id="c-outliers"></div>
-            </div>
-            <div class="card">
-                <h3>Top/Bottom 10</h3>
-                <div class="table-container" id="c-universal"></div>
             </div>
         </div>
 
@@ -828,11 +916,14 @@
         <!-- RIVALS VIEW -->
         <div id="view-rivals" class="main-view hidden" style="padding:0; background:transparent;">
             <!-- Sub Navigation -->
-            <div style="display:flex; justify-content:center; gap:15px; margin-bottom:20px;">
+            <div style="display:flex; justify-content:center; gap:10px; margin-bottom:20px;">
                 <button id="rtab-constellation" class="nav-btn active" onclick="switchRivalTab('constellation')"
-                    style="background:var(--pink); color:#000; border:none;">Taste Constellation</button>
-                <button id="rtab-matchmaking" class="nav-btn" onclick="switchRivalTab('matchmaking')"
-                    style="background:transparent; border:1px solid var(--border);">Matchmaking</button>
+                    style="padding:8px 16px; font-size:11px; font-weight:600; background:var(--pink); color:#000; border:none; border-radius:6px; cursor:pointer; text-transform:uppercase;">Constellation</button>
+                <button id="rtab-duel" class="nav-btn" onclick="switchRivalTab('duel')"
+                    style="padding:8px 16px; font-size:11px; font-weight:600; background:var(--card); color:var(--text); border:1px solid var(--border); border-radius:6px; cursor:pointer; text-transform:uppercase;">Head-to-Head</button>
+                <button id="rtab-oshi" class="nav-btn" onclick="switchRivalTab('oshi')"
+                    style="padding:8px 16px; font-size:11px; font-weight:600; background:var(--card); color:var(--text); border:1px solid var(--border); border-radius:6px; cursor:pointer; text-transform:uppercase;">Oshi
+                    Detector</button>
             </div>
 
             <!-- TAB 1: CONSTELLATION -->
@@ -905,9 +996,8 @@
                 </div>
             </div>
 
-            <!-- TAB 2: MATCHMAKING -->
-            <div id="rview-matchmaking" class="hidden">
-                <!-- Head to Head -->
+            <!-- TAB 2: HEAD-TO-HEAD DUEL -->
+            <div id="rview-duel" class="hidden">
                 <div class="card" style="margin-bottom:20px;">
                     <h3 style="border:none; text-align:center; font-size:18px;">👥 Head-to-Head Duel</h3>
                     <div class="selector-group"
@@ -937,22 +1027,10 @@
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Match Finder -->
-                <div class="card" style="margin-bottom:20px;">
-                    <h3 style="border:none; margin-bottom:20px; text-align: center;">💘 Find Your Match</h3>
-                    <div
-                        style="display:flex; gap:10px; align-items:center; justify-content:center; margin-bottom:20px;">
-                        <select id="match-finder-user"
-                            style="width:200px; padding:10px; border-radius:6px; background:#1c2128; color:white; border:1px solid #444;"></select>
-                        <button class="btn-footer btn-submit-action" onclick="findMatches()"
-                            style="padding:10px 20px;">Analyze</button>
-                    </div>
-                    <div id="match-results" class="grid"
-                        style="grid-template-columns: 1fr 1fr; gap:20px; text-align:left;"></div>
-                </div>
-
-                <!-- Oshi Detector -->
+            <!-- TAB 3: OSHI DETECTOR -->
+            <div id="rview-oshi" class="hidden">
                 <div class="card">
                     <h3 style="border:none; margin-bottom:10px; text-align: center;">💖 Oshi Detector</h3>
                     <div style="font-size:12px; color:var(--muted); margin-bottom:15px; text-align: center;">Who do you
@@ -1063,6 +1141,33 @@
         // Data cache to prevent redundant API calls
         let dataCache = { key: '', ranks: null, cont: null, takes: null, spice: null, loaded: false };
 
+        // Basic/Advanced Mode Toggle
+        window.advancedMode = false;
+        function toggleAdvancedMode() {
+            window.advancedMode = !window.advancedMode;
+            const btn = document.getElementById('mode-toggle');
+            if (window.advancedMode) {
+                btn.innerHTML = 'Advanced Mode';
+                btn.style.background = 'var(--pink)';
+                btn.style.color = '#000';
+                btn.style.borderColor = 'var(--pink)';
+            } else {
+                btn.innerHTML = 'Basic Mode';
+                btn.style.background = 'transparent';
+                btn.style.color = 'var(--muted)';
+                btn.style.borderColor = 'var(--border)';
+            }
+            // Re-render current tab with new limits
+            if (dataCache.loaded) {
+                renderCurrentTab();
+            }
+        }
+
+        // Helper to get list limit based on mode
+        function getLimit(basic, advanced) {
+            return window.advancedMode ? advanced : basic;
+        }
+
         async function init() {
             await fetchMasterSubgroups();
             tab('dash'); // Force dashboard view logic on startup
@@ -1155,19 +1260,57 @@
             if (activeTab === 'more') {
                 renderUniversal(ranks.rankings, cont?.results || []); renderDisputed(takes?.takes || []);
                 renderSubunitPopularity(ranks.rankings, cont?.results || [], f); renderControversy(cont?.results || []);
-                renderConsistent(cont?.results || []); renderSleepers(takes?.takes || []); renderOutliers(spice?.results || []);
+                renderConsistent(cont?.results || []); renderSleepers(takes?.takes || []);
+                renderHaters(takes?.takes || []); renderOutliers(spice?.results || []);
             }
             if (activeTab === 'opps') renderMatrix(sub, f);
             if (activeTab === 'spice') renderSpice(spice?.results || []);
             if (activeTab === 'rivals') fetchUserList();
             if (activeTab === 'users') loadUsers();
+
+            // Render dashboard constellation when on dashboard tab
+            if (activeTab === 'dash') {
+                setTimeout(async () => {
+                    try {
+                        const r = await fetch(`${API}/analysis/divergence?franchise=${f}&subgroup=${sub}`);
+                        const d = await r.json();
+                        if (typeof initDashboardConstellation === 'function') initDashboardConstellation(d);
+                    } catch (e) { console.error('Dashboard constellation error:', e); }
+                }, 300);
+            }
         }
+
+        // Re-render current tab with cached data (used when mode changes)
+        function renderCurrentTab() {
+            if (!dataCache.loaded) return;
+            const { ranks, cont, takes, spice } = dataCache;
+            const f = document.getElementById('view-franchise').value;
+            const sub = document.getElementById('view-subgroup').value;
+
+            if (ranks?.rankings) {
+                updateDashboard(ranks.rankings, cont?.results, takes?.takes, spice?.results);
+                renderLeaderboard(ranks.rankings);
+            }
+            if (activeTab === 'more' && ranks?.rankings) {
+                renderUniversal(ranks.rankings, cont?.results || []);
+                renderDisputed(takes?.takes || []);
+                renderSubunitPopularity(ranks.rankings, cont?.results || [], f);
+                renderControversy(cont?.results || []);
+                renderConsistent(cont?.results || []);
+                renderSleepers(takes?.takes || []);
+                renderHaters(takes?.takes || []);
+                renderOutliers(spice?.results || []);
+            }
+            if (activeTab === 'opps') renderMatrix(sub, f);
+            if (activeTab === 'spice') renderSpice(spice?.results || []);
+        }
+
 
         function updateDashboard(ranks, cont, takes, spice) {
             // 1. Top Song
             if (ranks.length > 0) {
                 const top = ranks[0];
-                document.getElementById('d-top-song').innerHTML = truncate(top.song_name, 22);
+                document.getElementById('d-top-song').innerHTML = `<span onclick="showSongDistribution('${top.song_name.replace(/'/g, "\\'")}')" style="cursor:pointer;" class="song-link">${truncate(top.song_name, 22)}</span>`;
                 document.getElementById('d-top-score').innerHTML = `${top.average} avg rank`;
 
                 // Total songs count
@@ -1181,13 +1324,13 @@
             // 2. Controversial
             if (cont && cont.length > 0) {
                 const c = cont[0];
-                document.getElementById('d-cont-song').innerHTML = truncate(c.song_name, 22);
+                document.getElementById('d-cont-song').innerHTML = `<span onclick="showSongDistribution('${c.song_name.replace(/'/g, "\\'")}')" style="cursor:pointer;" class="song-link">${truncate(c.song_name, 22)}</span>`;
                 document.getElementById('d-cont-score').innerHTML = `${c.controversy_score} score`;
 
                 // Most Agreed (lowest controversy)
                 const agreed = [...cont].sort((a, b) => a.controversy_score - b.controversy_score)[0];
                 if (agreed) {
-                    document.getElementById('d-agreed-song').innerHTML = truncate(agreed.song_name, 22);
+                    document.getElementById('d-agreed-song').innerHTML = `<span onclick="showSongDistribution('${agreed.song_name.replace(/'/g, "\\'")}')" style="cursor:pointer;" class="song-link">${truncate(agreed.song_name, 22)}</span>`;
                     document.getElementById('d-agreed-score').innerHTML = `${agreed.controversy_score} score`;
                 }
             }
@@ -1203,7 +1346,7 @@
             if (takes && takes.length > 0) {
                 const sleeper = [...takes].sort((a, b) => a.score - b.score)[0];
                 if (sleeper && sleeper.score < 0) {
-                    document.getElementById('d-sleep-song').innerHTML = truncate(sleeper.song_name, 22);
+                    document.getElementById('d-sleep-song').innerHTML = `<span onclick="showSongDistribution('${sleeper.song_name.replace(/'/g, "\\'")}')" style="cursor:pointer;" class="song-link">${truncate(sleeper.song_name, 22)}</span>`;
                     document.getElementById('d-sleep-user').innerHTML = `Loved by ${sleeper.username}`;
                 }
             }
@@ -1218,7 +1361,7 @@
             if (!el) return;
             el.innerHTML = `<table>` +
                 ranks.map((s, i) => `
-                    <tr>
+                    <tr onclick="showSongDistribution('${s.song_name.replace(/'/g, "\\'")}')" style="cursor:pointer;" class="clickable-row">
                         <td class="col-rank" style="color:${i === 0 ? '#ffd700' : i === 1 ? '#c0c0c0' : i === 2 ? '#cd7f32' : 'var(--pink)'}">#${i + 1}</td>
                         <td>${s.song_name}</td>
                         <td class="col-metric" style="color:var(--green)">${s.average}</td>
@@ -1232,8 +1375,8 @@
             const total = parseInt(document.getElementById('d-total-songs')?.innerHTML) || 100;
             el.innerHTML = `<table>` +
                 ranks.map((s, i) => `
-                    <tr>
-                        <td class="col-rank" style="color:var(--red)">#${total - i}</td>
+                    <tr onclick="showSongDistribution('${s.song_name.replace(/'/g, "\\'")}')" style="cursor:pointer;" class="clickable-row">
+                        <td class="col-rank">#${total - i}</td>
                         <td>${s.song_name}</td>
                         <td class="col-metric" style="color:var(--red)">${s.average}</td>
                     </tr>
@@ -1242,28 +1385,231 @@
 
 
         function renderLeaderboard(ranks) {
+            // Always show full list in Rankings tab - clickable for distribution
             document.getElementById('c-leaderboard').innerHTML = `<table><colgroup><col class="col-rank"><col><col class="col-metric"><col class="col-metric"></colgroup><tr><th>#</th><th>Song Name</th><th>Avg</th><th>Pts</th></tr>` +
-                ranks.map((s, i) => `<tr><td class="col-rank">${i + 1}</td><td>${s.song_name}</td><td class="col-metric" style="color:var(--pink)">${s.average}</td><td class="col-metric">${s.points}</td></tr>`).join('') + `</table>`;
+                ranks.map((s, i) => `<tr onclick="showSongDistribution('${s.song_name.replace(/'/g, "\\'")}')" style="cursor:pointer;" class="clickable-row"><td class="col-rank">${i + 1}</td><td>${s.song_name}</td><td class="col-metric" style="color:var(--pink)">${s.average}</td><td class="col-metric">${s.points}</td></tr>`).join('') + `</table>`;
+        }
+
+        function closeSongModal(event) {
+            if (event && event.target.id !== 'song-modal') return;
+            document.getElementById('song-modal').classList.add('hidden');
+            document.getElementById('song-modal').style.display = 'none';
+        }
+
+        async function showSongDistribution(songName) {
+            const modal = document.getElementById('song-modal');
+            const content = document.getElementById('song-modal-content');
+            document.getElementById('song-modal-title').textContent = songName;
+            modal.classList.remove('hidden');
+            modal.style.display = 'flex';
+            content.innerHTML = 'Loading distribution...';
+
+            try {
+                const f = document.getElementById('view-franchise').value;
+                const sub = document.getElementById('view-subgroup').value;
+                const res = await fetch(`${API}/analysis/divergence?franchise=${f}&subgroup=${sub}`);
+                const data = await res.json();
+
+                // Get song rankings from cached data or fetch
+                const songId = Object.keys(data.song_names).find(id => data.song_names[id] === songName);
+                if (!songId || !data.rankings[songId]) {
+                    content.innerHTML = 'No ranking data available for this song.';
+                    return;
+                }
+
+                const userRanks = data.rankings[songId];
+                const users = Object.keys(userRanks).sort();
+                const ranks = users.map(u => userRanks[u]);
+                const mean = ranks.reduce((a, b) => a + b, 0) / ranks.length;
+                const std = Math.sqrt(ranks.reduce((sum, r) => sum + Math.pow(r - mean, 2), 0) / ranks.length);
+                const minRank = 1;
+                const maxRank = Object.keys(data.song_names).length;
+                const range = (maxRank - minRank) || 1;
+
+                // Create number line visualization
+                content.innerHTML = `
+                    <div style="margin-bottom:20px; text-align:center;">
+                        <div style="display:inline-flex; gap:30px; font-size:14px;">
+                            <div><span style="color:var(--muted)">Mean:</span> <span style="font-weight:bold; color:var(--pink)">${mean.toFixed(2)}</span></div>
+                            <div><span style="color:var(--muted)">Std Dev:</span> <span style="font-weight:bold; color:var(--pink)">${std.toFixed(2)}</span></div>
+                            <div><span style="color:var(--muted)">Voters:</span> <span style="font-weight:bold">${users.length}</span></div>
+                        </div>
+                    </div>
+                    <div style="position:relative; height:120px; background:linear-gradient(90deg, rgba(59,130,246,0.1) 0%, rgba(219,97,162,0.1) 50%, rgba(248,81,73,0.1) 100%); border-radius:8px; margin:20px 0; border:1px solid var(--border);">
+                        <!-- Number line -->
+                        <div style="position:absolute; top:60px; left:20px; right:20px; height:2px; background:var(--border);"></div>
+                        <!-- Mean marker -->
+                        <div style="position:absolute; top:40px; left:calc(20px + ${((mean - minRank) / range) * (100 - 6)}%); transform:translateX(-50%); text-align:center;">
+                            <div style="font-size:9px; color:var(--pink); font-weight:bold;">MEAN</div>
+                            <div style="width:2px; height:30px; background:var(--pink); margin:0 auto;"></div>
+                        </div>
+                        <!-- Std dev range -->
+                        <div style="position:absolute; top:55px; height:12px; background:rgba(219,97,162,0.3); border-radius:4px; left:calc(20px + ${Math.max(0, ((mean - std - minRank) / range) * (100 - 6))}%); width:${((2 * std) / range) * (100 - 6)}%;"></div>
+                        <!-- User dots -->
+                        ${users.map((user, i) => {
+                    const rank = userRanks[user];
+                    const pos = ((rank - minRank) / range) * (100 - 6);
+                    const color = rank < mean ? 'var(--green)' : rank > mean ? 'var(--red)' : 'var(--pink)';
+                    return `<div title="${user}: #${rank}" style="position:absolute; top:52px; left:calc(20px + ${pos}%); transform:translateX(-50%); width:14px; height:14px; background:${color}; border-radius:50%; border:2px solid #fff; cursor:pointer; z-index:${10 + i};" onclick="event.stopPropagation(); alert('${user}\\nRanked: #${rank}')"></div>`;
+                }).join('')}
+                        <!-- Tick marks -->
+                        ${[minRank, Math.round(minRank + range * 0.25), Math.round(minRank + range * 0.5), Math.round(minRank + range * 0.75), maxRank].filter((v, i, a) => a.indexOf(v) === i).map(tick => `
+                            <div style="position:absolute; top:62px; left:calc(20px + ${((tick - minRank) / range) * (100 - 6)}%); transform:translateX(-50%); text-align:center;">
+                                <div style="width:1px; height:8px; background:var(--muted);"></div>
+                                <div style="font-size:10px; color:var(--muted); margin-top:2px;">${tick}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div style="font-size:10px; color:var(--muted); text-align:center;">← Higher Ranked | Lower Ranked →</div>
+                    <div style="margin-top:20px;"><h4 style="margin-bottom:10px; font-size:13px;">Individual Rankings</h4>
+                        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:8px;">
+                            ${users.sort((a, b) => userRanks[a] - userRanks[b]).map(u => `<div style="padding:8px; background:var(--card); border:1px solid var(--border); border-radius:6px; display:flex; justify-content:space-between;"><span style="font-size:11px;">${u}</span><span style="font-weight:bold; color:var(--pink);">#${userRanks[u]}</span></div>`).join('')}
+                        </div>
+                    </div>
+                `;
+            } catch (e) {
+                console.error(e);
+                content.innerHTML = 'Error loading distribution data.';
+            }
+        }
+
+        async function showUserComparison(u1, u2) {
+            const modal = document.getElementById('song-modal');
+            const content = document.getElementById('song-modal-content');
+            document.getElementById('song-modal-title').textContent = u1 === u2 ? 'Self-Reflection' : `${u1} vs ${u2}`;
+            modal.classList.remove('hidden');
+            modal.style.display = 'flex';
+
+            if (u1 === u2) {
+                content.innerHTML = `
+                    <div style="text-align:center; padding:40px 20px; font-style:italic;">
+                        <p style="font-size:18px; line-height:1.6; color:#fff;">
+                            "Now you're tired of fighting (Fighting)<br>
+                            Tired of fighting, fighting yourself"
+                        </p>
+                        <p style="font-size:14px; color:var(--muted); margin-top:15px;">— Matt Bellamy</p>
+                    </div>
+                `;
+                return;
+            }
+
+            content.innerHTML = '<div style="padding:20px;">Loading comparison...</div>';
+
+            try {
+                const f = document.getElementById('view-franchise').value, sub = document.getElementById('view-subgroup').value;
+                const r = await fetch(`${API}/analysis/head-to-head?franchise=${f}&subgroup=${sub}&user_a=${u1}&user_b=${u2}`);
+                const data = await r.json();
+
+                const rms = Math.sqrt(data.diffs.reduce((s, d) => s + Math.pow(d.diff, 2), 0) / data.diffs.length).toFixed(2);
+                window.__compData = { u1, u2, diffs: data.diffs, rms, activeTab: 'dis' };
+                renderCompModal();
+
+            } catch (e) { content.innerHTML = '<div style="padding:20px;">Error loading comparison.</div>'; }
+        }
+
+        window.switchCompTab = (tab) => {
+            if (!window.__compData) return;
+            window.__compData.activeTab = tab;
+            renderCompModal();
+        };
+
+        function renderCompModal() {
+            const { u1, u2, diffs, rms, activeTab } = window.__compData;
+            const content = document.getElementById('song-modal-content');
+
+            // Header metric
+            const statusMsg = rms < 5 ? "BEST FRIENDS FOREVER 💖" : rms < 15 ? "Solid Compatibility 👍" : rms > 30 ? "MORTAL ENEMIES 💀" : "It's Complicated 🤷";
+
+            let tableHtml = "";
+            let sortedArr = [...diffs];
+
+            if (activeTab === 'u1') {
+                sortedArr.sort((a, b) => a.r1 - b.r1);
+            } else if (activeTab === 'dis') {
+                sortedArr.sort((a, b) => b.diff - a.diff);
+            } else if (activeTab === 'agr') {
+                sortedArr.sort((a, b) => a.diff - b.diff);
+            }
+
+            if (activeTab === 'math') {
+                const sumSq = diffs.reduce((s, d) => s + Math.pow(d.diff, 2), 0);
+                const n = diffs.length;
+                const varVal = (sumSq / n).toFixed(2);
+                tableHtml = `
+                    <div style="background:rgba(0,0,0,0.2); padding:15px; border-radius:8px; font-family:'Consolas', monospace; font-size:12px; line-height:1.6;">
+                        <div style="color:var(--muted); margin-bottom:10px;">// Divergence Formula: sqrt(Σ(UserA_rank - UserB_rank)² / N)</div>
+                        <div>Σ(Squared Differences) = ${sumSq.toFixed(1)}</div>
+                        <div>Total Songs (N) = ${n}</div>
+                        <div>Mean Squared Diff = ${varVal}</div>
+                        <div style="color:var(--pink); font-size:16px; margin-top:10px; font-weight:bold;">√${varVal} = ${rms} Divergence</div>
+                    </div>
+                    <table style="margin-top:20px;">
+                        <tr><th>Song</th><th>Diff</th><th>Diff²</th></tr>
+                        ${diffs.sort((a, b) => b.diff - a.diff).map(d => `
+                            <tr>
+                                <td>${d.name}</td>
+                                <td>${d.diff.toFixed(1)}</td>
+                                <td style="color:var(--red)">${(d.diff * d.diff).toFixed(1)}</td>
+                            </tr>
+                        `).join('')}
+                    </table>
+                `;
+            } else {
+                tableHtml = `
+                    <table>
+                        <colgroup><col><col style="width:70px"><col style="width:70px"><col style="width:60px"></colgroup>
+                        <tr><th>Song</th><th>${u1}</th><th>${u2}</th><th>Diff</th></tr>
+                        ${sortedArr.map(d => `
+                            <tr onclick="showSongDistribution('${d.name.replace(/'/g, "\\'")}')" style="cursor:pointer;" class="clickable-row">
+                                <td>${d.name}</td>
+                                <td style="color:${d.r1 < d.r2 ? 'var(--green)' : 'var(--muted)'}">#${d.r1}</td>
+                                <td style="color:${d.r2 < d.r1 ? 'var(--green)' : 'var(--muted)'}">#${d.r2}</td>
+                                <td style="font-weight:bold; color:${d.diff > 20 ? 'var(--red)' : d.diff < 5 ? 'var(--green)' : 'var(--pink)'}">${Math.round(d.diff)}</td>
+                            </tr>
+                        `).join('')}
+                    </table>
+                `;
+            }
+
+            content.innerHTML = `
+                <div style="text-align:center; padding:10px 0 20px 0; border-bottom:1px solid var(--border); margin-bottom:15px;">
+                    <div style="font-size:32px; font-weight:900; color:var(--pink)">${rms} <span style="font-size:12px; font-weight:600; color:var(--muted); vertical-align:middle;">DIVERGENCE</span></div>
+                    <div style="font-size:11px; font-weight:600; color:var(--muted); margin-top:2px;">${statusMsg}</div>
+                </div>
+
+                <div class="comp-tabs">
+                    <div class="comp-tab ${activeTab === 'u1' ? 'active' : ''}" onclick="switchCompTab('u1')">${u1}'s Order</div>
+                    <div class="comp-tab ${activeTab === 'dis' ? 'active' : ''}" onclick="switchCompTab('dis')">Disagreements</div>
+                    <div class="comp-tab ${activeTab === 'agr' ? 'active' : ''}" onclick="switchCompTab('agr')">Agreements</div>
+                    <div class="comp-tab ${activeTab === 'math' ? 'active' : ''}" onclick="switchCompTab('math')">Math Breakdown</div>
+                </div>
+
+                <div style="margin-top:10px;">
+                    ${tableHtml}
+                </div>
+            `;
         }
 
         function renderUniversal(ranks, controversy) {
-            const top = ranks.slice(0, 10), btm = ranks.slice(-10);
+            const limit = getLimit(10, Math.floor(ranks.length / 2));
+            const top = ranks.slice(0, limit), btm = ranks.slice(-limit);
             const mapAgreement = (songName) => {
                 const c = controversy.find(x => x.song_name === songName);
                 return c ? Math.max(0, 100 - ((c.cv * c.avg_rank) * 2.5)).toFixed(1) : "0.0";
             };
-            const rows = [...top, ...btm].map((s, i) => `<tr><td class="col-rank" style="color:${i < 10 ? 'var(--green)' : 'var(--red)'}">${i < 10 ? 'TOP' : 'BTM'}</td><td>${s.song_name}</td><td class="col-metric" style="color:var(--pink)">${s.average}</td><td class="col-metric">${mapAgreement(s.song_name)}%</td></tr>`).join('');
+            const rows = [...top, ...btm].map((s, i) => `<tr onclick="showSongDistribution('${s.song_name.replace(/'/g, "\\'")}')" style="cursor:pointer;" class="clickable-row"><td class="col-rank" style="color:${i < limit ? 'var(--green)' : 'var(--red)'}">${i < limit ? 'TOP' : 'BTM'}</td><td>${s.song_name}</td><td class="col-metric" style="color:var(--pink)">${s.average}</td><td class="col-metric">${mapAgreement(s.song_name)}%</td></tr>`).join('');
             document.getElementById('c-universal').innerHTML = `<table><colgroup><col class="col-rank"><col><col class="col-metric"><col class="col-metric"></colgroup><tr><th>Type</th><th>Song</th><th>Avg</th><th>Agr</th></tr>${rows}</table>`;
         }
 
         function renderDisputed(takes) {
+            const limit = getLimit(10, 50);
             const songGroups = {};
             takes.forEach(t => { if (!songGroups[t.song_name]) songGroups[t.song_name] = []; songGroups[t.song_name].push(t); });
             const res = Object.keys(songGroups).map(name => {
                 const g = songGroups[name].sort((a, b) => a.user_rank - b.user_rank);
                 return { name, fight: `${g[0].username} vs ${g[g.length - 1].username}`, diff: Math.abs(g[g.length - 1].user_rank - g[0].user_rank) };
-            }).sort((a, b) => b.diff - a.diff).slice(0, 10);
-            document.getElementById('c-disputed').innerHTML = `<table><colgroup><col><col class="col-fight"><col class="col-metric"></colgroup><tr><th>Song</th><th>Fight</th><th class="col-metric">Diff</th></tr>` + res.map(r => `<tr><td>${r.name}</td><td class="col-fight">${r.fight}</td><td class="col-metric" style="color:var(--pink)">${r.diff}</td></tr>`).join('') + `</table>`;
+            }).sort((a, b) => b.diff - a.diff).slice(0, limit);
+            document.getElementById('c-disputed').innerHTML = `<table><colgroup><col><col class="col-fight"><col class="col-metric"></colgroup><tr><th>Song</th><th>Fight</th><th class="col-metric">Diff</th></tr>` + res.map(r => `<tr onclick="showSongDistribution('${r.name.replace(/'/g, "\\'")}')" style="cursor:pointer;" class="clickable-row"><td>${r.name}</td><td class="col-fight">${r.fight}</td><td class="col-metric" style="color:var(--pink)">${r.diff}</td></tr>`).join('') + `</table>`;
         }
 
         function renderSubunitPopularity(rankings, controversy, franchise) {
@@ -1276,10 +1622,50 @@
             document.getElementById('c-subunits').innerHTML = `<table><colgroup><col><col class="col-metric"><col class="col-metric"></colgroup><tr><th>Unit</th><th class="col-metric">Avg</th><th class="col-metric">Div</th></tr>` + data.map(d => `<tr><td style="font-weight:bold">${d.name}</td><td class="col-metric" style="color:var(--pink)">${d.avg}</td><td class="col-metric">${d.div}</td></tr>`).join('') + `</table>`;
         }
 
-        function renderControversy(results) { document.getElementById('c-controversy').innerHTML = `<table><colgroup><col><col class="col-metric"><col class="col-metric"></colgroup><tr><th>Song</th><th class="col-metric">Score</th><th class="col-metric">Div</th></tr>` + results.slice(0, 10).map(s => `<tr><td>${s.song_name}</td><td class="col-metric" style="color:var(--pink)">${s.controversy_score}</td><td class="col-metric">${s.cv}</td></tr>`).join('') + `</table>`; }
-        function renderConsistent(results) { const sorted = [...results].sort((a, b) => a.controversy_score - b.controversy_score).slice(0, 10); document.getElementById('c-consistent').innerHTML = `<table><colgroup><col><col class="col-metric"><col class="col-metric"></colgroup><tr><th>Song</th><th class="col-metric">Score</th><th class="col-metric">Avg</th></tr>` + sorted.map(s => `<tr><td>${s.song_name}</td><td class="col-metric" style="color:var(--pink)">${s.controversy_score}</td><td class="col-metric">${s.avg_rank}</td></tr>`).join('') + `</table>`; }
-        function renderSleepers(takes) { const sleepers = takes.filter(t => t.score < -15).slice(0, 10); document.getElementById('c-sleeper').innerHTML = `<table><colgroup><col><col class="col-metric"><col class="col-metric"></colgroup><tr><th>Song</th><th class="col-metric">Lover</th><th class="col-metric">Gap</th></tr>` + sleepers.map(t => `<tr><td>${t.song_name}</td><td class="col-metric">${t.username.substring(0, 8)}</td><td class="col-metric" style="color:var(--green)">${Math.abs(t.delta).toFixed(1)}</td></tr>`).join('') + `</table>`; }
-        function renderOutliers(results) { if (!results || !results.length) return; const s = results.map(u => u.global_spice), min = Math.min(...s), max = Math.max(...s), r = (max - min) || 1; document.getElementById('c-outliers').innerHTML = `<table><colgroup><col><col class="col-metric"></colgroup><tr><th>User</th><th class="col-metric">Spice</th></tr>` + results.slice(0, 10).map(u => `<tr><td style="font-weight:bold">${u.username}</td><td class="metric"><div class="bar-bg" style="width:180px"><div class="bar-fill" style="width:${((u.global_spice - min) / r) * 100}%"></div><div style="font-size:10px; margin-top:-14px; margin-left:5px;">${u.global_spice}</div></div></td></tr>`).join('') + `</table>`; }
+        function renderControversy(results) {
+            const limit = getLimit(10, results.length);
+            document.getElementById('c-controversy').innerHTML = `<table><colgroup><col><col class="col-metric"><col class="col-metric"></colgroup><tr><th>Song</th><th class="col-metric">Score</th><th class="col-metric">Div</th></tr>` + results.slice(0, limit).map(s => `<tr onclick="showSongDistribution('${s.song_name.replace(/'/g, "\\'")}')" style="cursor:pointer;" class="clickable-row"><td>${s.song_name}</td><td class="col-metric" style="color:var(--pink)">${s.controversy_score}</td><td class="col-metric">${s.cv}</td></tr>`).join('') + `</table>`;
+        }
+        function renderConsistent(results) {
+            const limit = getLimit(10, results.length);
+            const sorted = [...results].sort((a, b) => a.controversy_score - b.controversy_score).slice(0, limit);
+            document.getElementById('c-consistent').innerHTML = `<table><colgroup><col><col class="col-metric"><col class="col-metric"></colgroup><tr><th>Song</th><th class="col-metric">Score</th><th class="col-metric">Avg</th></tr>` + sorted.map(s => `<tr onclick="showSongDistribution('${s.song_name.replace(/'/g, "\\'")}')" style="cursor:pointer;" class="clickable-row"><td>${s.song_name}</td><td class="col-metric" style="color:var(--pink)">${s.controversy_score}</td><td class="col-metric">${s.avg_rank}</td></tr>`).join('') + `</table>`;
+        }
+        function renderSleepers(takes) {
+            const limit = getLimit(10, 50);
+            const sleepers = takes.filter(t => t.score < -15).slice(0, limit);
+            document.getElementById('c-sleeper').innerHTML = `<table><colgroup><col><col class="col-metric"><col class="col-metric"></colgroup><tr><th>Song</th><th class="col-metric">Lover</th><th class="col-metric">Gap</th></tr>` + sleepers.map(t => `<tr onclick="showSongDistribution('${t.song_name.replace(/'/g, "\\'")}')" style="cursor:pointer;" class="clickable-row"><td>${t.song_name}</td><td class="col-metric">${t.username.substring(0, 8)}</td><td class="col-metric" style="color:var(--green)">${Math.abs(t.delta).toFixed(1)}</td></tr>`).join('') + `</table>`;
+        }
+        function renderHaters(takes) {
+            const limit = getLimit(10, 50);
+            const haters = takes.filter(t => t.score > 15).slice(0, limit);
+            document.getElementById('c-haters').innerHTML = `<table><colgroup><col><col class="col-metric"><col class="col-metric"></colgroup><tr><th>Song</th><th class="col-metric">Hater</th><th class="col-metric">Gap</th></tr>` + haters.map(t => `<tr onclick="showSongDistribution('${t.song_name.replace(/'/g, "\\'")}')" style="cursor:pointer;" class="clickable-row"><td>${t.song_name}</td><td class="col-metric">${t.username.substring(0, 8)}</td><td class="col-metric" style="color:var(--red)">${Math.abs(t.delta).toFixed(1)}</td></tr>`).join('') + `</table>`;
+        }
+        function renderOutliers(results) {
+            if (!results || !results.length) return;
+            const limit = getLimit(10, results.length);
+            const s = results.map(u => u.global_spice), min = Math.min(...s), max = Math.max(...s), r = (max - min) || 1;
+            document.getElementById('c-outliers').innerHTML = `<table><colgroup><col><col class="col-metric"></colgroup><tr><th>User</th><th class="col-metric">Spice</th></tr>` + results.slice(0, limit).map(u => `<tr><td style="font-weight:bold">${u.username}</td><td class="metric"><div class="bar-bg" style="width:180px"><div class="bar-fill" style="width:${((u.global_spice - min) / r) * 100}%"></div><div style="font-size:10px; margin-top:-14px; margin-left:5px;">${u.global_spice}</div></div></td></tr>`).join('') + `</table>`;
+        }
+
+        function renderSpice(results) {
+            const el = document.getElementById('c-spice');
+            if (!el || !results || !results.length) {
+                if (el) el.innerHTML = 'No spice data available.';
+                return;
+            }
+            const limit = getLimit(15, results.length);
+            const data = results.slice(0, limit);
+            const s = data.map(u => u.global_spice), min = Math.min(...s), max = Math.max(...s), r = (max - min) || 1;
+
+            el.innerHTML = `<table><colgroup><col><col class="col-metric"><col class="col-metric"></colgroup><tr><th>User</th><th class="col-metric">Global Spice</th><th>Distribution</th></tr>` +
+                data.map(u => `<tr>
+                    <td style="font-weight:bold">${u.username}</td>
+                    <td class="col-metric" style="color:var(--pink)">${u.global_spice}</td>
+                    <td><div class="bar-bg" style="width:200px"><div class="bar-fill" style="width:${((u.global_spice - min) / r) * 100}%"></div></div></td>
+                </tr>`).join('') + `</table>`;
+        }
+
 
         async function renderMatrix(sub, f) {
             const wrap = document.getElementById("c-matrix"); wrap.innerHTML = "Loading...";
@@ -1288,7 +1674,7 @@
                 const d = await r.json(), u = Object.keys(d.matrix).sort(), max = Math.max(...Object.values(d.matrix).flatMap(o => Object.values(o))) || 1;
                 wrap.style.gridTemplateColumns = `150px repeat(${u.length}, 1fr)`;
                 wrap.innerHTML = `<div></div>` + u.map(n => `<div class="m-label">${n}</div>`).join('');
-                u.forEach(u1 => { wrap.innerHTML += `<div class="m-label" style="text-align:left">${u1}</div>`; u.forEach(u2 => { const v = d.matrix[u1][u2], op = Math.pow(v / max, 1.8); wrap.innerHTML += `<div class="cell" style="background:rgba(219, 97, 162, ${op}); color:${op > 0.5 ? '#fff' : '#8b949e'}; border-bottom:1px solid #0d1117;">${v}</div>`; }); });
+                u.forEach(u1 => { wrap.innerHTML += `<div class="m-label" style="text-align:left">${u1}</div>`; u.forEach(u2 => { const v = d.matrix[u1][u2], op = Math.pow(v / max, 1.8); wrap.innerHTML += `<div class="cell" onclick="showUserComparison('${u1}', '${u2}')" style="background:rgba(219, 97, 162, ${op}); color:${op > 0.5 ? '#fff' : '#8b949e'}; border-bottom:1px solid #0d1117; cursor:pointer;">${v}</div>`; }); });
             } catch (e) { wrap.innerHTML = "Error."; }
         }
 
@@ -1304,6 +1690,8 @@
                 allUsers = Object.keys(d.matrix).sort();
                 // Init Graph with full data (for loading calculations)
                 setTimeout(() => typeof initConstellation === 'function' && initConstellation(d), 500);
+                // Also init dashboard constellation
+                setTimeout(() => typeof initDashboardConstellation === 'function' && initDashboardConstellation(d), 600);
 
                 const opts = allUsers.map(u => `<option value="${u}">${u}</option>`).join('');
                 ['duel-user-a', 'duel-user-b', 'match-finder-user', 'bias-user'].forEach(id => {
@@ -1318,6 +1706,54 @@
                 });
             } catch (e) { }
         }
+
+        function switchRivalTab(tab) {
+            // Update button styles
+            const buttons = {
+                constellation: document.getElementById('rtab-constellation'),
+                duel: document.getElementById('rtab-duel'),
+                oshi: document.getElementById('rtab-oshi')
+            };
+            Object.keys(buttons).forEach(key => {
+                const btn = buttons[key];
+                if (key === tab) {
+                    btn.style.background = 'var(--pink)';
+                    btn.style.color = '#000';
+                    btn.style.borderColor = 'transparent';
+                } else {
+                    btn.style.background = 'var(--card)';
+                    btn.style.color = 'var(--text)';
+                    btn.style.borderColor = 'var(--border)';
+                }
+            });
+            // Update views
+            document.getElementById('rview-constellation').classList.toggle('hidden', tab !== 'constellation');
+            document.getElementById('rview-duel').classList.toggle('hidden', tab !== 'duel');
+            document.getElementById('rview-oshi').classList.toggle('hidden', tab !== 'oshi');
+        }
+
+        function switchMatchTab(tab) {
+            // Update button styles
+            const buttons = { duel: document.getElementById('mtab-duel'), match: document.getElementById('mtab-match'), oshi: document.getElementById('mtab-oshi') };
+            Object.keys(buttons).forEach(key => {
+                const btn = buttons[key];
+                if (key === tab) {
+                    btn.style.background = 'var(--pink)';
+                    btn.style.color = '#000';
+                    btn.style.borderColor = 'transparent';
+                } else {
+                    btn.style.background = 'var(--card)';
+                    btn.style.color = 'var(--text)';
+                    btn.style.borderColor = 'var(--border)';
+                }
+            });
+            // Update views
+            document.getElementById('mview-duel').classList.toggle('hidden', tab !== 'duel');
+            document.getElementById('mview-match').classList.toggle('hidden', tab !== 'match');
+            document.getElementById('mview-oshi').classList.toggle('hidden', tab !== 'oshi');
+        }
+
+
 
         async function runDuel() {
             const u1 = document.getElementById('duel-user-a').value;
@@ -1342,12 +1778,13 @@
                 document.getElementById('duel-msg').innerHTML = sc > 85 ? "BEST FRIENDS FOREVER 💖" : sc > 60 ? "Solid Compatibility 👍" : sc < 30 ? "MORTAL ENEMIES 💀" : "It's Complicated 🤷";
 
                 // Render Disputes
-                const disputes = data.diffs.slice(0, 10);
+                const limit = getLimit(10, data.diffs.length);
+                const disputes = data.diffs.slice(0, limit);
                 document.getElementById('duel-disputes').innerHTML = `<table>
                     <colgroup><col><col style="width:80px"><col style="width:80px"><col style="width:60px"></colgroup>
                     <tr><th>Song</th><th>${u1}</th><th>${u2}</th><th>Diff</th></tr>` +
                     disputes.map(d => `
-                        <tr>
+                        <tr onclick="showSongDistribution('${d.name.replace(/'/g, "\\'")}')" style="cursor:pointer;" class="clickable-row">
                             <td>${d.name}</td>
                             <td style="color:${d.r1 < d.r2 ? 'var(--green)' : 'var(--muted)'}">#${d.r1}</td>
                             <td style="color:${d.r2 < d.r1 ? 'var(--green)' : 'var(--muted)'}">#${d.r2}</td>
@@ -1380,7 +1817,14 @@
 
                 res.innerHTML = renderCard("❤️ Soulmates", data.soulmates, "var(--green)") +
                     renderCard("💀 Nemeses", data.nemeses, "var(--red)");
-            } catch (e) { res.innerHTML = "Error finding matches."; }
+            } catch (e) {
+                console.error('Match finding error:', e);
+                res.innerHTML = `<div class="card" style="border-color:var(--red); text-align:center; padding:30px;">
+                    <div style="font-size:48px; margin-bottom:10px;">⚠️</div>
+                    <div style="color:var(--red); font-weight:600; margin-bottom:10px;">Error Finding Matches</div>
+                    <div style="font-size:12px; color:var(--muted);">The API endpoint may not be available. Please check the backend service.</div>
+                </div>`;
+            }
         }
 
         async function analyzeBias() {
@@ -1598,11 +2042,35 @@
                 pc3: [...songLoadings].sort((a, b) => Math.abs(b.pc3) - Math.abs(a.pc3))
             };
 
-            // Global helper for showing details (simple alert for now, can be modal later)
+            // Global helper for showing details (now uses MODAL instead of alert)
             window.showAxisDetails = (title, data, key) => {
-                const top10 = data.slice(0, 10);
-                const msg = top10.map((s, i) => `${i + 1}. ${s.name} (${s[key] > 0 ? '+' : ''}${s[key].toFixed(2)})`).join('\n');
-                alert(`${title} Drivers (Pearson Correlation):\n\n${msg}\n\n(High magnitude = Strong driver of this axis)`);
+                const modal = document.getElementById('song-modal');
+                const content = document.getElementById('song-modal-content');
+                document.getElementById('song-modal-title').textContent = title + " Drivers";
+                modal.classList.remove('hidden');
+                modal.style.display = 'flex';
+
+                const limit = getLimit(10, data.length);
+                const topSongs = data.slice(0, limit);
+
+                content.innerHTML = `
+                    <div style="font-size:12px; color:var(--muted); margin-bottom:15px; text-align:center;">
+                        High magnitude Pearson correlation indicates a strong driver of this axis. Click any song for distribution.
+                    </div>
+                    <div style="max-height:60vh; overflow-y:auto; padding-right:5px;">
+                        ${topSongs.map((s, i) => `
+                            <div class="axis-item" onclick="showSongDistribution('${s.name.replace(/'/g, "\\'")}')">
+                                <div style="display:flex; align-items:center; gap:12px;">
+                                    <span style="font-family:monospace; color:var(--muted); font-size:11px;">${(i + 1).toString().padStart(2, '0')}</span>
+                                    <span style="font-weight:600;">${s.name}</span>
+                                </div>
+                                <div style="font-weight:900; color:${s[key] > 0 ? 'var(--green)' : 'var(--red)'}; font-family:monospace;">
+                                    ${s[key] > 0 ? '+' : ''}${s[key].toFixed(3)}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
             };
 
             // Click Handler for Drill-Down
@@ -1681,6 +2149,42 @@
             };
 
             if (typeof drawGraph === 'function') drawGraph();
+        }
+
+        // Dashboard Constellation (simplified 2D version)
+        function initDashboardConstellation(data) {
+            const matrixData = data.matrix;
+            const cvs = document.getElementById('dash-taste-canvas');
+            if (!cvs || !matrixData) return;
+            const rect = cvs.getBoundingClientRect();
+            cvs.width = rect.width; cvs.height = rect.height;
+            const ctx = cvs.getContext('2d');
+
+            const users = Object.keys(matrixData);
+            const distMatrix = users.map(u1 => users.map(u2 => matrixData[u1][u2]));
+            const { coords } = MathLib.mds(distMatrix);
+
+            const w = cvs.width, h = cvs.height;
+            const scale = Math.min(w, h) * 0.35;
+            const nodes = users.map((u, i) => ({
+                id: u,
+                x: coords[i].x * scale + w / 2,
+                y: coords[i].y * scale + h / 2,
+                color: `hsl(${280 + ((i * 40) % 80)}, 70%, 60%)`
+            }));
+
+            // Simple draw
+            ctx.clearRect(0, 0, w, h);
+            nodes.forEach(n => {
+                ctx.fillStyle = n.color;
+                ctx.beginPath();
+                ctx.arc(n.x, n.y, 8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 9px Inter';
+                ctx.textAlign = 'center';
+                ctx.fillText(n.id, n.x, n.y + 18);
+            });
         }
 
         function drawGraph() {
