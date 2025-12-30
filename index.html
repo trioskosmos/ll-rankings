@@ -771,7 +771,8 @@
             <div class="nav-item" id="btn-leader" onclick="tab('leader')">Rankings</div>
             <div class="nav-item" id="btn-more" onclick="tab('more')">Analysis</div>
             <div class="nav-item" id="btn-opps" onclick="tab('opps')">Divergence</div>
-            <div class="nav-item" id="btn-rivals" onclick="tab('rivals')">Rivals</div>
+            <div class="nav-item" id="btn-constellation" onclick="tab('constellation')">Constellation</div>
+            <div class="nav-item" id="btn-oshi" onclick="tab('oshi')">Oshi Detector</div>
             <div class="nav-item" id="btn-spice" onclick="tab('spice')">Spice</div>
             <div class="nav-item" id="btn-users" onclick="tab('users')">Users</div>
         </div>
@@ -824,12 +825,7 @@
                 </div>
             </div>
 
-            <!-- Taste Constellation on Dashboard -->
-            <div class="card" style="grid-column: 1 / -1;">
-                <h3 style="text-align:center;">🌌 Taste Constellation</h3>
-                <canvas id="dash-taste-canvas"
-                    style="width:100%; height:400px; background: radial-gradient(circle at center, #1b2028 0%, #0d1117 100%); border-radius:12px; border:1px solid var(--border);"></canvas>
-            </div>
+
         </div>
 
         <!-- FULL RANKINGS VIEW -->
@@ -844,14 +840,18 @@
         <div id="song-modal" class="hidden"
             style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.85); z-index:1000; display:flex; align-items:center; justify-content:center;"
             onclick="closeSongModal(event)">
-            <div
-                style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; padding:20px 20px 0 20px;">
-                <h3 id="song-modal-title" style="margin:0; border:none;">Song Distribution</h3>
-                <button onclick="closeSongModal()"
-                    style="background:none; border:none; color:var(--muted); font-size:24px; cursor:pointer;">&times;</button>
+            <div class="card"
+                style="max-width:900px; width:95%; max-height:85vh; padding:0; display:flex; flex-direction:column;"
+                onclick="event.stopPropagation()">
+                <div
+                    style="display:flex; justify-content:space-between; align-items:center; padding:20px 25px; border-bottom:1px solid var(--border);">
+                    <h3 id="song-modal-title" style="margin:0; border:none; font-size:18px; color:var(--pink);">Song
+                        Distribution</h3>
+                    <button onclick="closeSongModal()"
+                        style="background:none; border:none; color:var(--muted); font-size:24px; cursor:pointer;">&times;</button>
+                </div>
+                <div id="song-modal-content" style="padding:25px; overflow-y:auto; flex:1;"></div>
             </div>
-            <div id="song-modal-content"
-                style="padding:0 20px 20px 20px; overflow-y:auto; max-height:calc(80vh - 80px);"></div>
         </div>
         </div>
 
@@ -860,25 +860,30 @@
             style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:20px; align-items:start;">
             <!-- Row 1: The "Personal Opinions" & "Controversy" Line -->
             <div class="card">
-                <h3>Most Disputed</h3>
+                <h3 onclick="showMetricExplanation('disputed')"
+                    style="cursor:help; border-bottom:1px dashed var(--muted);">Most Disputed ℹ️</h3>
                 <div class="table-container" id="c-disputed"></div>
             </div>
             <div class="card">
-                <h3>Sleeper Picks</h3>
+                <h3 onclick="showMetricExplanation('sleeper')"
+                    style="cursor:help; border-bottom:1px dashed var(--muted);">Sleeper Picks ℹ️</h3>
                 <div class="table-container" id="c-sleeper"></div>
             </div>
             <div class="card">
-                <h3>Hot Takes</h3>
+                <h3 onclick="showMetricExplanation('haters')"
+                    style="cursor:help; border-bottom:1px dashed var(--muted);">Hot Takes ℹ️</h3>
                 <div class="table-container" id="c-haters"></div>
             </div>
             <div class="card">
-                <h3>Controversial Tracks</h3>
+                <h3 onclick="showMetricExplanation('controversy')"
+                    style="cursor:help; border-bottom:1px dashed var(--muted);">Controversial Tracks ℹ️</h3>
                 <div class="table-container" id="c-controversy"></div>
             </div>
 
             <!-- Row 2: Community Trends -->
             <div class="card" style="grid-column: span 2;">
-                <h3>Consistent Tracks (Consensus)</h3>
+                <h3 onclick="showMetricExplanation('consistent')"
+                    style="cursor:help; border-bottom:1px dashed var(--muted);">Consistent Tracks (Consensus) ℹ️</h3>
                 <div class="table-container" id="c-consistent"></div>
             </div>
 
@@ -890,11 +895,13 @@
 
             <!-- Row 4: Secondary Metrics -->
             <div class="card" style="grid-column: span 2;">
-                <h3>Subunit Power Rankings</h3>
+                <h3 onclick="showMetricExplanation('subunits')"
+                    style="cursor:help; border-bottom:1px dashed var(--muted);">Subunit Power Rankings ℹ️</h3>
                 <div class="table-container" id="c-subunits"></div>
             </div>
             <div class="card" style="grid-column: span 2;">
-                <h3>Outliers (Spice Meter)</h3>
+                <h3 onclick="showMetricExplanation('outliers')"
+                    style="cursor:help; border-bottom:1px dashed var(--muted);">Outliers (Spice Meter) ℹ️</h3>
                 <div class="table-container" id="c-outliers"></div>
             </div>
         </div>
@@ -913,171 +920,95 @@
             <div id="c-spice"></div>
         </div>
 
-        <!-- RIVALS VIEW -->
-        <div id="view-rivals" class="main-view hidden" style="padding:0; background:transparent;">
-            <!-- Sub Navigation -->
-            <div style="display:flex; justify-content:center; gap:10px; margin-bottom:20px;">
-                <button id="rtab-constellation" class="nav-btn active" onclick="switchRivalTab('constellation')"
-                    style="padding:8px 16px; font-size:11px; font-weight:600; background:var(--pink); color:#000; border:none; border-radius:6px; cursor:pointer; text-transform:uppercase;">Constellation</button>
-                <button id="rtab-duel" class="nav-btn" onclick="switchRivalTab('duel')"
-                    style="padding:8px 16px; font-size:11px; font-weight:600; background:var(--card); color:var(--text); border:1px solid var(--border); border-radius:6px; cursor:pointer; text-transform:uppercase;">Head-to-Head</button>
-                <button id="rtab-oshi" class="nav-btn" onclick="switchRivalTab('oshi')"
-                    style="padding:8px 16px; font-size:11px; font-weight:600; background:var(--card); color:var(--text); border:1px solid var(--border); border-radius:6px; cursor:pointer; text-transform:uppercase;">Oshi
-                    Detector</button>
+        <!-- VIEW: CONSTELLATION -->
+        <div id="view-constellation" class="card hidden">
+            <h3 style="border:none; margin-bottom:10px; text-align:center;">🌌 Taste Constellation</h3>
+            <div style="font-size:12px; color:var(--muted); margin-bottom:15px; text-align:center;"
+                id="constellation-desc">
+                Visualizing 147-dimensional taste differences in 2D space.
+                <button id="toggle-3d" onclick="toggle3D()"
+                    style="margin-left:10px; padding:4px 10px; font-size:10px; font-weight:bold; vertical-align:middle; background:transparent; border:1px solid var(--pink); color:var(--pink); border-radius:4px; cursor:pointer; text-transform:uppercase;">Switch
+                    to 3D</button>
             </div>
 
-            <!-- TAB 1: CONSTELLATION -->
-            <div id="rview-constellation" class="card">
-                <h3 style="border:none; margin-bottom:10px; text-align:center;">🌌 Taste Constellation</h3>
-                <div style="font-size:12px; color:var(--muted); margin-bottom:15px; text-align:center;">
-                    Visualizing 147-dimensional taste differences in 2D space.
-                    <button id="toggle-3d" onclick="toggle3D()"
-                        style="margin-left:10px; padding:4px 10px; font-size:10px; font-weight:bold; vertical-align:middle; background:transparent; border:1px solid var(--pink); color:var(--pink); border-radius:4px; cursor:pointer; text-transform:uppercase;">Switch
-                        to 3D</button>
-                </div>
+            <canvas id="taste-canvas"
+                style="width:100%; height:600px; background: radial-gradient(circle at center, #1b2028 0%, #0d1117 100%); border-radius:12px; border:1px solid var(--border); margin-bottom:30px;"></canvas>
 
-                <canvas id="taste-canvas"
-                    style="width:100%; height:600px; background: radial-gradient(circle at center, #1b2028 0%, #0d1117 100%); border-radius:12px; border:1px solid var(--border); margin-bottom:30px;"></canvas>
+            <!-- LAYMAN EXPLANATION -->
+            <div
+                style="background:rgba(255,255,255,0.03); border-radius:12px; padding:25px; border:1px solid var(--border);">
+                <h4 style="margin-top:0; color:var(--pink);">How to read this graph</h4>
+                <p style="font-size:14px; color:#ccc; line-height:1.6; margin-bottom:20px;">
+                    This map visualizes the "Social Geography" of taste.
+                    <b>Distance = Disagreement</b>. The further apart two users are, the more they disagree on
+                    rankings.
+                </p>
 
-                <!-- LAYMAN EXPLANATION -->
-                <div
-                    style="background:rgba(255,255,255,0.03); border-radius:12px; padding:25px; border:1px solid var(--border);">
-                    <h4 style="margin-top:0; color:var(--pink);">How to read this graph</h4>
-                    <p style="font-size:14px; color:#ccc; line-height:1.6; margin-bottom:20px;">
-                        This map visualizes the "Social Geography" of taste.
-                        <b>Distance = Disagreement</b>. The further apart two users are, the more they disagree on
-                        rankings.
-                    </p>
-
-                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:25px;">
-                        <!-- Concept 1: The Main Divide -->
-                        <!-- Concept 1: The Main Divide -->
-                        <div>
-                            <strong
-                                style="color:#fff; display:block; margin-bottom:8px; border-bottom:1px solid var(--pink); padding-bottom:5px;">1.
-                                The Main Divide (X-Axis)</strong>
-                            <p style="font-size:13px; color:var(--muted); margin:0;">
-                                This line represents the <b>single biggest difference</b> in opinion across the whole
-                                group.
-                                <br><br>
-                                <b style="color:var(--pink); cursor:pointer;">Click the "X" Label</b> on the graph to
-                                see exactly which songs are causing this split.
-                                (Usually, people on the left love a certain style, while people on the right prefer
-                                another).
-                            </p>
-                        </div>
-
-                        <!-- Concept 2: The Nuance -->
-                        <div>
-                            <strong
-                                style="color:#fff; display:block; margin-bottom:8px; border-bottom:1px solid var(--pink); padding-bottom:5px;">2.
-                                The Nuance (Y-Axis)</strong>
-                            <p style="font-size:13px; color:var(--muted); margin:0;">
-                                This difference distinguishes people who might agree on the big stuff but disagree on
-                                specific details.
-                                <br><br>
-                                <b style="color:var(--pink); cursor:pointer;">Click the "Y" Label</b> to see the songs
-                                driving these finer distinctions.
-                            </p>
-                        </div>
-
-                        <!-- Concept 3: The Layout -->
-                        <div>
-                            <strong
-                                style="color:#fff; display:block; margin-bottom:8px; border-bottom:1px solid var(--pink); padding-bottom:5px;">3.
-                                The Layout</strong>
-                            <p style="font-size:13px; color:var(--muted); margin:0;">
-                                <b>Distance &approx; Disagreement</b>.<br>
-                                Users close together typically share very similar tastes. Users far apart rarely agree.
-                                Look for clusters!
-                            </p>
-                        </div>
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:25px;">
+                    <!-- Concept 1: The Main Divide -->
+                    <!-- Concept 1: The Main Divide -->
+                    <div>
+                        <strong
+                            style="color:#fff; display:block; margin-bottom:8px; border-bottom:1px solid var(--pink); padding-bottom:5px;">1.
+                            The Main Divide (X-Axis)</strong>
+                        <p style="font-size:13px; color:var(--muted); margin:0;">
+                            This line represents the <b>single biggest difference</b> in opinion across the whole
+                            group.
+                            <br><br>
+                            <b style="color:var(--pink); cursor:pointer;">Click the "X" Label</b> on the graph to
+                            see exactly which songs are causing this split.
+                            (Usually, people on the left love a certain style, while people on the right prefer
+                            another).
+                        </p>
                     </div>
-                </div>
-            </div>
 
-            <!-- TAB 2: HEAD-TO-HEAD DUEL -->
-            <div id="rview-duel" class="hidden">
-                <div class="card" style="margin-bottom:20px;">
-                    <h3 style="border:none; text-align:center; font-size:18px;">👥 Head-to-Head Duel</h3>
-                    <div class="selector-group"
-                        style="margin-bottom:30px; justify-content:center; align-items:center; gap:20px;">
-                        <select id="duel-user-a" onchange="runDuel()"
-                            style="width:200px; padding:12px; font-size:16px; background:var(--card); border:2px solid var(--border);"></select>
-                        <div style="font-weight:900; color:var(--red); font-size:24px; font-style:italic;">VS</div>
-                        <select id="duel-user-b" onchange="runDuel()"
-                            style="width:200px; padding:12px; font-size:16px; background:var(--card); border:2px solid var(--border);"></select>
+                    <!-- Concept 2: The Nuance -->
+                    <div>
+                        <strong
+                            style="color:#fff; display:block; margin-bottom:8px; border-bottom:1px solid var(--pink); padding-bottom:5px;">2.
+                            The Nuance (Y-Axis)</strong>
+                        <p style="font-size:13px; color:var(--muted); margin:0;">
+                            This difference distinguishes people who might agree on the big stuff but disagree on
+                            specific details.
+                            <br><br>
+                            <b style="color:var(--pink); cursor:pointer;">Click the "Y" Label</b> to see the songs
+                            driving these finer distinctions.
+                        </p>
                     </div>
-                    <div id="duel-results" class="hidden">
-                        <div style="text-align:center; margin-bottom:40px;">
-                            <div
-                                style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:2px; font-weight:700; margin-bottom:10px;">
-                                Compatibility Score</div>
-                            <div id="duel-score"
-                                style="font-size:56px; line-height:1; font-weight:900; color:#fff; text-shadow:0 0 30px rgba(219,97,162,0.3);">
-                                --%</div>
-                            <div id="duel-msg"
-                                style="color:var(--pink); font-size:14px; font-weight:600; margin-top:5px;">--</div>
-                        </div>
-                        <div class="card"
-                            style="margin-bottom:20px; border-color:var(--red); background:rgba(20,20,20,0.5);">
-                            <h3 style="color:var(--red); border-color:rgba(248,81,73,0.3);">⚔️ Biggest Disagreements
-                            </h3>
-                            <div class="table-container" id="duel-disputes"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            <!-- TAB 3: OSHI DETECTOR -->
-            <div id="rview-oshi" class="hidden">
-                <div class="card">
-                    <h3 style="border:none; margin-bottom:10px; text-align: center;">💖 Oshi Detector</h3>
-                    <div style="font-size:12px; color:var(--muted); margin-bottom:15px; text-align: center;">Who do you
-                        <i>really</i> love the most? (Based on average rank)
+                    <!-- Concept 3: The Layout -->
+                    <div>
+                        <strong
+                            style="color:#fff; display:block; margin-bottom:8px; border-bottom:1px solid var(--pink); padding-bottom:5px;">3.
+                            The Layout</strong>
+                        <p style="font-size:13px; color:var(--muted); margin:0;">
+                            <b>Distance &approx; Disagreement</b>.<br>
+                            Users close together typically share very similar tastes. Users far apart rarely agree.
+                            Look for clusters!
+                        </p>
                     </div>
-                    <div
-                        style="display:flex; gap:10px; align-items:center; justify-content:center; margin-bottom:15px;">
-                        <select id="bias-user"
-                            style="width:200px; padding:10px; background:var(--card); border:1px solid var(--border); color:#fff; border-radius:6px;"></select>
-                        <button class="btn-footer btn-submit-action" onclick="analyzeBias()"
-                            style="padding:10px 20px;">Detect</button>
-                    </div>
-                    <div id="bias-results" class="grid"
-                        style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:15px;"></div>
                 </div>
             </div>
         </div>
 
+        <!-- VIEW: OSHI DETECTOR -->
+        <div id="view-oshi" class="card hidden">
+            <h3 style="border:none; margin-bottom:10px; text-align: center;">💖 Oshi Detector</h3>
+            <div style="font-size:12px; color:var(--muted); margin-bottom:15px; text-align: center;">Who do you
+                <i>really</i> love the most? (Based on average rank)
+            </div>
+            <div style="display:flex; gap:10px; align-items:center; justify-content:center; margin-bottom:15px;">
+                <select id="bias-user"
+                    style="width:200px; padding:10px; background:var(--card); border:1px solid var(--border); color:#fff; border-radius:6px;"></select>
+                <button class="btn-footer btn-submit-action" onclick="analyzeBias()"
+                    style="padding:10px 20px;">Detect</button>
+            </div>
+            <div id="bias-results" class="grid"
+                style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:15px;"></div>
+        </div>
+
         <script>
-            function switchRivalTab(tab) {
-                // Update Buttons
-                document.getElementById('rtab-constellation').className = tab === 'constellation' ? 'nav-btn active' : 'nav-btn';
-                document.getElementById('rtab-constellation').style.background = tab === 'constellation' ? 'var(--pink)' : 'transparent';
-                document.getElementById('rtab-constellation').style.color = tab === 'constellation' ? '#000' : 'var(--muted)';
-                document.getElementById('rtab-constellation').style.borderColor = tab === 'constellation' ? 'transparent' : 'var(--border)';
 
-                document.getElementById('rtab-matchmaking').className = tab === 'matchmaking' ? 'nav-btn active' : 'nav-btn';
-                document.getElementById('rtab-matchmaking').style.background = tab === 'matchmaking' ? 'var(--pink)' : 'transparent';
-                document.getElementById('rtab-matchmaking').style.color = tab === 'matchmaking' ? '#000' : 'var(--muted)';
-                document.getElementById('rtab-matchmaking').style.borderColor = tab === 'matchmaking' ? 'transparent' : 'var(--border)';
-
-                // Update Views
-                document.getElementById('rview-constellation').classList.toggle('hidden', tab !== 'constellation');
-                document.getElementById('rview-matchmaking').classList.toggle('hidden', tab !== 'matchmaking');
-
-                // Trigger Resize/Redraw if Constellation
-                if (tab === 'constellation') {
-                    setTimeout(() => {
-                        const cvs = document.getElementById('taste-canvas');
-                        if (cvs) {
-                            cvs.width = cvs.parentElement.clientWidth;
-                            // Height fixed usually, but we can reset
-                            if (typeof drawGraph === 'function') drawGraph();
-                        }
-                    }, 50);
-                }
-            }
         </script>
 
         <!-- USERS VIEW -->
@@ -1185,6 +1116,7 @@
             const filtered = allSubgroups.filter(sg => sg.franchise === f);
             sel.innerHTML = filtered.map(s => `<option value="${s.name}">${s.name}</option>`).join("");
             if (filtered.some(s => s.name === "All Songs")) sel.value = "All Songs";
+            else if (filtered.length > 0) sel.selectedIndex = 0;
         }
 
         function changeFranchiseView() {
@@ -1204,7 +1136,8 @@
             const ids = ['c-leaderboard', 'c-universal', 'c-disputed', 'c-subunits', 'c-controversy', 'c-sleeper', 'c-consistent', 'c-outliers', 'c-matrix', 'c-spice', 'c-dash-top5', 'c-dash-bottom5', 'duel-disputes', 'match-results'];
             ids.forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = "Refreshing..."; });
             ['d-top-song', 'd-cont-song', 'd-spice-user', 'd-sleep-song', 'd-agreed-song', 'd-total-songs'].forEach(id => document.getElementById(id).innerHTML = "...");
-            document.getElementById('duel-results').classList.add('hidden');
+            const dr = document.getElementById('duel-results');
+            if (dr) dr.classList.add('hidden');
         }
 
         function tab(name) {
@@ -1219,6 +1152,16 @@
         async function syncData(forceFetch = false) {
             const sub = document.getElementById('view-subgroup').value, f = document.getElementById('view-franchise').value;
             if (!sub) return;
+
+            // Priority fetch for Constellation to ensure immediate refresh
+            if (activeTab === 'constellation') {
+                try {
+                    const res = await fetch(`${API}/analysis/divergence?franchise=${encodeURIComponent(f)}&subgroup=${encodeURIComponent(sub)}`);
+                    const data = await res.json();
+                    if (data && data.matrix) initConstellation(data);
+                } catch (e) { console.error("Constellation load error:", e); }
+                // Do not return, let standard data load proceed
+            }
 
             const cacheKey = `${f}|${sub}`;
             let ranks, cont, takes, spice;
@@ -1265,18 +1208,14 @@
             }
             if (activeTab === 'opps') renderMatrix(sub, f);
             if (activeTab === 'spice') renderSpice(spice?.results || []);
-            if (activeTab === 'rivals') fetchUserList();
+
+            // New Tab Logic (Constellation handled at top)
+            if (activeTab === 'oshi') fetchUserList();
             if (activeTab === 'users') loadUsers();
 
             // Render dashboard constellation when on dashboard tab
             if (activeTab === 'dash') {
-                setTimeout(async () => {
-                    try {
-                        const r = await fetch(`${API}/analysis/divergence?franchise=${f}&subgroup=${sub}`);
-                        const d = await r.json();
-                        if (typeof initDashboardConstellation === 'function') initDashboardConstellation(d);
-                    } catch (e) { console.error('Dashboard constellation error:', e); }
-                }, 300);
+                // (Constellation removed via user request)
             }
         }
 
@@ -1303,6 +1242,7 @@
             }
             if (activeTab === 'opps') renderMatrix(sub, f);
             if (activeTab === 'spice') renderSpice(spice?.results || []);
+            if (activeTab === 'constellation' || activeTab === 'oshi') fetchUserList();
         }
 
 
@@ -1428,42 +1368,69 @@
 
                 // Create number line visualization
                 content.innerHTML = `
-                    <div style="margin-bottom:20px; text-align:center;">
-                        <div style="display:inline-flex; gap:30px; font-size:14px;">
-                            <div><span style="color:var(--muted)">Mean:</span> <span style="font-weight:bold; color:var(--pink)">${mean.toFixed(2)}</span></div>
-                            <div><span style="color:var(--muted)">Std Dev:</span> <span style="font-weight:bold; color:var(--pink)">${std.toFixed(2)}</span></div>
-                            <div><span style="color:var(--muted)">Voters:</span> <span style="font-weight:bold">${users.length}</span></div>
+                    <div style="margin-bottom:25px; text-align:center;">
+                        <div style="display:inline-flex; gap:40px; font-size:15px;">
+                            <div class="stat-item"><span style="color:var(--muted); font-size:11px; display:block; text-transform:uppercase;">Community Mean</span> <span style="font-weight:900; color:var(--pink); font-size:22px;">#${mean.toFixed(1)}</span></div>
+                            <div class="stat-item"><span style="color:var(--muted); font-size:11px; display:block; text-transform:uppercase;">Std Deviation</span> <span style="font-weight:900; color:#fff; font-size:22px;">${std.toFixed(2)}</span></div>
+                            <div class="stat-item"><span style="color:var(--muted); font-size:11px; display:block; text-transform:uppercase;">Total Voters</span> <span style="font-weight:900; color:#fff; font-size:22px;">${users.length}</span></div>
                         </div>
                     </div>
-                    <div style="position:relative; height:120px; background:linear-gradient(90deg, rgba(59,130,246,0.1) 0%, rgba(219,97,162,0.1) 50%, rgba(248,81,73,0.1) 100%); border-radius:8px; margin:20px 0; border:1px solid var(--border);">
-                        <!-- Number line -->
-                        <div style="position:absolute; top:60px; left:20px; right:20px; height:2px; background:var(--border);"></div>
+                    
+                    <div style="position:relative; height:120px; border-radius:12px; margin:30px 0; border:1px solid var(--border); background:#0d1117; overflow:hidden;">
+                        <!-- Selection Area Coloration (Constrained to Data Range) -->
+                         <div style="position:absolute; top:0; bottom:0; left:25px; right:25px; background:linear-gradient(90deg, rgba(63,185,80,0.1) 0%, rgba(219,97,162,0.1) 50%, rgba(248,81,73,0.1) 100%); border-left:1px solid rgba(255,255,255,0.1); border-right:1px solid rgba(255,255,255,0.1);"></div>
+
+                        <!-- Main line (Visual Only, centered in the data range) -->
+                        <div style="position:absolute; top:65px; left:25px; right:25px; height:2px; background:rgba(255,255,255,0.1);"></div>
+                        
                         <!-- Mean marker -->
-                        <div style="position:absolute; top:40px; left:calc(20px + ${((mean - minRank) / range) * (100 - 6)}%); transform:translateX(-50%); text-align:center;">
-                            <div style="font-size:9px; color:var(--pink); font-weight:bold;">MEAN</div>
-                            <div style="width:2px; height:30px; background:var(--pink); margin:0 auto;"></div>
+                        <div style="position:absolute; top:35px; left:calc(25px + ${(mean - minRank) / range} * (100% - 50px)); transform:translateX(-50%); text-align:center; z-index:5;">
+                            <div style="font-size:9px; color:var(--pink); font-weight:900; letter-spacing:1px; margin-bottom:2px;">AVG</div>
+                            <div style="width:2px; height:50px; background:var(--pink); margin:0 auto; box-shadow:0 0 10px var(--pink);"></div>
                         </div>
-                        <!-- Std dev range -->
-                        <div style="position:absolute; top:55px; height:12px; background:rgba(219,97,162,0.3); border-radius:4px; left:calc(20px + ${Math.max(0, ((mean - std - minRank) / range) * (100 - 6))}%); width:${((2 * std) / range) * (100 - 6)}%;"></div>
+
+                        <!-- Std dev range box -->
+                        <div style="position:absolute; top:60px; height:10px; background:rgba(219,97,162,0.25); border:1px border var(--pink); border-radius:4px; 
+                            left:calc(25px + ${Math.max(0, (mean - std - minRank) / range)} * (100% - 50px)); 
+                            width:calc(${(2 * std) / range} * (100% - 50px)); z-index:2;"></div>
+
                         <!-- User dots -->
                         ${users.map((user, i) => {
                     const rank = userRanks[user];
-                    const pos = ((rank - minRank) / range) * (100 - 6);
-                    const color = rank < mean ? 'var(--green)' : rank > mean ? 'var(--red)' : 'var(--pink)';
-                    return `<div title="${user}: #${rank}" style="position:absolute; top:52px; left:calc(20px + ${pos}%); transform:translateX(-50%); width:14px; height:14px; background:${color}; border-radius:50%; border:2px solid #fff; cursor:pointer; z-index:${10 + i};" onclick="event.stopPropagation(); alert('${user}\\nRanked: #${rank}')"></div>`;
+                    const pct = (rank - minRank) / range;
+                    const color = rank < (mean - 2) ? 'var(--green)' : rank > (mean + 2) ? 'var(--red)' : 'var(--pink)';
+                    return `<div title="${user}: #${rank}" 
+                                style="position:absolute; top:58px; left:calc(25px + ${pct} * (100% - 50px)); transform:translateX(-50%); 
+                                width:16px; height:16px; background:${color}; border-radius:50%; border:2px solid #fff; cursor:pointer; z-index:${10 + i}; transition:all 0.2s;"
+                                onmouseover="this.style.transform='translateX(-50%) scale(1.4)'; this.style.zIndex='100';"
+                                onmouseout="this.style.transform='translateX(-50%) scale(1)'; this.style.zIndex='${10 + i}';"
+                                onclick="event.stopPropagation(); showUserComparison('${user}', '${user}')"></div>`;
                 }).join('')}
+
                         <!-- Tick marks -->
-                        ${[minRank, Math.round(minRank + range * 0.25), Math.round(minRank + range * 0.5), Math.round(minRank + range * 0.75), maxRank].filter((v, i, a) => a.indexOf(v) === i).map(tick => `
-                            <div style="position:absolute; top:62px; left:calc(20px + ${((tick - minRank) / range) * (100 - 6)}%); transform:translateX(-50%); text-align:center;">
-                                <div style="width:1px; height:8px; background:var(--muted);"></div>
-                                <div style="font-size:10px; color:var(--muted); margin-top:2px;">${tick}</div>
+                        ${[minRank, Math.round(minRank + range * 0.25), Math.round(minRank + range * 0.5), Math.round(minRank + range * 0.75), maxRank].filter((v, i, a) => a.indexOf(v) === i).map(tick => {
+                    const pct = (tick - minRank) / range;
+                    return `
+                            <div style="position:absolute; top:67px; left:calc(25px + ${pct} * (100% - 50px)); transform:translateX(-50%); text-align:center;">
+                                <div style="width:1px; height:10px; background:var(--muted); opacity:0.5;"></div>
+                                <div style="font-size:11px; font-weight:700; color:var(--muted); margin-top:4px;">${tick}</div>
                             </div>
-                        `).join('')}
+                        `;
+                }).join('')}
                     </div>
-                    <div style="font-size:10px; color:var(--muted); text-align:center;">← Higher Ranked | Lower Ranked →</div>
-                    <div style="margin-top:20px;"><h4 style="margin-bottom:10px; font-size:13px;">Individual Rankings</h4>
-                        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:8px;">
-                            ${users.sort((a, b) => userRanks[a] - userRanks[b]).map(u => `<div style="padding:8px; background:var(--card); border:1px solid var(--border); border-radius:6px; display:flex; justify-content:space-between;"><span style="font-size:11px;">${u}</span><span style="font-weight:bold; color:var(--pink);">#${userRanks[u]}</span></div>`).join('')}
+                    <div style="display:flex; justify-content:space-between; margin-top:-10px; padding:0 25px;">
+                         <div style="font-size:10px; color:var(--green); font-weight:800; text-transform:uppercase;">← High Rank (Love)</div>
+                         <div style="font-size:10px; color:var(--red); font-weight:800; text-transform:uppercase;">Low Rank (Hate) →</div>
+                    </div>
+
+                    <div style="margin-top:35px;"><h4 style="margin-bottom:15px; font-size:14px; text-transform:uppercase; letter-spacing:1px; color:var(--muted);">Voter Breakdown</h4>
+                        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:10px;">
+                            ${users.sort((a, b) => userRanks[a] - userRanks[b]).map(u => `
+                                <div style="padding:10px 12px; background:var(--card); border:1px solid var(--border); border-radius:8px; display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="showUserComparison('${u}', '${u}')">
+                                    <span style="font-size:12px; font-weight:600;">${u.substring(0, 10)}</span>
+                                    <span style="font-weight:900; color:var(--pink); font-family:monospace;">#${userRanks[u]}</span>
+                                </div>
+                            `).join('')}
                         </div>
                     </div>
                 `;
@@ -1500,11 +1467,18 @@
                 const r = await fetch(`${API}/analysis/head-to-head?franchise=${f}&subgroup=${sub}&user_a=${u1}&user_b=${u2}`);
                 const data = await r.json();
 
-                const rms = Math.sqrt(data.diffs.reduce((s, d) => s + Math.pow(d.diff, 2), 0) / data.diffs.length).toFixed(2);
-                window.__compData = { u1, u2, diffs: data.diffs, rms, activeTab: 'dis' };
+                const n = data.diffs.length;
+                // Calculate Raw RMS
+                const rawRms = Math.sqrt(data.diffs.reduce((s, d) => s + Math.pow(d.diff, 2), 0) / n);
+                // Normalize: Divide by (N-1) to get approx 0-1 range, then * 100 for percentage
+                // Note: For random uniform rankings, expected absolute rank diff is N/3.
+                // Standardizing against N-1 is a simple way to make it roughly scale-invariant.
+                const rms = ((rawRms / Math.max(1, n - 1)) * 100).toFixed(1);
+
+                window.__compData = { u1, u2, diffs: data.diffs, rms, rawRms: rawRms.toFixed(2), activeTab: 'dis' };
                 renderCompModal();
 
-            } catch (e) { content.innerHTML = '<div style="padding:20px;">Error loading comparison.</div>'; }
+            } catch (e) { console.error(e); content.innerHTML = '<div style="padding:20px;">Error loading comparison.</div>'; }
         }
 
         window.switchCompTab = (tab) => {
@@ -1516,9 +1490,6 @@
         function renderCompModal() {
             const { u1, u2, diffs, rms, activeTab } = window.__compData;
             const content = document.getElementById('song-modal-content');
-
-            // Header metric
-            const statusMsg = rms < 5 ? "BEST FRIENDS FOREVER 💖" : rms < 15 ? "Solid Compatibility 👍" : rms > 30 ? "MORTAL ENEMIES 💀" : "It's Complicated 🤷";
 
             let tableHtml = "";
             let sortedArr = [...diffs];
@@ -1535,21 +1506,43 @@
                 const sumSq = diffs.reduce((s, d) => s + Math.pow(d.diff, 2), 0);
                 const n = diffs.length;
                 const varVal = (sumSq / n).toFixed(2);
+                const rawRms = Math.sqrt(sumSq / n).toFixed(2);
+
                 tableHtml = `
-                    <div style="background:rgba(0,0,0,0.2); padding:15px; border-radius:8px; font-family:'Consolas', monospace; font-size:12px; line-height:1.6;">
-                        <div style="color:var(--muted); margin-bottom:10px;">// Divergence Formula: sqrt(Σ(UserA_rank - UserB_rank)² / N)</div>
-                        <div>Σ(Squared Differences) = ${sumSq.toFixed(1)}</div>
-                        <div>Total Songs (N) = ${n}</div>
-                        <div>Mean Squared Diff = ${varVal}</div>
-                        <div style="color:var(--pink); font-size:16px; margin-top:10px; font-weight:bold;">√${varVal} = ${rms} Divergence</div>
+                    <div style="border-left:3px solid var(--pink); padding-left:15px; margin-bottom:20px;">
+                        <h4 style="font-size:13px; margin-bottom:10px; color:var(--pink);">Normalized Divergence Formula</h4>
+                        <div style="font-family:'Consolas', monospace; font-size:12px; line-height:1.8; color:var(--muted);">
+                            RMS = √(Σ(diff²)/N)<br>
+                            <span style="color:#fff; font-weight:bold;">Metric = (RMS / (N-1)) × 100</span>
+                        </div>
                     </div>
-                    <table style="margin-top:20px;">
-                        <tr><th>Song</th><th>Diff</th><th>Diff²</th></tr>
-                        ${diffs.sort((a, b) => b.diff - a.diff).map(d => `
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:20px;">
+                        <div class="card" style="padding:12px;">
+                            <div style="font-size:10px; color:var(--muted); text-transform:uppercase; margin-bottom:5px;">Raw RMS</div>
+                            <div style="font-size:20px; font-weight:900; color:#fff;">${rawRms}</div>
+                        </div>
+                        <div class="card" style="padding:12px;">
+                            <div style="font-size:10px; color:var(--muted); text-transform:uppercase; margin-bottom:5px;">Avg Rank Diff</div>
+                            <div style="font-size:20px; font-weight:900; color:#fff;">${rawRms}</div>
+                        </div>
+                        <div class="card" style="padding:12px; grid-column:span 2; background:var(--pink);">
+                            <div style="font-size:10px; color:#000; text-transform:uppercase; margin-bottom:5px; opacity:0.7;">Final Normalized Score</div>
+                            <div style="font-size:20px; font-weight:900; color:#000;">${rms}%</div>
+                        </div>
+                    </div>
+                    <h4 style="font-size:13px; margin-bottom:10px;">
+                        Complete Breakdown 
+                        ${window.isAdvancedMode ? '' : '<span style="color:var(--muted); font-weight:400;">(Top 10 - Switch to Advanced for Full List)</span>'}
+                    </h4>
+                    <table style="margin-top:10px;">
+                        <tr><th>Song</th><th>${u1}</th><th>${u2}</th><th>Diff</th><th>Diff²</th></tr>
+                        ${diffs.sort((a, b) => b.diff - a.diff).slice(0, window.isAdvancedMode ? diffs.length : 10).map(d => `
                             <tr>
                                 <td>${d.name}</td>
-                                <td>${d.diff.toFixed(1)}</td>
-                                <td style="color:var(--red)">${(d.diff * d.diff).toFixed(1)}</td>
+                                <td style="color:var(--muted)">#${d.r1}</td>
+                                <td style="color:var(--muted)">#${d.r2}</td>
+                                <td>${d.diff.toFixed(0)}</td>
+                                <td style="color:var(--red)">${(d.diff * d.diff).toFixed(0)}</td>
                             </tr>
                         `).join('')}
                     </table>
@@ -1573,8 +1566,7 @@
 
             content.innerHTML = `
                 <div style="text-align:center; padding:10px 0 20px 0; border-bottom:1px solid var(--border); margin-bottom:15px;">
-                    <div style="font-size:32px; font-weight:900; color:var(--pink)">${rms} <span style="font-size:12px; font-weight:600; color:var(--muted); vertical-align:middle;">DIVERGENCE</span></div>
-                    <div style="font-size:11px; font-weight:600; color:var(--muted); margin-top:2px;">${statusMsg}</div>
+                    <div style="font-size:32px; font-weight:900; color:var(--pink)">${rms}% <span style="font-size:12px; font-weight:600; color:var(--muted); vertical-align:middle;">DIVERGENCE</span></div>
                 </div>
 
                 <div class="comp-tabs">
@@ -1610,6 +1602,85 @@
                 return { name, fight: `${g[0].username} vs ${g[g.length - 1].username}`, diff: Math.abs(g[g.length - 1].user_rank - g[0].user_rank) };
             }).sort((a, b) => b.diff - a.diff).slice(0, limit);
             document.getElementById('c-disputed').innerHTML = `<table><colgroup><col><col class="col-fight"><col class="col-metric"></colgroup><tr><th>Song</th><th>Fight</th><th class="col-metric">Diff</th></tr>` + res.map(r => `<tr onclick="showSongDistribution('${r.name.replace(/'/g, "\\'")}')" style="cursor:pointer;" class="clickable-row"><td>${r.name}</td><td class="col-fight">${r.fight}</td><td class="col-metric" style="color:var(--pink)">${r.diff}</td></tr>`).join('') + `</table>`;
+        }
+
+        function showMetricExplanation(type) {
+            const modal = document.getElementById('song-modal');
+            const content = document.getElementById('song-modal-content');
+            const title = document.getElementById('song-modal-title');
+
+            modal.classList.remove('hidden');
+            modal.style.display = 'flex';
+
+            const definitions = {
+                disputed: {
+                    title: "Most Disputed",
+                    math: "Δ = Rank_Max - Rank_Min",
+                    desc: "Calculates the raw gap between the person who loves the song the most vs. the person who hates it the most.",
+                    use: "Identifies songs with the most extreme polarization. A high 'Fight' score means two users are essentially at war."
+                },
+                sleeper: {
+                    title: "Sleeper Picks",
+                    math: "Score = User_Rank - Avg_Rank (where < -15)",
+                    desc: "Identifies songs that a specific user ranks significantly HIGHER (lower number) than the community average.",
+                    use: "Finds your 'hidden gems'—songs you defend that everyone else ignores."
+                },
+                haters: {
+                    title: "Hot Takes",
+                    math: "Score = User_Rank - Avg_Rank (where > 15)",
+                    desc: "Identifies songs that a specific user ranks significantly LOWER (higher number) than the community average.",
+                    use: "Exposes your controversial dislikes. These are the popular songs you just don't get."
+                },
+                controversy: {
+                    title: "Controversy Score",
+                    math: "Score = StdDev * WeightingFactor",
+                    desc: "A composite metric that measures the overall spread of opinion. <b>Div (Divergence)</b> in the table is the Coefficient of Variation (StdDev / Mean).",
+                    use: "High Controversy = The community is confused or split. Low Controversy = Everyone agrees."
+                },
+                consistent: {
+                    title: "Consistent Tracks",
+                    math: "Score ≈ 0 (Lowest StdDev)",
+                    desc: "Songs with the lowest standard deviation in rankings.",
+                    use: "The 'Safe Bets'. These songs are universally agreed upon, whether they are good or bad. No one fights about them."
+                },
+                subunits: {
+                    title: "Subunit Power",
+                    math: "Avg = Σ(Song_Ranks) / Song_Count",
+                    desc: "The geometric mean rank of all songs belonging to a specific subunit.",
+                    use: "Objectively determines which subunit has the strongest overall discography according to the group."
+                },
+                outliers: {
+                    title: "Spice Meter",
+                    math: "Distance = Euclidean_Dist(User_Vector, Consensus_Vector)",
+                    desc: "Measures how far a user's taste vector deviates from the 'average' taste vector of the group.",
+                    use: "<b>High Spice</b> = Unique, contrarian taste.<br><b>Low Spice</b> = NPC energy (agrees with the majority)."
+                }
+            };
+
+            const def = definitions[type];
+            if (!def) return;
+
+            title.textContent = def.title;
+            content.innerHTML = `
+                <div style="padding:10px;">
+                    <div class="card" style="margin-bottom:20px; border-left:4px solid var(--pink);">
+                        <h4 style="margin:0 0 10px 0; color:var(--pink);">The Math</h4>
+                        <div style="font-family:'Consolas', monospace; font-size:14px; background:rgba(0,0,0,0.2); padding:10px; border-radius:6px;">
+                            ${def.math}
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom:20px;">
+                        <h4 style="margin-bottom:10px;">What is this?</h4>
+                        <p style="line-height:1.6; color:#ccc;">${def.desc}</p>
+                    </div>
+
+                    <div>
+                        <h4 style="margin-bottom:10px;">Why use it?</h4>
+                        <p style="line-height:1.6; color:#ccc;">${def.use}</p>
+                    </div>
+                </div>
+            `;
         }
 
         function renderSubunitPopularity(rankings, controversy, franchise) {
@@ -1671,11 +1742,28 @@
             const wrap = document.getElementById("c-matrix"); wrap.innerHTML = "Loading...";
             try {
                 const r = await fetch(`${API}/analysis/divergence?franchise=${f}&subgroup=${sub}`);
-                const d = await r.json(), u = Object.keys(d.matrix).sort(), max = Math.max(...Object.values(d.matrix).flatMap(o => Object.values(o))) || 1;
+                const d = await r.json();
+                const u = Object.keys(d.matrix).sort();
+                const nSongs = Object.keys(d.song_names || {}).length || 1;
+
+                // Max for coloration (cap at 40% for visual contrast, as >40% is extreme)
+                const maxVal = 40;
+
                 wrap.style.gridTemplateColumns = `150px repeat(${u.length}, 1fr)`;
                 wrap.innerHTML = `<div></div>` + u.map(n => `<div class="m-label">${n}</div>`).join('');
-                u.forEach(u1 => { wrap.innerHTML += `<div class="m-label" style="text-align:left">${u1}</div>`; u.forEach(u2 => { const v = d.matrix[u1][u2], op = Math.pow(v / max, 1.8); wrap.innerHTML += `<div class="cell" onclick="showUserComparison('${u1}', '${u2}')" style="background:rgba(219, 97, 162, ${op}); color:${op > 0.5 ? '#fff' : '#8b949e'}; border-bottom:1px solid #0d1117; cursor:pointer;">${v}</div>`; }); });
-            } catch (e) { wrap.innerHTML = "Error."; }
+
+                u.forEach(u1 => {
+                    wrap.innerHTML += `<div class="m-label" style="text-align:left">${u1}</div>`;
+                    u.forEach(u2 => {
+                        const raw = d.matrix[u1][u2];
+                        const pct = ((raw / Math.max(1, nSongs - 1)) * 100);
+                        const display = pct.toFixed(0);
+                        const op = Math.min(1, Math.pow(pct / maxVal, 1.5)); // Color opacity based on %
+
+                        wrap.innerHTML += `<div class="cell" onclick="showUserComparison('${u1}', '${u2}')" style="background:rgba(219, 97, 162, ${op}); color:${op > 0.5 ? '#fff' : '#8b949e'}; border-bottom:1px solid #0d1117; cursor:pointer;" title="${u1} vs ${u2}: ${pct.toFixed(1)}%">${display}</div>`;
+                    });
+                });
+            } catch (e) { console.error(e); wrap.innerHTML = "Error."; }
         }
 
         /* --- RIVALS LOGIC --- */
@@ -1688,10 +1776,17 @@
                 const r = await fetch(`${API}/analysis/divergence?franchise=${f}&subgroup=${sub}`);
                 const d = await r.json();
                 allUsers = Object.keys(d.matrix).sort();
+
+                // Update dynamic dimensionality text
+                const dimCount = Object.keys(d.song_names || {}).length || "?";
+                const descEl = document.getElementById('constellation-desc');
+                if (descEl) {
+                    descEl.childNodes[0].nodeValue = `Visualizing ${dimCount}-dimensional taste differences in 2D space. `;
+                }
+
+                // Init Graph with full data (for loading calculations)
                 // Init Graph with full data (for loading calculations)
                 setTimeout(() => typeof initConstellation === 'function' && initConstellation(d), 500);
-                // Also init dashboard constellation
-                setTimeout(() => typeof initDashboardConstellation === 'function' && initDashboardConstellation(d), 600);
 
                 const opts = allUsers.map(u => `<option value="${u}">${u}</option>`).join('');
                 ['duel-user-a', 'duel-user-b', 'match-finder-user', 'bias-user'].forEach(id => {
@@ -1953,17 +2048,20 @@
             const coords = mdsResult.coords;
             graphVarianceExplained = mdsResult.varianceExplained;
 
-            let maxDist = 0;
+            let maxX = 0;
+            let maxY = 0;
             coords.forEach(p => {
-                const d = Math.max(Math.abs(p.x), Math.abs(p.y));
-                if (d > maxDist) maxDist = d;
+                if (Math.abs(p.x) > maxX) maxX = Math.abs(p.x);
+                if (Math.abs(p.y) > maxY) maxY = Math.abs(p.y);
             });
 
-            const padding = 60;
+            const padding = 40; // Reduced padding for tighter fit
             const w = cvs.width, h = cvs.height;
 
             // Scale to fit the furthest point within the canvas (keeping origin at center)
-            const fitScale = (Math.min(w, h) / 2 - padding) / (maxDist || 1);
+            const scaleX = (w / 2 - padding) / (maxX || 1);
+            const scaleY = (h / 2 - padding) / (maxY || 1);
+            const fitScale = Math.min(scaleX, scaleY);
 
             // Use Uniform Scaling to preserve Aspect Ratio (Distance = Divergence)
             // Engineers expect Euclidean space to be consistent.
@@ -2042,6 +2140,11 @@
                 pc3: [...songLoadings].sort((a, b) => Math.abs(b.pc3) - Math.abs(a.pc3))
             };
 
+            // Store rankings and song names for position analysis
+            window.graphRankingsData = songRankings;
+            window.graphSongNames = songNames;
+            window.graphUsers = users;
+
             // Global helper for showing details (now uses MODAL instead of alert)
             window.showAxisDetails = (title, data, key) => {
                 const modal = document.getElementById('song-modal');
@@ -2080,15 +2183,245 @@
                 const w = cvs.width, h = cvs.height;
                 const cx = w / 2, cy = h / 2;
 
-                // Click X-Axis Label (Right area)
-                if (x > w - 300 && Math.abs(y - cy) < 40) {
+                // Click X-Axis Label (Right area) - REDUCED hitbox
+                if (x > w - 120 && Math.abs(y - cy) < 25) {
                     window.showAxisDetails('X-Axis', window.graphAxisData.pc1, 'pc1');
+                    return;
                 }
-                // Click Y-Axis Label (Top center area)
-                else if (Math.abs(x - cx) < 200 && y < 60) {
+                // Click Y-Axis Label (Top center area) - REDUCED hitbox
+                if (Math.abs(x - cx) < 100 && y < 35) {
                     window.showAxisDetails('Y-Axis', window.graphAxisData.pc2, 'pc2');
+                    return;
+                }
+
+                // Check for node clicks (with 15px radius for easier clicking)
+                const clickRadius = 15;
+                const clickedNodes = graphNodes.filter(n => Math.hypot(n.x - x, n.y - y) < clickRadius);
+
+                if (clickedNodes.length === 0) return;
+
+                // If multiple nodes overlap, show picker
+                if (clickedNodes.length > 1) {
+                    showNodePicker(clickedNodes, x, y);
+                } else {
+                    showUserPositionMath(clickedNodes[0]);
                 }
             };
+
+            // Show user's position math
+            window.showUserPositionMath = function (node) {
+                const modal = document.getElementById('song-modal');
+                const content = document.getElementById('song-modal-content');
+                const title = document.getElementById('song-modal-title');
+
+                title.textContent = `${node.id}'s Position Analysis`;
+                modal.classList.remove('hidden');
+                modal.style.display = 'flex';
+
+                // Calculate distance from origin (community consensus)
+                const distance = Math.sqrt(node.pc1 * node.pc1 + node.pc2 * node.pc2 + node.pc3 * node.pc3).toFixed(2);
+                const distance2D = Math.sqrt(node.pc1 * node.pc1 + node.pc2 * node.pc2).toFixed(2);
+
+                // Advanced Mode: Calculate per-song contributions
+                let songContributionHTML = '';
+
+                // Debug checks
+                const hasRanks = window.graphRankingsData && Object.keys(window.graphRankingsData).length > 0;
+
+                if (window.advancedMode && hasRanks && window.graphAxisData) {
+                    const songContributions = [];
+
+                    // Calculate mean ranks for normalization
+                    const meanRanks = {};
+                    for (const [songId, userRanks] of Object.entries(window.graphRankingsData)) {
+                        const ranks = Object.values(userRanks);
+                        meanRanks[songId] = ranks.reduce((a, b) => a + b, 0) / ranks.length;
+                    }
+
+                    // For each song, calculate its contribution
+                    for (const songData of window.graphAxisData.pc1) {
+                        const songId = songData.id;
+                        const userRank = window.graphRankingsData[songId]?.[node.id];
+
+                        if (userRank !== undefined) {
+                            const deviation = userRank - meanRanks[songId];
+                            const pc2Data = window.graphAxisData.pc2.find(s => s.id === songId);
+                            const pc3Data = window.graphAxisData.pc3.find(s => s.id === songId);
+
+                            songContributions.push({
+                                name: songData.name,
+                                rank: userRank,
+                                mean: meanRanks[songId].toFixed(1),
+                                deviation: deviation.toFixed(1),
+                                pc1Contrib: (songData.pc1 * deviation).toFixed(3),
+                                pc2Contrib: ((pc2Data?.pc2 || 0) * deviation).toFixed(3),
+                                pc3Contrib: ((pc3Data?.pc3 || 0) * deviation).toFixed(3)
+                            });
+                        }
+                    }
+
+                    // Sort by absolute total contribution
+                    songContributions.sort((a, b) => {
+                        const totA = Math.abs(parseFloat(a.pc1Contrib)) + Math.abs(parseFloat(a.pc2Contrib));
+                        const totB = Math.abs(parseFloat(b.pc1Contrib)) + Math.abs(parseFloat(b.pc2Contrib));
+                        return totB - totA;
+                    });
+
+                    if (songContributions.length > 0) {
+                        songContributionHTML = `
+                            <div style="margin-top:25px; border-top:2px solid var(--pink); padding-top:20px;">
+                                <h4 style="font-size:14px; color:var(--pink); margin-bottom:10px;">
+                                    Per-Song Contribution Analysis
+                                    <span style="font-size:10px; color:var(--muted); font-weight:400; margin-left:8px;">(Advanced Mode)</span>
+                                </h4>
+                                <div style="font-size:11px; color:var(--muted); margin-bottom:12px; line-height:1.5;">
+                                    Shows how ${node.id}'s rank on each song contributes to their position. Contribution = Song Loading × (User Rank - Mean Rank)
+                                </div>
+                                <div style="max-height:400px; overflow-y:auto;">
+                                    <table style="width:100%; font-size:11px;">
+                                        <thead>
+                                            <tr style="position:sticky; top:0; background:var(--bg); border-bottom:2px solid var(--border);">
+                                                <th style="text-align:left; padding:8px 4px;">Song</th>
+                                                <th style="text-align:center; padding:8px 4px;">Rank</th>
+                                                <th style="text-align:center; padding:8px 4px;">Dev</th>
+                                                <th style="text-align:center; padding:8px 4px;">→PC1</th>
+                                                <th style="text-align:center; padding:8px 4px;">→PC2</th>
+                                                <th style="text-align:center; padding:8px 4px;">→PC3</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${songContributions.map(s => `
+                                                <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                                                    <td style="padding:6px 4px; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${s.name}</td>
+                                                    <td style="text-align:center; padding:6px 4px; color:var(--muted);">#${s.rank}</td>
+                                                    <td style="text-align:center; padding:6px 4px; color:${parseFloat(s.deviation) > 0 ? 'var(--red)' : 'var(--green)'}; font-weight:600;">
+                                                        ${parseFloat(s.deviation) > 0 ? '+' : ''}${s.deviation}
+                                                    </td>
+                                                    <td style="text-align:center; padding:6px 4px; color:${Math.abs(parseFloat(s.pc1Contrib)) > 0.1 ? 'var(--pink)' : 'var(--muted)'}; font-family:monospace;">
+                                                        ${parseFloat(s.pc1Contrib) > 0 ? '+' : ''}${s.pc1Contrib}
+                                                    </td>
+                                                    <td style="text-align:center; padding:6px 4px; color:${Math.abs(parseFloat(s.pc2Contrib)) > 0.1 ? 'var(--pink)' : 'var(--muted)'}; font-family:monospace;">
+                                                        ${parseFloat(s.pc2Contrib) > 0 ? '+' : ''}${s.pc2Contrib}
+                                                    </td>
+                                                    <td style="text-align:center; padding:6px 4px; color:${Math.abs(parseFloat(s.pc3Contrib)) > 0.1 ? 'var(--pink)' : 'var(--muted)'}; font-family:monospace;">
+                                                        ${parseFloat(s.pc3Contrib) > 0 ? '+' : ''}${s.pc3Contrib}
+                                                    </td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div style="margin-top:10px; padding:10px; background:rgba(255,255,255,0.03); border-radius:6px; font-size:10px; color:var(--muted); line-height:1.5;">
+                                    <b>Reading the table:</b><br>
+                                    • <b>Rank</b>: ${node.id}'s ranking for this song<br>
+                                    • <b>Dev</b>: Deviation from average (Red = ranked lower/worse, Green = ranked higher/better)<br>
+                                    • <b>→PC1/PC2/PC3</b>: Contribution to each coordinate (larger absolute values = stronger influence)
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        songContributionHTML = `<div style="padding:20px; text-align:center; color:var(--muted);">No rank data available for this user to calculate contributions.</div>`;
+                    }
+                } else if (window.advancedMode) {
+                    songContributionHTML = `<div style="padding:20px; text-align:center; color:var(--red); font-size:12px;">Data missing for advanced analysis.<br>Ranks: ${!!hasRanks}, Axis: ${!!window.graphAxisData}<br>Please refresh the page.</div>`;
+                }
+
+                content.innerHTML = `
+                    <div style="margin-bottom:20px;">
+                        <h4 style="font-size:14px; color:var(--pink); margin-bottom:10px;">Coordinates in Taste Space</h4>
+                        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
+                            <div class="card" style="padding:12px; text-align:center;">
+                                <div style="font-size:10px; color:var(--muted); margin-bottom:5px;">PC1 (X-Axis)</div>
+                                <div style="font-size:18px; font-weight:900; color:${node.pc1 > 0 ? 'var(--green)' : 'var(--red)'}">
+                                    ${node.pc1 > 0 ? '+' : ''}${node.pc1.toFixed(3)}
+                                </div>
+                            </div>
+                            <div class="card" style="padding:12px; text-align:center;">
+                                <div style="font-size:10px; color:var(--muted); margin-bottom:5px;">PC2 (Y-Axis)</div>
+                                <div style="font-size:18px; font-weight:900; color:${node.pc2 > 0 ? 'var(--green)' : 'var(--red)'}">
+                                    ${node.pc2 > 0 ? '+' : ''}${node.pc2.toFixed(3)}
+                                </div>
+                            </div>
+                            <div class="card" style="padding:12px; text-align:center;">
+                                <div style="font-size:10px; color:var(--muted); margin-bottom:5px;">PC3 (Z-Depth)</div>
+                                <div style="font-size:18px; font-weight:900; color:${node.pc3 > 0 ? 'var(--green)' : 'var(--red)'}">
+                                    ${node.pc3 > 0 ? '+' : ''}${node.pc3.toFixed(3)}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom:20px;">
+                        <h4 style="font-size:14px; color:var(--pink); margin-bottom:10px;">Distance from Consensus</h4>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                            <div class="card" style="padding:12px; background:rgba(219,97,162,0.1); border-color:var(--pink);">
+                                <div style="font-size:10px; color:var(--muted); margin-bottom:5px;">2D Distance (Visible)</div>
+                                <div style="font-size:22px; font-weight:900; color:var(--pink)">${distance2D}</div>
+                                <div style="font-size:9px; color:var(--muted); margin-top:3px;">Euclidean distance in 2D projection</div>
+                            </div>
+                            <div class="card" style="padding:12px;">
+                                <div style="font-size:10px; color:var(--muted); margin-bottom:5px;">3D Distance (True)</div>
+                                <div style="font-size:22px; font-weight:900;">${distance}</div>
+                                <div style="font-size:9px; color:var(--muted); margin-top:3px;">Full dimensional distance</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 style="font-size:14px; color:var(--pink); margin-bottom:10px;">Interpretation</h4>
+                        <div style="font-size:12px; color:var(--muted); line-height:1.6; padding:12px; background:rgba(255,255,255,0.03); border-radius:6px;">
+                            <p style="margin:0 0 8px 0;">The <b>coordinates</b> show where <b>${node.id}</b> sits in the multi-dimensional taste space.</p>
+                            <ul style="margin:0; padding-left:20px;">
+                                <li><b>PC1 (${node.pc1 > 0 ? 'Positive' : 'Negative'})</b>: Aligns with ${node.pc1 > 0 ? 'right' : 'left'} side of the X-axis spectrum</li>
+                                <li><b>PC2 (${node.pc2 > 0 ? 'Positive' : 'Negative'})</b>: Aligns with ${node.pc2 > 0 ? 'top' : 'bottom'} side of the Y-axis spectrum</li>
+                                <li><b>Distance</b>: ${distance2D > 0.5 ? 'High divergence - unique taste profile' : 'Low divergence - mainstream taste'}</li>
+                            </ul>
+                            <p style="margin:12px 0 0 0; padding-top:12px; border-top:1px solid var(--border);">
+                                Click the <b>X-Axis</b> or <b>Y-Axis</b> labels to see which specific songs drive each dimension.
+                                ${!window.advancedMode ? '<br><b>Enable Advanced Mode</b> to see per-song contribution analysis.' : ''}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    ${songContributionHTML}
+                `;
+            }
+
+            // Show picker when nodes overlap
+            window.showNodePicker = function (nodes, x, y) {
+                const modal = document.getElementById('song-modal');
+                const content = document.getElementById('song-modal-content');
+                const title = document.getElementById('song-modal-title');
+
+                title.textContent = 'Select User';
+                modal.classList.remove('hidden');
+                modal.style.display = 'flex';
+
+                // Store nodes globally for onclick access
+                window.tempOverlapNodes = nodes;
+
+                content.innerHTML = `
+                    <div style="font-size:12px; color:var(--muted); margin-bottom:15px; text-align:center;">
+                        Multiple users are in this area. Select one to view position details:
+                    </div>
+                    <div style="display:grid; gap:10px;">
+                        ${nodes.map((n, idx) => `
+                            <div onclick="showUserPositionMath(window.tempOverlapNodes[${idx}]);"  
+                                 style="padding:15px; background:var(--card); border:1px solid var(--border); border-radius:8px; cursor:pointer; transition:all 0.2s;"
+                                 onmouseover="this.style.borderColor='var(--pink)'; this.style.background='rgba(219,97,162,0.1)'"
+                                 onmouseout="this.style.borderColor='var(--border)'; this.style.background='var(--card)'">
+                                <div style="display:flex; align-items:center; gap:12px;">
+                                    <div style="width:32px; height:32px; border-radius:50%; background:${n.color}; display:flex; align-items:center; justify-content:center; font-weight:bold; color:#000; font-size:14px;">
+                                        ${n.initials}
+                                    </div>
+                                    <div style="font-weight:600; font-size:16px;">${n.id}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
 
             // Find top polarizing songs for each axis (keep for reference)
             graphPC1Songs = window.graphAxisData.pc1.slice(0, 3).map(s => s.name);
@@ -2136,11 +2469,11 @@
                 // Node Hover
                 graphHover = graphNodes.find(n => Math.hypot(n.x - mx, n.y - my) < 12);
 
-                // Axis Hover
+                // Axis Hover (REDUCED to match click areas)
                 const w = cvs.width, h = cvs.height, cx = w / 2, cy = h / 2;
                 window.graphHoverLabel = null;
-                if (mx > w - 300 && Math.abs(my - cy) < 40) window.graphHoverLabel = 'x';
-                else if (Math.abs(mx - cx) < 200 && my < 60) window.graphHoverLabel = 'y';
+                if (mx > w - 120 && Math.abs(my - cy) < 25) window.graphHoverLabel = 'x';
+                else if (Math.abs(mx - cx) < 100 && my < 35) window.graphHoverLabel = 'y';
 
                 // Cursor
                 cvs.style.cursor = (graphHover || window.graphHoverLabel) ? 'pointer' : 'default';
@@ -2269,6 +2602,18 @@
             graphCtx.fillText("• Distance: RMS Taste Divergence (Length of difference vector)", 20, h - 40);
             graphCtx.fillText("• Projection: Top 2 Principal Components (PC1 & PC2) of variance", 20, h - 25);
             graphCtx.fillText(`• 2D Accuracy: ${graphVarianceExplained}% (captures nearly all structure)`, 20, h - 10);
+
+            // Interaction instruction
+            if (window.constellationSelectedUser) {
+                graphCtx.fillStyle = 'rgba(219, 97, 162, 0.8)';
+                graphCtx.font = 'bold 11px Inter';
+                graphCtx.fillText(`✓ ${window.constellationSelectedUser} selected - Click another user to compare`, 20, 20);
+            } else {
+                graphCtx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                graphCtx.font = '10px Inter';
+                graphCtx.fillText("Click any user to select, then click another to compare divergence", 20, 20);
+            }
+
             graphCtx.restore();
 
             // No Edges (removed per user feedback)
@@ -2276,6 +2621,7 @@
             // Nodes (smaller for less overlap)
             graphNodes.forEach(n => {
                 graphCtx.shadowBlur = 0;
+
                 // Border
                 graphCtx.fillStyle = '#161b22';
                 graphCtx.beginPath(); graphCtx.arc(n.x, n.y, 12, 0, Math.PI * 2); graphCtx.fill();
@@ -2489,6 +2835,92 @@
                 log.innerHTML = `<span style="color:var(--red)">CONNECTION ERROR.</span>`;
                 btn.disabled = false;
             }
+        }
+
+        function initDashboardConstellation(data) {
+            // data = { matrix: {...}, rankings: {...}, song_names: {...} }
+            const cvs = document.getElementById('dash-taste-canvas');
+            if (!cvs || !data.matrix) return;
+            const ctx = cvs.getContext('2d');
+
+            // Set canvas size
+            const rect = cvs.getBoundingClientRect();
+            cvs.width = rect.width; cvs.height = rect.height;
+            const w = cvs.width, h = cvs.height;
+            const cx = w / 2, cy = h / 2;
+
+            const users = Object.keys(data.matrix);
+            if (users.length < 3) {
+                ctx.fillStyle = '#666'; ctx.textAlign = 'center'; ctx.fillText("Not enough users", cx, cy); return;
+            }
+
+            const distMatrix = users.map(u1 => users.map(u2 => data.matrix[u1][u2]));
+            let mdsResult;
+            try { mdsResult = MathLib.mds(distMatrix); } catch (e) { return; }
+
+            const coords = mdsResult.coords; // {x,y,z}
+
+            // --- AUTO ZOOM LOGIC ---
+            // 1. Find bounding box of all points relative to center 0,0
+            let maxX = 0, maxY = 0;
+            coords.forEach(p => {
+                maxX = Math.max(maxX, Math.abs(p.x));
+                maxY = Math.max(maxY, Math.abs(p.y));
+            });
+
+            // 2. Calculate scale to fill ~90% of the smallest dimension
+            // padding = 20px
+            const padding = 30;
+            const safeW = (w / 2) - padding;
+            const safeH = (h / 2) - padding;
+
+            // If all points are at 0,0 (perfect consensus), default scale 1
+            const scaleX = maxX > 0 ? safeW / maxX : 1;
+            const scaleY = maxY > 0 ? safeH / maxY : 1;
+
+            // Use the smaller scale to maintain aspect ratio and fit everything
+            const scale = Math.min(scaleX, scaleY);
+
+            // --- DRAW ---
+            ctx.clearRect(0, 0, w, h);
+
+            // Grid rings (simple)
+            ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+            ctx.beginPath(); ctx.arc(cx, cy, 50, 0, Math.PI * 2); ctx.stroke();
+            ctx.beginPath(); ctx.arc(cx, cy, 100, 0, Math.PI * 2); ctx.stroke();
+
+            // Axis lines
+            ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+            ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(w, cy); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, h); ctx.stroke();
+
+            // Nodes
+            const nodes = users.map((u, i) => ({
+                id: u,
+                x: coords[i].x * scale + cx,
+                y: coords[i].y * scale + cy,
+                color: `hsl(${280 + ((i * 40) % 80)}, 70%, 60%)`,
+                initials: u.substring(0, 2).toUpperCase()
+            }));
+
+            // Draw furthest first if we had 3D Z-depth, but for 2D standard draw is fine
+            nodes.forEach(n => {
+                ctx.fillStyle = n.color;
+                ctx.beginPath(); ctx.arc(n.x, n.y, 6, 0, Math.PI * 2); ctx.fill();
+
+                // Initials
+                ctx.fillStyle = "#fff";
+                ctx.font = "bold 9px Inter";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText(n.initials, n.x, n.y + 12);
+            });
+
+            // Label
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            ctx.font = '10px Inter';
+            ctx.textAlign = 'right';
+            ctx.fillText("Zoomed View", w - 10, h - 10);
         }
 
         async function loadUsers() {
