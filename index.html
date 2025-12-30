@@ -1545,21 +1545,24 @@
             // Compute Song Loadings (Pearson correlation of song ranks with PC scores)
             const pc1Coords = graphNodes.map(n => n.pc1);
             const pc2Coords = graphNodes.map(n => n.pc2);
+            const pc3Coords = graphNodes.map(n => n.pc3);
 
             const songLoadings = [];
             for (const [songId, userRanks] of Object.entries(songRankings)) {
                 // Build rank vector aligned with users array
                 const rankVec = users.map(u => userRanks[u] ?? 0);
 
-                // Pearson correlation with PC1
+                // Pearson correlation with PC scores
                 const r1 = MathLib.pearson(rankVec, pc1Coords);
                 const r2 = MathLib.pearson(rankVec, pc2Coords);
+                const r3 = MathLib.pearson(rankVec, pc3Coords);
 
                 songLoadings.push({
                     id: songId,
                     name: songNames[songId] || songId.substring(0, 8),
                     pc1: r1,
-                    pc2: r2
+                    pc2: r2,
+                    pc3: r3
                 });
             }
 
@@ -1584,13 +1587,15 @@
 
             window.graphAxisLabels = {
                 x: getAxisLabel(songLoadings, 'pc1'),
-                y: getAxisLabel(songLoadings, 'pc2')
+                y: getAxisLabel(songLoadings, 'pc2'),
+                z: getAxisLabel(songLoadings, 'pc3')
             };
 
             // Store full data for drill-down
             window.graphAxisData = {
                 pc1: [...songLoadings].sort((a, b) => Math.abs(b.pc1) - Math.abs(a.pc1)),
-                pc2: [...songLoadings].sort((a, b) => Math.abs(b.pc2) - Math.abs(a.pc2))
+                pc2: [...songLoadings].sort((a, b) => Math.abs(b.pc2) - Math.abs(a.pc2)),
+                pc3: [...songLoadings].sort((a, b) => Math.abs(b.pc3) - Math.abs(a.pc3))
             };
 
             // Global helper for showing details (simple alert for now, can be modal later)
@@ -1624,9 +1629,41 @@
             // No edges needed (user requested removal)
 
             // Events
+            // Drag State
+            window.graphIsDragging = false;
+            window.graphLastMouseX = 0;
+            window.graphAutoRotate = true;
+
+            cvs.onmousedown = e => {
+                if (window.graphIs3D) {
+                    window.graphIsDragging = true;
+                    window.graphLastMouseX = e.clientX;
+                    window.graphAutoRotate = false;
+                    cvs.style.cursor = 'grabbing';
+                }
+            };
+            cvs.onmouseup = e => {
+                window.graphIsDragging = false;
+                if (window.graphIs3D) cvs.style.cursor = 'grab';
+            };
+            cvs.onmouseleave = cvs.onmouseup;
+
+            // Events
             cvs.onmousemove = e => {
                 const r = cvs.getBoundingClientRect();
                 const mx = e.clientX - r.left, my = e.clientY - r.top;
+
+                // 3D Logic
+                if (window.graphIs3D) {
+                    if (window.graphIsDragging) {
+                        const delta = e.clientX - window.graphLastMouseX;
+                        window.graphRotation += delta * 0.005;
+                        window.graphLastMouseX = e.clientX;
+                    } else {
+                        cvs.style.cursor = 'grab';
+                    }
+                    return; // Skip 2D hover logic
+                }
 
                 // Node Hover
                 graphHover = graphNodes.find(n => Math.hypot(n.x - mx, n.y - my) < 12);
@@ -1784,7 +1821,9 @@
 
         function animate3D() {
             if (!window.graphIs3D) return;
-            window.graphRotation += 0.005;
+            if (window.graphAutoRotate) {
+                window.graphRotation += 0.005;
+            }
             drawGraph3D();
             graphAnimFrame = requestAnimationFrame(animate3D);
         }
@@ -1819,7 +1858,8 @@
             graphCtx.fillStyle = 'rgba(255,255,255,0.5)';
             graphCtx.font = '12px Inter';
             graphCtx.textAlign = 'left'; graphCtx.textBaseline = 'top';
-            graphCtx.fillText("3D Mode - Rotating (Z-Axis Depth)", 20, 20);
+            const title = window.graphAutoRotate ? "3D Mode - Auto-Rotating" : "3D Mode - Drag to Rotate";
+            graphCtx.fillText(title, 20, 20);
 
             // Draw Axes
             const axisLen = 300;
@@ -1840,11 +1880,22 @@
                     graphCtx.lineTo(p2.x, p2.y);
                     graphCtx.stroke();
                     graphCtx.globalAlpha = 1;
-                    // Label
+                    // Short Label
                     graphCtx.fillStyle = ax.c;
                     graphCtx.font = 'bold 12px Inter';
                     graphCtx.textAlign = 'center';
                     graphCtx.fillText(ax.l, p2.x, p2.y);
+
+                    // Full Label (Song Drivers)
+                    if (window.graphAxisLabels) {
+                        const labelKey = ax.l.toLowerCase();
+                        const fullLabel = window.graphAxisLabels[labelKey];
+                        if (fullLabel) {
+                            graphCtx.font = '10px Inter';
+                            graphCtx.fillStyle = 'rgba(255,255,255,0.7)';
+                            graphCtx.fillText(fullLabel, p2.x, p2.y + 15);
+                        }
+                    }
                 }
             });
 
