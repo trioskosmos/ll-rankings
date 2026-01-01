@@ -12,7 +12,7 @@ from app.schemas import (AnalysisMetadata, CommunityRankResponse,
                          ControversyResponse, DivergenceMatrixResponse,
                          HotTakesResponse, SpiceMeterResponse, TriggerResponse,
                          SubgroupResponse)
-from app.services.analysis import AnalysisService
+from app.services.analysis import AnalysisService, ControversyIndexService
 
 router = APIRouter(prefix="/api/v1", tags=["analysis"])
 
@@ -104,16 +104,39 @@ async def get_divergence_matrix(
                 computed_at=datetime.utcnow(),
                 based_on_submissions=len(subgroup_obj.submissions),
             ),
-            matrix=data,
+            matrix=data["matrix"],
+            rankings=data.get("rankings"),
+            song_names=data.get("song_names"),
         )
 
-    return DivergenceMatrixResponse(
-        metadata=AnalysisMetadata(
-            computed_at=result.computed_at,
-            based_on_submissions=result.based_on_submissions,
-        ),
-        matrix=result.result_data,
-    )
+    # Handle cached results (legacy check)
+    cached = result.result_data
+    # If it's the new format, it has "matrix" key. If old, the top level is the matrix.
+    # We can check if "matrix" is in the keys, but user names might be keys too.
+    # A safe heuristic: New format keys are "matrix", "rankings", "song_names".
+    # Old format keys are usernames (strings).
+    is_new_format = "matrix" in cached and isinstance(cached["matrix"], dict)
+    
+    if is_new_format:
+        return DivergenceMatrixResponse(
+            metadata=AnalysisMetadata(
+                computed_at=result.computed_at,
+                based_on_submissions=result.based_on_submissions,
+            ),
+            matrix=cached["matrix"],
+            rankings=cached.get("rankings"),
+            song_names=cached.get("song_names"),
+        )
+    else:
+        return DivergenceMatrixResponse(
+            metadata=AnalysisMetadata(
+                computed_at=result.computed_at,
+                based_on_submissions=result.based_on_submissions,
+            ),
+            matrix=cached,
+            rankings=None,
+            song_names=None,
+        )
 
 
 @router.get("/analysis/controversy", response_model=ControversyResponse)
@@ -215,36 +238,157 @@ async def get_spice_meter(franchise: str, db: Session = Depends(get_db)):
     if not franchise_obj:
         raise HTTPException(status_code=404, detail="Franchise not found")
 
-    result = (
-        db.query(AnalysisResult)
-        .filter(
-            AnalysisResult.franchise_id == franchise_obj.id,
-            AnalysisResult.subgroup_id is None,
-            AnalysisResult.analysis_type == "SPICE",
-        )
-        .first()
+    # Always compute fresh data (no caching for now)
+    data = AnalysisService.compute_spice_meter(str(franchise_obj.id), db)
+    sub_count = (
+        db.query(Submission).filter_by(franchise_id=franchise_obj.id).count()
     )
-
-    if not result:
-        data = AnalysisService.compute_spice_meter(str(franchise_obj.id), db)
-        sub_count = (
-            db.query(Submission).filter_by(franchise_id=franchise_obj.id).count()
-        )
-
-        return SpiceMeterResponse(
-            metadata=AnalysisMetadata(
-                computed_at=datetime.utcnow(), based_on_submissions=sub_count
-            ),
-            results=data,
-        )
 
     return SpiceMeterResponse(
         metadata=AnalysisMetadata(
-            computed_at=result.computed_at,
-            based_on_submissions=result.based_on_submissions,
+            computed_at=datetime.utcnow(), based_on_submissions=sub_count
         ),
-        results=result.result_data,
+        results=data,
     )
+
+
+# NEW ENDPOINTS FOR ADDITIONAL FEATURES
+
+@router.get("/analysis/disputed")
+async def get_most_disputed(franchise: str, subgroup: str, db: Session = Depends(get_db)):
+    """Get songs with the largest ranking gaps between users"""
+    franchise_obj = db.query(Franchise).filter_by(name=franchise).first()
+    if not franchise_obj:
+        raise HTTPException(status_code=404, detail="Franchise not found")
+
+    subgroup_obj = (
+        db.query(Subgroup)
+        .filter(Subgroup.name == subgroup, Subgroup.franchise_id == franchise_obj.id)
+        .first()
+    )
+    if not subgroup_obj:
+        raise HTTPException(status_code=404, detail="Subgroup not found")
+
+    data = AnalysisService.compute_most_disputed(
+        str(franchise_obj.id), str(subgroup_obj.id), db
+    )
+    
+    return {
+        "metadata": {
+            "computed_at": datetime.utcnow(),
+            "based_on_submissions": len(subgroup_obj.submissions),
+        },
+        "results": data
+    }
+
+
+@router.get("/analysis/consensus")
+async def get_top_bottom_consensus(
+    franchise: str, subgroup: str, limit: int = 10, db: Session = Depends(get_db)
+):
+    """Get songs universally ranked high or low with strong agreement"""
+    franchise_obj = db.query(Franchise).filter_by(name=franchise).first()
+    if not franchise_obj:
+        raise HTTPException(status_code=404, detail="Franchise not found")
+
+    subgroup_obj = (
+        db.query(Subgroup)
+        .filter(Subgroup.name == subgroup, Subgroup.franchise_id == franchise_obj.id)
+        .first()
+    )
+    if not subgroup_obj:
+        raise HTTPException(status_code=404, detail="Subgroup not found")
+
+    data = AnalysisService.compute_top_bottom_consensus(
+        str(franchise_obj.id), str(subgroup_obj.id), db, limit
+    )
+    
+    return {
+        "metadata": {
+            "computed_at": datetime.utcnow(),
+            "based_on_submissions": len(subgroup_obj.submissions),
+        },
+        "top": data["top"],
+        "bottom": data["bottom"]
+    }
+
+
+@router.get("/analysis/outliers")
+async def get_outlier_users(franchise: str, subgroup: str, db: Session = Depends(get_db)):
+    """Identify users with the most extreme/unique rankings"""
+    franchise_obj = db.query(Franchise).filter_by(name=franchise).first()
+    if not franchise_obj:
+        raise HTTPException(status_code=404, detail="Franchise not found")
+
+    subgroup_obj = (
+        db.query(Subgroup)
+        .filter(Subgroup.name == subgroup, Subgroup.franchise_id == franchise_obj.id)
+        .first()
+    )
+    if not subgroup_obj:
+        raise HTTPException(status_code=404, detail="Subgroup not found")
+
+    data = AnalysisService.compute_outlier_users(
+        str(franchise_obj.id), str(subgroup_obj.id), db
+    )
+    
+    return {
+        "metadata": {
+            "computed_at": datetime.utcnow(),
+            "based_on_submissions": len(subgroup_obj.submissions),
+        },
+        "results": data
+    }
+
+
+@router.get("/analysis/comebacks")
+async def get_comeback_songs(franchise: str, subgroup: str, db: Session = Depends(get_db)):
+    """Find sleeper/comeback songs with polarized rankings"""
+    franchise_obj = db.query(Franchise).filter_by(name=franchise).first()
+    if not franchise_obj:
+        raise HTTPException(status_code=404, detail="Franchise not found")
+
+    subgroup_obj = (
+        db.query(Subgroup)
+        .filter(Subgroup.name == subgroup, Subgroup.franchise_id == franchise_obj.id)
+        .first()
+    )
+    if not subgroup_obj:
+        raise HTTPException(status_code=404, detail="Subgroup not found")
+
+    data = AnalysisService.compute_comeback_songs(
+        str(franchise_obj.id), str(subgroup_obj.id), db
+    )
+    
+    return {
+        "metadata": {
+            "computed_at": datetime.utcnow(),
+            "based_on_submissions": len(subgroup_obj.submissions),
+        },
+        "results": data
+    }
+
+
+@router.get("/analysis/subunits")
+async def get_subunit_popularity(franchise: str, db: Session = Depends(get_db)):
+    """Analyze performance of different subunits/groups"""
+    franchise_obj = db.query(Franchise).filter_by(name=franchise).first()
+    if not franchise_obj:
+        raise HTTPException(status_code=404, detail="Franchise not found")
+
+    data = AnalysisService.compute_subunit_popularity(
+        str(franchise_obj.id), db
+    )
+    
+    sub_count = db.query(Submission).filter_by(franchise_id=franchise_obj.id).count()
+    
+    return {
+        "metadata": {
+            "computed_at": datetime.utcnow(),
+            "based_on_submissions": sub_count,
+        },
+        "results": data
+    }
 
 
 @router.post("/analysis/trigger", response_model=TriggerResponse)
@@ -294,7 +438,8 @@ async def get_franchise_subgroups(franchise: str, db: Session = Depends(get_db))
         # Resolve names for IDs stored in the JSON list
         song_names = []
         if sg.song_ids:
-            songs = db.query(Song.name).filter(Song.id.in_(sg.song_ids)).all()
+            from uuid import UUID
+            songs = db.query(Song.name).filter(Song.id.in_([UUID(sid) for sid in sg.song_ids])).all()
             song_names = [s.name for s in songs]
 
         results.append(SubgroupResponse(
@@ -308,3 +453,96 @@ async def get_franchise_subgroups(franchise: str, db: Session = Depends(get_db))
         ))
 
     return results
+
+
+@router.get("/analysis/head-to-head")
+async def get_head_to_head(
+    franchise: str,
+    subgroup: str,
+    user_a: str,
+    user_b: str,
+    db: Session = Depends(get_db)
+):
+    """Compare two users' rankings directly"""
+    franchise_obj = db.query(Franchise).filter_by(name=franchise).first()
+    if not franchise_obj:
+        raise HTTPException(status_code=404, detail="Franchise not found")
+        
+    subgroup_obj = (
+        db.query(Subgroup)
+        .filter(Subgroup.name == subgroup, Subgroup.franchise_id == franchise_obj.id)
+        .first()
+    )
+    if not subgroup_obj:
+        raise HTTPException(status_code=404, detail="Subgroup not found")
+
+    result = ControversyIndexService.compute_head_to_head(
+        str(franchise_obj.id), str(subgroup_obj.id), user_a, user_b, db
+    )
+    
+    if "error" in result:
+        raise HTTPException(status_code=404, detail=result["error"])
+        
+    return result
+
+
+@router.get("/analysis/user-match")
+async def get_user_matches(
+    franchise: str,
+    subgroup: str,
+    user: str,
+    db: Session = Depends(get_db)
+):
+    """Find soulmates and nemeses for a user"""
+    franchise_obj = db.query(Franchise).filter_by(name=franchise).first()
+    if not franchise_obj:
+        raise HTTPException(status_code=404, detail="Franchise not found")
+        
+    subgroup_obj = (
+        db.query(Subgroup)
+        .filter(Subgroup.name == subgroup, Subgroup.franchise_id == franchise_obj.id)
+        .first()
+    )
+    if not subgroup_obj:
+        raise HTTPException(status_code=404, detail="Subgroup not found")
+
+    result = ControversyIndexService.compute_user_match(
+        str(franchise_obj.id), str(subgroup_obj.id), user, db
+    )
+    
+    if "error" in result:
+        raise HTTPException(status_code=404, detail=result["error"])
+        
+    return result
+
+
+@router.get("/analysis/conformity")
+async def get_conformity_scores(
+    franchise: str,
+    subgroup: str,
+    db: Session = Depends(get_db)
+):
+    """Identify Normies and Hipsters based on consensus deviation"""
+    franchise_obj = db.query(Franchise).filter_by(name=franchise).first()
+    if not franchise_obj:
+         raise HTTPException(status_code=404, detail="Franchise not found")
+    
+    subgroup_obj = db.query(Subgroup).filter(Subgroup.name == subgroup, Subgroup.franchise_id == franchise_obj.id).first()
+    if not subgroup_obj:
+         raise HTTPException(status_code=404, detail="Subgroup not found")
+         
+    return ControversyIndexService.compute_conformity(str(franchise_obj.id), str(subgroup_obj.id), db)
+
+
+@router.get("/analysis/oshi-bias")
+async def get_oshi_bias(
+    franchise: str,
+    user: str,
+    db: Session = Depends(get_db)
+):
+    """Calculate member bias for a user"""
+    franchise_obj = db.query(Franchise).filter_by(name=franchise).first()
+    if not franchise_obj:
+         raise HTTPException(status_code=404, detail="Franchise not found")
+         
+    return ControversyIndexService.compute_oshi_bias(str(franchise_obj.id), user, db)

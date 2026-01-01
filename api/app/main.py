@@ -13,7 +13,7 @@ from app.models import Song, Franchise
 from app.seeds.init import DatabaseSeeder
 from app.exceptions import LiellaException
 from app.logging_config import setup_logging
-from app.api.v1 import submissions, analysis, health
+from app.api.v1 import submissions, analysis, health, users
 from app.jobs import analysis_scheduler
 
 # Setup logging
@@ -149,6 +149,16 @@ async def universal_exception_handler(request: Request, exc: Exception):
 app.include_router(health.router)
 app.include_router(submissions.router)
 app.include_router(analysis.router)
+app.include_router(users.router)
+
+# Static Files (Frontend)
+from fastapi.staticfiles import StaticFiles
+import os
+
+# Get path to root directory (one level up from /api)
+root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+app.mount("/", StaticFiles(directory=root_dir, html=True), name="static")
 
 if __name__ == "__main__":
     import uvicorn

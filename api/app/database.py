@@ -24,12 +24,16 @@ def init_engine():
     global engine, SessionLocal
     
     try:
+        connect_args = {}
+        if settings.database_url.startswith("postgresql"):
+            connect_args = {"connect_timeout": 10}
+        elif settings.database_url.startswith("sqlite"):
+            connect_args = {"check_same_thread": False}
+
         engine = create_engine(
             settings.database_url,
             echo=settings.database_echo,
-            connect_args={
-                "connect_timeout": 10  # PostgreSQL connection timeout (seconds)
-            },
+            connect_args=connect_args,
             pool_pre_ping=True,  # Verify connections before using
             pool_recycle=3600    # Recycle connections every hour
         )

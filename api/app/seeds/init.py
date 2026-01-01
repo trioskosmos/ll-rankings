@@ -307,6 +307,16 @@ class DatabaseSeeder:
             DatabaseSeeder.seed_songs(db, "liella")
             DatabaseSeeder.seed_subgroups(db, "liella")
             
+            # Import user rankings from CSV
+            try:
+                from app.seeds.import_rankings import import_user_rankings
+                logger.info("\n📊 Importing user rankings...")
+                imported_count = import_user_rankings(db)
+                logger.info(f"✓ Imported {imported_count} user ranking submissions\n")
+            except Exception as e:
+                logger.warning(f"⚠ Failed to import user rankings: {str(e)}")
+                logger.warning("Continuing with seeding...\n")
+            
             logger.info("\n" + "="*50)
             logger.info("✓ Seeding complete!")
             logger.info("="*50 + "\n")

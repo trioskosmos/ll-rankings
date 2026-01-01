@@ -8,7 +8,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     # Database
-    database_url: str = "postgresql://user:password@postgres:5432/liella_rankings"
+    database_url: str = "sqlite:///./rankings.db"
     database_echo: bool = False
 
     # API

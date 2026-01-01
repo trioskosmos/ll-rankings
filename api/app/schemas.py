@@ -62,6 +62,8 @@ class AnalysisMetadata(BaseModel):
 class DivergenceMatrixResponse(BaseModel):
     metadata: AnalysisMetadata
     matrix: Dict[str, Dict[str, float]]
+    rankings: Optional[Dict[str, Dict[str, float]]] = None
+    song_names: Optional[Dict[str, str]] = None
 
 
 class ControversySongResult(BaseModel):
@@ -93,10 +95,19 @@ class HotTakesResponse(BaseModel):
     takes: list[HotTakeResult]
 
 
+class ExtremePick(BaseModel):
+    song: str
+    group: str
+    user_rank: float
+    avg_rank: float
+    deviation: float
+
+
 class UserSpiceResult(BaseModel):
     username: str
     global_spice: float
     group_breakdown: Dict[str, float]  # {subgroup_name: spice_score}
+    extreme_picks: Optional[list[ExtremePick]] = None
 
 
 class SpiceMeterResponse(BaseModel):
