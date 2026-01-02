@@ -3,14 +3,49 @@
 import statistics
 import json
 import os
+import time
+from functools import wraps
 from collections import defaultdict
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Callable, Any
 from uuid import UUID
 import math
 
 from sqlalchemy.orm import Session
 from app.models import Song, Subgroup, Submission, SubmissionStatus
 from app.services.ranking_utils import RelativeRankingService
+
+
+# Simple TTL cache for expensive computations
+class AnalysisCache:
+    """In-memory cache with TTL expiration for analysis results."""
+    _cache: Dict[str, tuple] = {}  # {key: (value, expiry_time)}
+    DEFAULT_TTL = 300  # 5 minutes
+    
+    @classmethod
+    def get(cls, key: str) -> Any:
+        """Get cached value if not expired."""
+        if key in cls._cache:
+            value, expiry = cls._cache[key]
+            if time.time() < expiry:
+                return value
+            del cls._cache[key]
+        return None
+    
+    @classmethod
+    def set(cls, key: str, value: Any, ttl: int = None) -> None:
+        """Store value with TTL."""
+        ttl = ttl or cls.DEFAULT_TTL
+        cls._cache[key] = (value, time.time() + ttl)
+    
+    @classmethod
+    def clear(cls) -> None:
+        """Clear all cached entries."""
+        cls._cache.clear()
+    
+    @classmethod
+    def make_key(cls, *args) -> str:
+        """Create cache key from arguments."""
+        return ":".join(str(a) for a in args)
 
 
 def to_uuid(val: Union[str, UUID]) -> UUID:
@@ -24,9 +59,16 @@ class AnalysisService:
     def compute_divergence_matrix(
         franchise_id: str, subgroup_id: str, db: Session
     ) -> Dict[str, any]:
+        # Check cache first
+        cache_key = AnalysisCache.make_key("divergence", franchise_id, subgroup_id)
+        cached = AnalysisCache.get(cache_key)
+        if cached is not None:
+            return cached
+            
         subgroup = db.query(Subgroup).filter_by(id=to_uuid(subgroup_id)).first()
         if not subgroup or not subgroup.song_ids:
             return {"matrix": {}, "rankings": {}, "song_names": {}}
+
 
         # Fetch ALL valid submissions for this franchise
         submissions = (
@@ -89,11 +131,14 @@ class AnalysisService:
         song_objs = db.query(Song).filter(Song.id.in_([to_uuid(s) for s in all_songs])).all()
         song_names = {str(s.id): s.name for s in song_objs}
 
-        return {
+        result = {
             "matrix": matrix,
             "rankings": song_rankings,
             "song_names": song_names
         }
+        AnalysisCache.set(cache_key, result)
+        return result
+
 
     @staticmethod
     def compute_controversy(
@@ -214,10 +259,17 @@ class AnalysisService:
 
     @staticmethod
     def compute_spice_meter(franchise_id: str, db: Session) -> list[dict]:
+        # Check cache first
+        cache_key = AnalysisCache.make_key("spice", franchise_id)
+        cached = AnalysisCache.get(cache_key)
+        if cached is not None:
+            return cached
+            
         subgroups = db.query(Subgroup).filter_by(franchise_id=to_uuid(franchise_id)).all()
         user_raw_data = defaultdict(dict)
         user_extreme_picks = defaultdict(list)
         all_usernames = set()
+
 
         # Fetch ALL valid submissions for this franchise ONCE (not per subgroup)
         submissions = (
@@ -321,7 +373,10 @@ class AnalysisService:
                 "extreme_picks": all_picks
             })
 
-        return sorted(final_results, key=lambda x: x["global_spice"], reverse=True)
+        result = sorted(final_results, key=lambda x: x["global_spice"], reverse=True)
+        AnalysisCache.set(cache_key, result)
+        return result
+
 
     @staticmethod
     def compute_community_rankings(
@@ -834,7 +889,7 @@ class ControversyIndexService:
         # Rankings is List[Dict] usually. Let's ensure map
         # CommunityRankResponse usually has result_data as list of objects?
         # compute_community_rankings returns List[dict(song_id, rank, ...)]
-        consensus_map = {str(r['song_id']): float(r['rank']) for r in community_ranks}
+        consensus_map = {str(r['song_id']): float(r['average']) for r in community_ranks}
         
         subgroup = db.query(Subgroup).filter_by(id=to_uuid(subgroup_id)).first()
         subs = db.query(Submission).filter(

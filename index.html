@@ -769,7 +769,7 @@
             <div class="nav-item" id="btn-aff" onclick="tab('aff')">Affinity</div>
             <div class="nav-item" id="btn-subranks" onclick="tab('subranks')">Subunits</div>
             <div class="nav-item" id="btn-more" onclick="tab('more')">Analysis</div>
-            <div class="nav-item" id="btn-opps" onclick="tab('opps')">Divergence</div>
+            <div class="nav-item" id="btn-opps" onclick="tab('opps')">Divergence / Rivals</div>
             <div class="nav-item" id="btn-constellation" onclick="tab('constellation')">Constellation</div>
             <div class="nav-item" id="btn-oshi" onclick="tab('oshi')">Oshi Detector</div>
             <div class="nav-item" id="btn-spice" onclick="tab('spice')">Spice</div>
@@ -969,7 +969,11 @@
 
         <!-- DIVERGENCE VIEW -->
         <div id="view-opps" class="card hidden">
-            <h3>User Divergence Matrix</h3>
+            <h3>User Divergence & Head-to-Head Matrix</h3>
+            <p style="font-size:12px; color:var(--muted); margin-top:-10px; margin-bottom:15px;">
+                The lower the percentage, the more similar the taste. Click any cell to see a detailed
+                <b>Head-to-Head</b> comparison.
+            </p>
             <div id="matrix-scroll-wrapper">
                 <div id="c-matrix"></div>
             </div>
@@ -1538,7 +1542,7 @@
                                 width:16px; height:16px; background:${color}; border-radius:50%; border:2px solid #fff; cursor:pointer; z-index:${10 + i}; transition:all 0.2s;"
                                 onmouseover="this.style.transform='translateX(-50%) scale(1.4)'; this.style.zIndex='100';"
                                 onmouseout="this.style.transform='translateX(-50%) scale(1)'; this.style.zIndex='${10 + i}';"
-                                onclick="event.stopPropagation(); showUserComparison('${user}', '${user}')"></div>`;
+                                onclick="event.stopPropagation(); window.showSpiceDetail('${user}')"></div>`;
                 }).join('')}
                     </div>
                     <div style="display:flex; justify-content:space-between; margin-top:-10px; padding:0 ${margin}px;">
@@ -1549,7 +1553,7 @@
                     <div style="margin-top:35px;"><h4 style="margin-bottom:15px; font-size:14px; text-transform:uppercase; letter-spacing:1px; color:var(--muted);">Voter Breakdown</h4>
                         <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:10px;">
                             ${users.sort((a, b) => userRanks[a] - userRanks[b]).map(u => `
-                                <div style="padding:10px 12px; background:var(--card); border:1px solid var(--border); border-radius:8px; display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="showUserComparison('${u}', '${u}')">
+                                <div style="padding:10px 12px; background:var(--card); border:1px solid var(--border); border-radius:8px; display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="window.showSpiceDetail('${u}')">
                                     <span style="font-size:12px; font-weight:600;">${u.substring(0, 10)}</span>
                                     <span style="font-weight:900; color:var(--pink); font-family:monospace;">#${userRanks[u]}</span>
                                 </div>
@@ -2490,8 +2494,9 @@
 
                 if (xStrategy === 'z-score') {
                     const zScores = sorted.map(r => (r.average - mean) / stddev);
-                    const minZ = Math.min(...zScores);
-                    const maxZ = Math.max(...zScores);
+                    // Force scale to at least +/- 2.25 to show the "standard" range
+                    const minZ = Math.min(-2.25, Math.min(...zScores));
+                    const maxZ = Math.max(2.25, Math.max(...zScores));
                     const zRange = maxZ - minZ || 1;
 
                     const getX = (z) => {
@@ -2570,11 +2575,12 @@
                 ctx.textAlign = 'center';
 
                 // We draw labels at the boundaries of rects. 
-                // Skip the very last one (right edge) and first (left edge) usually, 
-                // but checking boundaries is safer.
                 bgRects.forEach((rect, i) => {
-                    if (i < bgRects.length - 1) {
+                    if (i < bgRects.length - 1 && rect.w > 0) {
                         const boundaryX = rect.x + rect.w;
+
+                        // Only draw if boundary is well within the canvas (avoid edge overlap)
+                        if (boundaryX < 5 || boundaryX > w - 5) return;
 
                         // Determine label text based on method and tier
                         let label = '';
@@ -2592,7 +2598,6 @@
                             if (rect.t === 'C') label = '80%';
                         } else if (tierMethod === 'score') {
                             if (rect.t === 'S') label = '93%'; // approx
-                            // Score cuts are dynamic, maybe skip labels or use approx
                         }
 
                         if (label) {
@@ -3066,7 +3071,7 @@
                 `;
                 if (wrapUnq) wrapUnq.style.display = 'none';
 
-                drawAffinityChart(points, outliers);
+                drawAffinityChart(points, []);
 
             } catch (e) {
                 console.error(e);
