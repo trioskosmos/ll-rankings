@@ -944,7 +944,12 @@ class ControversyIndexService:
                 # Prefer English Name if available
                 char_names[cid] = a.get('englishName', a['name'])
 
-        group_chars = {a['name']: a['characters'] for a in artists if a.get('characters')}
+        group_chars = {}
+        for a in artists:
+            if a.get('characters'):
+                group_chars[a['name']] = a['characters']
+                if a.get('englishName'):
+                    group_chars[a['englishName']] = a['characters']
 
         sub = db.query(Submission).filter(
             Submission.franchise_id == to_uuid(franchise_id),
@@ -972,22 +977,41 @@ class ControversyIndexService:
         ranks = [float(v) for v in user_ranks.values()]
         global_avg = sum(ranks) / len(ranks)
 
-        # Find Subunits that are mapped
+        # Find Subgroups (Solos AND Subunits)
+        # Remove is_subunit filter to find everything, but we will filter by artist char count later
         all_subgroups = db.query(Subgroup).filter(
-            Subgroup.franchise_id == to_uuid(franchise_id),
-            Subgroup.is_subunit == True
+            Subgroup.franchise_id == to_uuid(franchise_id)
         ).all()
         
         song_to_chars = defaultdict(set)
         for sg in all_subgroups:
-            # Match Subgroup Name to Artist
-            # We might need fuzzy match? Assuming exact for now.
+            # Fuzzy Logic for Artist Matching
             name_key = sg.name
+            matched_cids = None
+            
+            # 1. Exact Match (JP or EN)
             if name_key in group_chars:
-                cids = group_chars[name_key]
+                matched_cids = group_chars[name_key]
+            
+            # 2. "Solos" suffix handling (e.g. "Kanon Solos" -> "Kanon")
+            elif name_key.endswith(" Solos"):
+                 base_name = name_key.replace(" Solos", "")
+                 # Look for artist whose English name contains base_name
+                 # e.g. "Kanon" in "Kanon Shibuya"
+                 for en_name, cids in group_chars.items():
+                     if len(cids) == 1 and base_name in en_name:
+                         matched_cids = cids
+                         break
+            
+            if matched_cids:
+                # STRICT FILTER: Only allow SOLO artists (1 character)
+                # User requested "only the solos"
+                if len(matched_cids) != 1:
+                    continue
+
                 if not sg.song_ids: continue
                 for sid in sg.song_ids:
-                    for cid in cids:
+                    for cid in matched_cids:
                         if cid: song_to_chars[sid].add(cid)
         
         char_stats = defaultdict(list)
@@ -1004,7 +1028,8 @@ class ControversyIndexService:
                     
         results = []
         for cid, cranks in char_stats.items():
-            if len(cranks) < 3: continue
+            # Lower threshold to 1 to include new members with few songs (e.g. Tomari, Shiki)
+            if len(cranks) < 1: continue
             avg = sum(cranks) / len(cranks)
             # Bias: How much BETTER (lower rank) than global avg?
             # Positive Bias = Liked more than average song.

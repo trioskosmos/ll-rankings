@@ -1,0 +1,4 @@
+[liella.tomari_solos] INVALID: 'ワイルドカード' (Artists: ["['65']"]). Expected ['49']
+[liella.tomari_solos] INVALID: 'dolce' (Artists: ["['48']", "['65']"]). Expected ['49']
+[liella.tomari_solos] INVALID: '11th moon' (Artists: ["['48', '65']"]). Expected ['49']
+[liella.tomari_solos] INVALID: 'Bubble Rise' (Artists: ["['37', '48', '65']"]). Expected ['49']

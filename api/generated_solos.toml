@@ -1,0 +1,104 @@
+[liella.kanon_solos]
+name = "Kanon Solos"
+is_custom = false
+is_subunit = true
+songs = [
+    "心キラララ",
+    "ほんのちょっぴり",
+    "だいすきのうた",
+    "青空を待ってる",
+    "Free Flight",
+    "Over Over"
+]
+
+[liella.keke_solos]
+name = "Keke Solos"
+is_custom = false
+is_subunit = true
+songs = [
+    "Oh！レディ・ステディ・ポジティブ",
+    "水色のSunday",
+    "星屑クルージング",
+    "ファンダメンタル"
+]
+
+[liella.chisato_solos]
+name = "Chisato Solos"
+is_custom = false
+is_subunit = true
+songs = [
+    "勇気のカケラ",
+    "Flyer’s High",
+    "君を想う花になる",
+    "Rhythm"
+]
+
+[liella.sumire_solos]
+name = "Sumire Solos"
+is_custom = false
+is_subunit = true
+songs = [
+    "グソクムシのうた",
+    "ヒロインズ☆ランウェイ",
+    "みてろ！",
+    "Starry Prayer",
+    "Just woo!!"
+]
+
+[liella.ren_solos]
+name = "Ren Solos"
+is_custom = false
+is_subunit = true
+songs = [
+    "リバーブ",
+    "微熱のワルツ",
+    "ミッドナイトラプソディ",
+    "結び葉"
+]
+
+[liella.kinako_solos]
+name = "Kinako Solos"
+is_custom = false
+is_subunit = true
+songs = [
+    "ビギナーズRock!!",
+    "あふれる言葉",
+    "てくてく日和"
+]
+
+[liella.mei_solos]
+name = "Mei Solos"
+is_custom = false
+is_subunit = true
+songs = [
+    "茜心",
+    "Sky Linker"
+]
+
+[liella.shiki_solos]
+name = "Shiki Solos"
+is_custom = false
+is_subunit = true
+songs = [
+    "ガラスボールリジェクション",
+    "LiLiA"
+]
+
+[liella.natsumi_solos]
+name = "Natsumi Solos"
+is_custom = false
+is_subunit = true
+songs = [
+    "Eyeをちょうだい",
+    "パステルコラージュ"
+]
+
+[liella.wien_solos]
+name = "Wien Solos"
+is_custom = false
+is_subunit = true
+songs = [
+    "Butterfly Wing",
+    "エーデルシュタイン",
+    "ルカ"
+]

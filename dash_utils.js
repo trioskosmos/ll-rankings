@@ -23,32 +23,54 @@ function initDashboardConstellation(data) {
 
     // --- AUTO ZOOM LOGIC ---
     // 1. Find bounding box of all points relative to center 0,0
-    let maxX = 0, maxY = 0;
+    let maxDist = 0;
     coords.forEach(p => {
-        maxX = Math.max(maxX, Math.abs(p.x));
-        maxY = Math.max(maxY, Math.abs(p.y));
+        const d = Math.sqrt(p.x * p.x + p.y * p.y);
+        maxDist = Math.max(maxDist, d);
     });
 
-    // 2. Calculate scale to fill ~90% of the smallest dimension
-    // padding = 20px
+    // 2. Calculate Theoretical Max Radius
+    // N = number of songs. 
+    const N = data.song_names ? Object.keys(data.song_names).length : 0;
+    const theoMax = N > 1 ? Math.sqrt((Math.pow(N, 2) - 1) / 3) : 0;
+
+    // 3. Determine scale (fit both data and theoretical max)
+    // If theoMax is generated (N>0), use it as the outer bound.
+    // Otherwise fallback to data bounds.
+    const outerBound = theoMax > 0 ? theoMax : (maxDist || 1);
+
+    // padding = 30px
     const padding = 30;
-    const safeW = (w / 2) - padding;
-    const safeH = (h / 2) - padding;
+    const safeRadius = Math.min(w, h) / 2 - padding;
 
-    // If all points are at 0,0 (perfect consensus), default scale 1
-    const scaleX = maxX > 0 ? safeW / maxX : 1;
-    const scaleY = maxY > 0 ? safeH / maxY : 1;
-
-    // Use the smaller scale to maintain aspect ratio and fit everything
-    const scale = Math.min(scaleX, scaleY);
+    // Scale: map outerBound to safeRadius
+    const scale = safeRadius / outerBound;
 
     // --- DRAW ---
     ctx.clearRect(0, 0, w, h);
 
-    // Grid rings (simple)
+    // Draw Theoretical Max Boundary
+    if (theoMax > 0) {
+        ctx.strokeStyle = 'rgba(219, 97, 162, 0.3)'; // Pinkish low opacity
+        ctx.setLineDash([5, 5]); // Dashed
+        ctx.beginPath();
+        ctx.arc(cx, cy, theoMax * scale, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]); // Reset
+
+        // Label for Max Radius
+        ctx.fillStyle = 'rgba(219, 97, 162, 0.5)';
+        ctx.font = '9px Inter';
+        ctx.textAlign = 'center';
+        ctx.fillText("Theoretical Limit", cx, cy - (theoMax * scale) - 5);
+    }
+
+    // Grid rings (simple) 
+    // We can draw intermediate rings based on the max radius now? 
+    // Let's keep the fixed pixel rings or make them proportional?
+    // Let's make them proportional to 50% of max
     ctx.strokeStyle = 'rgba(255,255,255,0.05)';
-    ctx.beginPath(); ctx.arc(cx, cy, 50, 0, Math.PI * 2); ctx.stroke();
-    ctx.beginPath(); ctx.arc(cx, cy, 100, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx, cy, (theoMax * scale) * 0.5, 0, Math.PI * 2); ctx.stroke();
 
     // Axis lines
     ctx.strokeStyle = 'rgba(255,255,255,0.1)';

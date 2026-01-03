@@ -478,43 +478,23 @@ name = "Kanon Solos"
 is_custom = false
 is_subunit = true
 songs = [
-    "青空を待ってる",
-    "Memories",
-    "Free Flight",
-    "Over Over",
-    "ほんのちょっぴり",
-    "心キラララ",
-    "Dreamer Coaster",
-    "Flower Garden",
-    "Primary",
-    "1.2.3！",
-    "Stella!",
-    "変わらないすべて",
-    "Flyer's High",
-    "Rhythm",
-    "クレッシェンドゆ・ら",
-    "HAPPY TO DO WA！",
-    "What a Wonderful Dream!!"
+"心キラララ",
+"ほんのちょっぴり",
+"だいすきのうた",
+"青空を待ってる",
+"Free Flight",
+"Over Over"
 ]
-# Re-verifying Kanon list: 
-# Free Flight, Over Over, Memories, ほんのちょっぴり, 青空を待ってる, 心キラララ, Dreamer Coaster (CSV: 124. Dreamer Coaster - 澁谷かのん). OK.
 
 [liella.keke_solos]
 name = "Keke Solos"
 is_custom = false
 is_subunit = true
 songs = [
-   "Oh！レディ・ステディ・ポジティブ",
-   "ファンダメンタル",
-   "Anniversary",
-   "星屑クルージング",
-   "水色のSunday",
-   "エンドレスサーキット",
-   "1.2.3！",
-   "Stella!",
-   "Dears",
-   "HAPPY TO DO WA！",
-   "変わらないすべて"
+"Oh！レディ・ステディ・ポジティブ",
+"水色のSunday",
+"星屑クルージング",
+"ファンダメンタル"
 ]
 
 [liella.chisato_solos]
@@ -522,16 +502,10 @@ name = "Chisato Solos"
 is_custom = false
 is_subunit = true
 songs = [
-    "勇気のカケラ",
-    "Flyer's High",
-    "Ringing!",
-    "君を想う花になる",
-    "駆けるメリーゴーランド",
-    "Memories",
-    "Stella!",
-    "変わらないすべて",
-    "Rhythm",
-    "クレッシェンドゆ・ら"
+"勇気のカケラ",
+"Flyer’s High",
+"君を想う花になる",
+"Rhythm"
 ]
 
 [liella.sumire_solos]
@@ -539,16 +513,11 @@ name = "Sumire Solos"
 is_custom = false
 is_subunit = true
 songs = [
-    "ヒロインズ☆ランウェイ",
-    "みてろ！",
-    "Starry Prayer",
-    "Just woo!!",
-    "グソクムシのうた",
-    "Message",
-    "Dears",
-    "HAPPY TO DO WA！",
-    "Stella!",
-    "エンドレスサーキット"
+"グソクムシのうた",
+"ヒロインズ☆ランウェイ",
+"みてろ！",
+"Starry Prayer",
+"Just woo!!"
 ]
 
 [liella.ren_solos]
@@ -556,15 +525,10 @@ name = "Ren Solos"
 is_custom = false
 is_subunit = true
 songs = [
-    "結び葉",
-    "微熱のワルツ",
-    "Dears",
-    "リバーブ",
-    "ミッドナイトラプソディ",
-    "迷宮讃歌",
-    "Anniversary",
-    "クレッシェンドゆ・ら",
-    "HAPPY TO DO WA！"
+"リバーブ",
+"微熱のワルツ",
+"ミッドナイトラプソディ",
+"結び葉"
 ]
 
 [liella.kinako_solos]
@@ -572,10 +536,9 @@ name = "Kinako Solos"
 is_custom = false
 is_subunit = true
 songs = [
-    "ビギナーズRock!!",
-    "あふれる言葉",
-    "てくてく日和",
-    "Dreamer Coaster"
+"ビギナーズRock!!",
+"あふれる言葉",
+"てくてく日和"
 ]
 
 [liella.mei_solos]
@@ -583,10 +546,8 @@ name = "Mei Solos"
 is_custom = false
 is_subunit = true
 songs = [
-    "茜心",
-    "Sky Linker",
-    "パレードはいつも",
-    "罪DA・YO・NE"
+"茜心",
+"Sky Linker"
 ]
 
 [liella.shiki_solos]
@@ -594,12 +555,8 @@ name = "Shiki Solos"
 is_custom = false
 is_subunit = true
 songs = [
-    "ガラスボールリジェクション",
-    "LiLiA",
-    "パレードはいつも",
-    "愛♡スクリ～ム！",
-    "ICE LIMIT",
-    "罪DA・YO・NE"
+"ガラスボールリジェクション",
+"LiLiA"
 ]
 
 [liella.natsumi_solos]
@@ -607,9 +564,8 @@ name = "Natsumi Solos"
 is_custom = false
 is_subunit = true
 songs = [
-    "Eyeをちょうだい",
-    "パステルコラージュ",
-    "迷宮讃歌"
+"Eyeをちょうだい",
+"パステルコラージュ"
 ]
 
 [liella.wien_solos]
@@ -617,12 +573,9 @@ name = "Wien Solos"
 is_custom = false
 is_subunit = true
 songs = [
-    "エーデルシュタイン",
-    "ルカ",
-    "dolce",
-    "Butterfly Wing",
-    "11th moon",
-    "Bubble Rise"
+"Butterfly Wing",
+"エーデルシュタイン",
+"ルカ"
 ]
 
 [liella.tomari_solos]

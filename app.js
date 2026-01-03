@@ -1,12 +1,13 @@
-const API = "/api/v1";
-let activeTab = 'dash', allSubgroups = [];
+var API = "/api/v1";
+var activeTab = 'dash';
+var allSubgroups = allSubgroups || [];
 
 // Data cache to prevent redundant API calls
-let dataCache = { key: '', ranks: null, cont: null, takes: null, spice: null, loaded: false };
+var dataCache = { key: '', ranks: null, cont: null, takes: null, spice: null, loaded: false };
 
 // Song metadata cache for year sorting (populated from song-info.json)
-let songMetadata = {}; // { songName: { year: 2021, releasedOn: '2021-01-01' } }
-let currentLeaderboardRanks = []; // Store current rankings for re-sorting
+var songMetadata = {}; // { songName: { year: 2021, releasedOn: '2021-01-01' } }
+var currentLeaderboardRanks = []; // Store current rankings for re-sorting
 
 
 // Basic/Advanced Mode Toggle
@@ -37,6 +38,33 @@ function toggleAdvancedMode() {
 // Helper to get list limit based on mode
 function getLimit(basic, advanced) {
     return window.advancedMode ? advanced : basic;
+}
+
+// Constellation Zoom State: 'data' = zoom to fit dots, 'limit' = zoom to theoretical max
+window.constellationZoom = 'data'; // Default to data for best visibility of dots
+var lastConstellationData = null; // Cache for re-render
+
+function toggleConstellationZoom() {
+    console.log("DEBUG toggleConstellationZoom: CALLED. Current zoom:", window.constellationZoom);
+    window.constellationZoom = window.constellationZoom === 'data' ? 'limit' : 'data';
+    console.log("DEBUG toggleConstellationZoom: New zoom:", window.constellationZoom);
+    const btn = document.getElementById('toggle-zoom');
+    if (btn) {
+        if (window.constellationZoom === 'limit') {
+            btn.innerHTML = '🔍 Fit to Data';
+            btn.style.borderColor = 'var(--pink)';
+            btn.style.color = 'var(--pink)';
+        } else {
+            btn.innerHTML = '📏 Fit to Limit';
+            btn.style.borderColor = 'var(--muted)';
+            btn.style.color = 'var(--muted)';
+        }
+    }
+    // Re-render constellation with new zoom
+    console.log("DEBUG toggleConstellationZoom: lastConstellationData exists?", !!lastConstellationData);
+    if (lastConstellationData) {
+        initConstellation(lastConstellationData);
+    }
 }
 
 async function init() {
@@ -98,7 +126,7 @@ function renderLeaderboardRows(ranks, showYear = false) {
     const yearHeader = showYear ? '<th>Year</th>' : '';
 
     document.getElementById('c-leaderboard').innerHTML = `<table><colgroup><col class="col-rank"><col>${yearCol}<col class="col-metric"><col class="col-metric"></colgroup><tr><th>#</th><th>Song Name</th>${yearHeader}<th>Avg</th><th>Pts</th></tr>` +
-        ranks.map((s, i) => {
+        ranks.filter(s => s && s.song_name).map((s, i) => {
             const year = songMetadata[s.song_name]?.year || '—';
             const yearCell = showYear ? `<td class="col-metric" style="color:var(--muted)">${year}</td>` : '';
             return `<tr onclick="showSongDistribution('${s.song_name.replace(/'/g, "\\'")}')" style="cursor:pointer;" class="clickable-row"><td class="col-rank">${i + 1}</td><td>${s.song_name}</td>${yearCell}<td class="col-metric" style="color:var(--pink)">${s.average}</td><td class="col-metric">${s.points}</td></tr>`;
@@ -168,7 +196,13 @@ async function syncData(forceFetch = false) {
         try {
             const res = await fetch(`${API}/analysis/divergence?franchise=${encodeURIComponent(f)}&subgroup=${encodeURIComponent(sub)}`);
             const data = await res.json();
-            if (data && data.matrix) initConstellation(data);
+            console.log("DEBUG: fetched divergence data. Matrix keys:", data?.matrix ? Object.keys(data.matrix).length : "MISSING");
+            if (data && data.matrix) {
+                console.log("DEBUG: calling initConstellation from app.js");
+                initConstellation(data);
+            } else {
+                console.log("DEBUG: data.matrix missing, skipping initConstellation");
+            }
         } catch (e) { console.error("Constellation load error:", e); }
         // Do not return, let standard data load proceed
     }
@@ -237,8 +271,9 @@ async function syncData(forceFetch = false) {
         renderHaters(takes?.takes || []);
     }
     if (activeTab === 'opps') renderMatrix(sub, f);
-    if (activeTab === 'tiers') renderTierStats(ranks.rankings);
+    if (activeTab === 'tiers') renderTierStats(ranks.rankings, cont?.results || []);
     if (activeTab === 'aff') renderAffinity(ranks.rankings);
+    if (activeTab === 'subranks') renderSubranks();
 
     // Render dashboard constellation when on dashboard tab
     if (activeTab === 'dash') {
@@ -273,7 +308,7 @@ function renderCurrentTab() {
     if (activeTab === 'opps') renderMatrix(sub, f);
     if (activeTab === 'spice' || activeTab === 'dash') fetchSpiceData();
     if (activeTab === 'constellation' || activeTab === 'oshi') fetchUserList();
-    if (activeTab === 'tiers' && ranks?.rankings) renderTierStats(ranks.rankings);
+    if (activeTab === 'tiers' && ranks?.rankings) renderTierStats(ranks.rankings, cont?.results || []);
     if (activeTab === 'aff' && ranks?.rankings) renderAffinity(ranks.rankings);
 }
 
@@ -450,7 +485,7 @@ async function showSongDistribution(songName) {
                                 width:16px; height:16px; background:${color}; border-radius:50%; border:2px solid #fff; cursor:pointer; z-index:${10 + i}; transition:all 0.2s;"
                                 onmouseover="this.style.transform='translateX(-50%) scale(1.4)'; this.style.zIndex='100';"
                                 onmouseout="this.style.transform='translateX(-50%) scale(1)'; this.style.zIndex='${10 + i}';"
-                                onclick="event.stopPropagation(); showUserComparison('${user}', '${user}')"></div>`;
+                                onclick="event.stopPropagation(); window.showSpiceDetail('${user}')"></div>`;
         }).join('')}
                     </div>
                     <div style="display:flex; justify-content:space-between; margin-top:-10px; padding:0 25px;">
@@ -461,7 +496,7 @@ async function showSongDistribution(songName) {
                     <div style="margin-top:35px;"><h4 style="margin-bottom:15px; font-size:14px; text-transform:uppercase; letter-spacing:1px; color:var(--muted);">Voter Breakdown</h4>
                         <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:10px;">
                             ${users.sort((a, b) => userRanks[a] - userRanks[b]).map(u => `
-                                <div style="padding:10px 12px; background:var(--card); border:1px solid var(--border); border-radius:8px; display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="showUserComparison('${u}', '${u}')">
+                                <div style="padding:10px 12px; background:var(--card); border:1px solid var(--border); border-radius:8px; display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="window.showSpiceDetail('${u}')">
                                     <span style="font-size:12px; font-weight:600;">${u.substring(0, 10)}</span>
                                     <span style="font-weight:900; color:var(--pink); font-family:monospace;">#${userRanks[u]}</span>
                                 </div>
@@ -750,13 +785,24 @@ function showMetricExplanation(type) {
 }
 
 function renderSubunitPopularity(rankings, controversy, franchise) {
+    // Normalize franchise key to match API/TOML keys
+    let fKey = franchise.toLowerCase();
+    if (franchise.includes("Sunshine")) fKey = "aqours";
+    else if (franchise.includes("Superstar")) fKey = "liella";
+    else if (franchise.includes("Nijigasaki")) fKey = "nijigasaki";
+    else if (franchise.includes("Hasunosora")) fKey = "hasunosora";
+    else if (franchise === "Love Live!" || franchise === "u's") fKey = "u's";
+
     // Include meaningful categories: Subunits, Solos, Group Songs, and special collections like Liella no Uta
     const categoriesToIndex = ['Solos', 'Group Songs', 'Liella no Uta'];
     const units = allSubgroups.filter(sg =>
-        sg.franchise === franchise && (sg.is_subunit || categoriesToIndex.includes(sg.name))
+        (sg.franchise === fKey || sg.franchise === franchise) && (sg.is_subunit || categoriesToIndex.includes(sg.name))
     );
 
-    if (!units.length) { document.getElementById('c-subunits').innerHTML = "No category data."; return; }
+    if (!units.length) {
+        document.getElementById('c-subunits').innerHTML = `<div style="padding:20px; color:var(--red);">No subunits found for <b>${fKey}</b><br><span style="font-size:10px; color:var(--muted)">Raw: ${franchise} | Total Groups: ${allSubgroups.length}</span></div>`;
+        return;
+    }
 
     const data = units.map(unit => {
         const rS = rankings.filter(r => unit.songs.includes(r.song_name)), cS = controversy.filter(r => unit.songs.includes(r.song_name));
@@ -1243,9 +1289,10 @@ async function renderMatrix(sub, f) {
 }
 
 // Tier calculation method - stored globally for re-render
-let tierMethod = 'score'; // 'percentile', 'score', 'stddev'
+var tierMethod = tierMethod || 'stddev'; // 'percentile', 'score', 'stddev'
 
-function renderTierStats(rankings) {
+// NOTE: This is a legacy version, kept for reference. The active version is in index.html.
+function _renderTierStats_AppJs_Legacy(rankings) {
     const container = document.getElementById('view-tiers');
     const total = rankings.length;
 
@@ -1645,10 +1692,11 @@ function renderTierStats(rankings) {
 }
 
 // Change tier method (advanced mode)
-function changeTierMethod(method) {
+// NOTE: Legacy version. Active version is in index.html.
+function _changeTierMethod_AppJs_Legacy(method) {
     tierMethod = method;
     if (dataCache.loaded && dataCache.ranks?.rankings) {
-        renderTierStats(dataCache.ranks.rankings);
+        _renderTierStats_AppJs_Legacy(dataCache.ranks.rankings);
     }
 }
 
@@ -1750,7 +1798,7 @@ async function renderAffinity_OLD(subData) {
 }
 
 /* --- RIVALS LOGIC --- */
-let allUsers = [];
+var allUsers = [];
 
 async function fetchUserList() {
     const f = document.getElementById('view-franchise').value, sub = document.getElementById('view-subgroup').value;
@@ -1939,7 +1987,7 @@ async function analyzeBias() {
 
         window.lastBiasData = d.biases;
         window.lastBiasGlobalAvg = d.global_avg;
-        const displayList = window.advancedMode ? d.biases : d.biases.slice(0, 5);
+        const displayList = d.biases; // Show all biases regardless of mode
 
         let html = '';
         displayList.forEach((b, i) => {
@@ -2031,11 +2079,11 @@ window.showMemberBiasDetail = function (index) {
 
 
 /* --- CONSTELLATION GRAPH --- */
-let graphCtx = null, graphNodes = [], graphEdges = [], graphAnimParams = { w: 0, h: 0 };
-let graphHover = null, graphDrag = null, graphMouse = { x: 0, y: 0 };
+var graphCtx = null, graphNodes = [], graphEdges = [], graphAnimParams = { w: 0, h: 0 };
+var graphHover = null, graphDrag = null, graphMouse = { x: 0, y: 0 };
 
 // --- Math Helpers for MDS ---
-const MathLib = {
+var MathLib = {
     mean: (arr) => arr.reduce((a, b) => a + b, 0) / arr.length,
     pearson: (x, y) => {
         const n = x.length;
@@ -2103,12 +2151,16 @@ const MathLib = {
     }
 };
 
-let graphVarianceExplained = 0; // Store for legend
-let graphPC1Songs = []; // Top 3 songs defining X-axis
-let graphPC2Songs = []; // Top 3 songs defining Y-axis
+var graphVarianceExplained = 0; // Store for legend
+var graphPC1Songs = []; // Top 3 songs defining X-axis
+var graphPC2Songs = []; // Top 3 songs defining Y-axis
 
 function initConstellation(data) {
     // data = { matrix: {...}, rankings: {...}, song_names: {...} }
+
+    // Cache for re-render on zoom toggle
+    lastConstellationData = data;
+
     const matrixData = data.matrix;
     const songRankings = data.rankings || {};
     const songNames = data.song_names || {};
@@ -2134,24 +2186,41 @@ function initConstellation(data) {
     const coords = mdsResult.coords;
     graphVarianceExplained = mdsResult.varianceExplained;
 
-    let maxX = 0;
-    let maxY = 0;
+    // Calculate data bounds (max X and Y extents separately)
+    let maxX = 0, maxY = 0;
     coords.forEach(p => {
-        if (Math.abs(p.x) > maxX) maxX = Math.abs(p.x);
-        if (Math.abs(p.y) > maxY) maxY = Math.abs(p.y);
+        maxX = Math.max(maxX, Math.abs(p.x));
+        maxY = Math.max(maxY, Math.abs(p.y));
     });
+    const maxDist = Math.sqrt(maxX * maxX + maxY * maxY); // For theoMax comparison
 
-    const padding = 40; // Reduced padding for tighter fit
+    // Calculate Theoretical Max Radius
+    const N = Object.keys(songNames).length;
+    const theoMax = N > 1 ? Math.sqrt((Math.pow(N, 2) - 1) / 3) : 0;
+    console.log("DEBUG initConstellation: N=", N, "theoMax=", theoMax, "maxX=", maxX, "maxY=", maxY);
+
+    const padding = 15; // Minimal padding for maximum zoom
     const w = cvs.width, h = cvs.height;
 
-    // Scale to fit the furthest point within the canvas (keeping origin at center)
-    const scaleX = (w / 2 - padding) / (maxX || 1);
-    const scaleY = (h / 2 - padding) / (maxY || 1);
-    const fitScale = Math.min(scaleX, scaleY);
+    // Determine outer bound based on zoom mode
+    let scale;
+    console.log("DEBUG initConstellation: window.constellationZoom=", window.constellationZoom);
+    if (window.constellationZoom === 'limit' && theoMax > 0) {
+        // Fit theoretical max to smallest dimension (ensure full circle fits)
+        const safeRadius = Math.min(w, h) / 2 - padding;
+        scale = safeRadius / theoMax;
+        console.log("DEBUG initConstellation: Using LIMIT mode, theoMax=", theoMax);
+    } else {
+        // Fit to data - calculate separate scales for X and Y, use the smaller one
+        const scaleX = (w / 2 - padding) / (maxX * 1.02 || 1);
+        const scaleY = (h / 2 - padding) / (maxY * 1.02 || 1);
+        scale = Math.min(scaleX, scaleY);
+        console.log("DEBUG initConstellation: Using DATA mode, scaleX=", scaleX, "scaleY=", scaleY, "final scale=", scale);
+    }
 
-    // Use Uniform Scaling to preserve Aspect Ratio (Distance = Divergence)
-    // Engineers expect Euclidean space to be consistent.
-    const scale = fitScale;
+    window.graphScale = scale;
+    window.theoMax = theoMax; // Store for drawing limit ring
+    console.log("DEBUG initConstellation: window.graphScale=", window.graphScale);
 
     graphNodes = users.map((u, i) => ({
         id: u,
@@ -2230,6 +2299,67 @@ function initConstellation(data) {
     window.graphRankingsData = songRankings;
     window.graphSongNames = songNames;
     window.graphUsers = users;
+
+    // Populate divergence rankings panel (Dataset Bounds and Users by Divergence)
+    console.log("DEBUG: Updating Stats Panel. graphNodes:", graphNodes.length);
+    const maxPC1 = Math.max(...graphNodes.map(n => Math.abs(n.pc1)));
+    const maxPC2 = Math.max(...graphNodes.map(n => Math.abs(n.pc2)));
+    const usersByMag = graphNodes.map(n => ({
+        ...n,
+        magnitude: Math.sqrt(n.pc1 * n.pc1 + n.pc2 * n.pc2)
+    })).sort((a, b) => b.magnitude - a.magnitude);
+    const maxMag = usersByMag[0]?.magnitude || 0;
+
+    // Update stats display
+    const statPC1El = document.getElementById('stat-max-pc1');
+    const statPC2El = document.getElementById('stat-max-pc2');
+    const statMagEl = document.getElementById('stat-max-mag');
+
+    if (statPC1El) statPC1El.textContent = maxPC1.toFixed(3);
+    if (statPC2El) statPC2El.textContent = maxPC2.toFixed(3);
+    if (statMagEl) {
+        statMagEl.innerHTML = `<span style="color:#fff">${maxMag.toFixed(3)}</span> / <span style="color:var(--muted)">${(window.theoMax || 0).toFixed(3)}</span>`;
+    }
+
+    // Populate user rankings table
+    const rankingsEl = document.getElementById('constellation-user-rankings');
+    if (rankingsEl) {
+        console.log("DEBUG: Found rankingsEl, updating HTML...");
+        rankingsEl.innerHTML = `
+            <table style="width:100%; border-collapse:collapse;">
+                <thead>
+                    <tr style="border-bottom:1px solid var(--border); font-size:10px; color:var(--muted); text-transform:uppercase;">
+                        <th style="text-align:left; padding:6px 4px;">User</th>
+                        <th style="text-align:center; padding:6px 4px;">Mag</th>
+                        <th style="text-align:center; padding:6px 4px;">PC1</th>
+                        <th style="text-align:center; padding:6px 4px;">PC2</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${usersByMag.map((u, i) => `
+                        <tr onclick="showUserPositionMath(graphNodes.find(n => n.id === '${u.id}'))" 
+                            style="cursor:pointer; border-bottom:1px solid rgba(255,255,255,0.03);"
+                            onmouseover="this.style.background='rgba(219,97,162,0.1)'"
+                            onmouseout="this.style.background='transparent'">
+                            <td style="padding:8px 4px;">
+                                <span style="color:var(--muted); font-size:10px; margin-right:6px;">#${i + 1}</span>
+                                <span style="font-weight:600; color:#fff;">${u.id}</span>
+                            </td>
+                            <td style="text-align:center; padding:8px 4px; font-family:monospace; font-weight:bold; color:${i === 0 ? 'var(--pink)' : '#fff'};">
+                                ${u.magnitude.toFixed(2)}
+                            </td>
+                            <td style="text-align:center; padding:8px 4px; font-family:monospace; font-size:11px; color:${u.pc1 > 0 ? 'var(--green)' : 'var(--red)'};">
+                                ${u.pc1 > 0 ? '+' : ''}${u.pc1.toFixed(2)}
+                            </td>
+                            <td style="text-align:center; padding:8px 4px; font-family:monospace; font-size:11px; color:${u.pc2 > 0 ? 'var(--green)' : 'var(--red)'};">
+                                ${u.pc2 > 0 ? '+' : ''}${u.pc2.toFixed(2)}
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    }
 
     // Global helper for showing details (now uses MODAL instead of alert)
     window.showAxisDetails = (title, data, key) => {
@@ -2630,21 +2760,59 @@ function initDashboardConstellation(data) {
     const padding = 40;
     const safeW = (w / 2) - padding;
     const safeH = (h / 2) - padding;
-    const scaleX = maxX > 0 ? safeW / maxX : 1;
-    const scaleY = maxY > 0 ? safeH / maxY : 1;
+
+    // Calculate theoretical max based on number of songs
+    const N = data.song_names ? Object.keys(data.song_names).length : 0;
+    const theoMax = N > 1 ? Math.sqrt((Math.pow(N, 2) - 1) / 3) : Math.max(maxX, maxY) * 1.5;
+
+    // Determine outer bound based on zoom mode
+    let outerBound;
+    if (window.constellationZoom === 'limit' && theoMax > 0) {
+        outerBound = theoMax;
+    } else {
+        outerBound = Math.max(maxX, maxY) || 1;
+    }
+
+    const scaleX = outerBound > 0 ? safeW / outerBound : 1;
+    const scaleY = outerBound > 0 ? safeH / outerBound : 1;
     const scale = Math.min(scaleX, scaleY);
+
+    // Store for use by other functions
+    window.graphScale = scale;
+    window.theoMax = theoMax;
 
     // Clear and draw background
     ctx.clearRect(0, 0, w, h);
 
-    // Draw subtle grid circles
+    // Draw subtle grid circles - dynamically based on data range
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
     ctx.lineWidth = 1;
-    [50, 100].forEach(r => {
+    const maxGridVal = Math.ceil(outerBound);
+    const gridStep = maxGridVal <= 1 ? 0.25 : maxGridVal <= 5 ? 1 : Math.ceil(maxGridVal / 4);
+    for (let gridVal = gridStep; gridVal <= outerBound; gridVal += gridStep) {
+        const gridRadius = gridVal * scale;
         ctx.beginPath();
-        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.arc(cx, cy, gridRadius, 0, Math.PI * 2);
         ctx.stroke();
-    });
+    }
+
+    // Draw Theoretical Limit Ring (always show it)
+    if (theoMax > 0) {
+        const limitRadius = theoMax * scale;
+        ctx.strokeStyle = 'rgba(219, 97, 162, 0.4)'; // Pinkish
+        ctx.setLineDash([5, 5]); // Dashed
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(cx, cy, limitRadius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]); // Reset
+
+        // Label for Max Radius
+        ctx.fillStyle = 'rgba(219, 97, 162, 0.7)';
+        ctx.font = 'bold 10px Inter';
+        ctx.textAlign = 'center';
+        ctx.fillText("Theoretical Limit", cx, cy - limitRadius - 8);
+    }
 
     // Draw axis lines
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
@@ -2714,24 +2882,62 @@ function drawGraph() {
     graphCtx.textAlign = 'center';
     graphCtx.textBaseline = 'middle';
 
-    // Find the global max distance for grid scaling (from graphNodes)
-    // graphNodes are already centered at cx, cy
-    let maxNodeDist = 0;
+    // Find max PC value for grid scaling (use raw PC coords from graphNodes)
+    let maxPCDist = 0;
     graphNodes.forEach(n => {
-        maxNodeDist = Math.max(maxNodeDist, Math.abs(n.x - cx), Math.abs(n.y - cy));
+        maxPCDist = Math.max(maxPCDist, Math.abs(n.pc1 || 0), Math.abs(n.pc2 || 0));
     });
-    // Round up to nearest 100 for nice grid
-    const gridStep = 100;
-    const maxGrid = Math.ceil(maxNodeDist / gridStep) * gridStep + gridStep;
 
-    // Concentric circles (Radar style) with labels
-    for (let r = gridStep; r <= maxGrid; r += gridStep) {
+    // Use stored scale
+    const scale = window.graphScale || 1;
+
+    // Choose nice grid step based on max PC value
+    let pcGridStep;
+    if (maxPCDist <= 0.5) pcGridStep = 0.1;
+    else if (maxPCDist <= 1) pcGridStep = 0.25;
+    else if (maxPCDist <= 2) pcGridStep = 0.5;
+    else if (maxPCDist <= 5) pcGridStep = 1;
+    else if (maxPCDist <= 20) pcGridStep = 5;
+    else if (maxPCDist <= 50) pcGridStep = 10;
+    else pcGridStep = Math.ceil(maxPCDist / 5);
+
+    // Calculate the maximum visible radius in PC units (to canvas edge)
+    const maxVisibleRadius = Math.max(w, h) / 2 / scale;
+    const maxGridPC = Math.ceil(maxVisibleRadius / pcGridStep) * pcGridStep;
+
+    // Concentric circles with PC value labels - extend to canvas edges
+    for (let pcVal = pcGridStep; pcVal <= maxGridPC; pcVal += pcGridStep) {
+        const pixelRadius = pcVal * scale;
         graphCtx.beginPath();
-        graphCtx.arc(cx, cy, r, 0, Math.PI * 2);
+        graphCtx.arc(cx, cy, pixelRadius, 0, Math.PI * 2);
         graphCtx.stroke();
-        // Axis labels
-        graphCtx.fillText(r, cx + r, cy);
-        graphCtx.fillText(-r, cx - r, cy);
+        // Axis labels showing actual PC values (only within visible area)
+        if (pixelRadius < Math.min(w, h) / 2 - 20) {
+            const label = pcVal % 1 === 0 ? pcVal.toString() : pcVal.toFixed(1);
+            graphCtx.fillText(label, cx + pixelRadius + 8, cy);
+            graphCtx.fillText('-' + label, cx - pixelRadius - 8, cy);
+        }
+    }
+
+    // Draw Theoretical Limit Ring (dashed pink outer boundary)
+    if (window.theoMax && window.theoMax > 0) {
+        const limitRadius = window.theoMax * scale;
+        graphCtx.strokeStyle = 'rgba(219, 97, 162, 0.6)'; // Pink
+        graphCtx.setLineDash([8, 4]); // Dashed
+        graphCtx.lineWidth = 2.5;
+        graphCtx.beginPath();
+        graphCtx.arc(cx, cy, limitRadius, 0, Math.PI * 2);
+        graphCtx.stroke();
+        graphCtx.setLineDash([]); // Reset
+        graphCtx.lineWidth = 1;
+
+        // Label for Theoretical Limit
+        graphCtx.fillStyle = 'rgba(219, 97, 162, 0.9)';
+        graphCtx.font = 'bold 11px Inter';
+        graphCtx.textAlign = 'center';
+        graphCtx.textBaseline = 'bottom';
+        graphCtx.fillText("Theoretical Limit", cx, cy - limitRadius - 6);
+        graphCtx.textBaseline = 'middle';
     }
 
     // Crosshairs with Labels
@@ -2819,9 +3025,9 @@ function drawGraph() {
 }
 
 // 3D Visualizer Logic
-window.graphIs3D = false;
-window.graphRotation = 0;
-let graphAnimFrame = null;
+window.graphIs3D = window.graphIs3D || false;
+window.graphRotation = window.graphRotation || 0;
+var graphAnimFrame = graphAnimFrame || null;
 
 window.toggle3D = () => {
     window.graphIs3D = !window.graphIs3D;
@@ -3151,6 +3357,8 @@ function renderUsersData(data, spiceMap, subgroup) {
 function capitalize(str) {
     return str.charAt(0).toUpperCase() + str.slice(1);
 }
+
+
 
 async function recompute() {
     document.getElementById('engine-log').innerText = "CALCULATING...";
