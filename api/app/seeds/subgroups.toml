@@ -249,31 +249,6 @@ songs = [
     "Time to go"
 ]
 
-[liella.liella_no_uta]
-name = "Liella no Uta"
-is_custom = false
-songs = [
-    "結ぶメロディ",
-    "11th moon",
-    "Primary",
-    "Summer Escape!!",
-    "迷宮讃歌",
-    "dolce",
-    "Anniversary",
-    "Departure",
-    "Dears",
-    "ひとひらだけ",
-    "エンドレスサーキット",
-    "パレードはいつも",
-    "Message",
-    "Ringing!",
-    "プライム・アドベンチャー",
-    "駆けるメリーゴーランド",
-    "Memories",
-    "Dreamer Coaster",
-    "Time to go"
-]
-
 [liella.season_1_singles]
 name = "Season 1 Singles"
 is_custom = false
@@ -478,12 +453,12 @@ name = "Kanon Solos"
 is_custom = false
 is_subunit = true
 songs = [
-"心キラララ",
-"ほんのちょっぴり",
-"だいすきのうた",
-"青空を待ってる",
-"Free Flight",
-"Over Over"
+    "青空を待ってる",
+    "Free Flight",
+    "Over Over",
+    "ほんのちょっぴり",
+    "心キラララ",
+    "だいすきのうた"
 ]
 
 [liella.keke_solos]
@@ -491,10 +466,10 @@ name = "Keke Solos"
 is_custom = false
 is_subunit = true
 songs = [
-"Oh！レディ・ステディ・ポジティブ",
-"水色のSunday",
-"星屑クルージング",
-"ファンダメンタル"
+   "Oh！レディ・ステディ・ポジティブ",
+   "ファンダメンタル",
+   "星屑クルージング",
+   "水色のSunday"
 ]
 
 [liella.chisato_solos]
@@ -502,10 +477,9 @@ name = "Chisato Solos"
 is_custom = false
 is_subunit = true
 songs = [
-"勇気のカケラ",
-"Flyer’s High",
-"君を想う花になる",
-"Rhythm"
+    "勇気のカケラ",
+    "Flyer’s High",
+    "君を想う花になる"
 ]
 
 [liella.sumire_solos]
@@ -513,11 +487,11 @@ name = "Sumire Solos"
 is_custom = false
 is_subunit = true
 songs = [
-"グソクムシのうた",
-"ヒロインズ☆ランウェイ",
-"みてろ！",
-"Starry Prayer",
-"Just woo!!"
+    "ヒロインズ☆ランウェイ",
+    "みてろ！",
+    "Starry Prayer",
+    "Just woo!!",
+    "グソクムシのうた"
 ]
 
 [liella.ren_solos]
@@ -525,10 +499,10 @@ name = "Ren Solos"
 is_custom = false
 is_subunit = true
 songs = [
-"リバーブ",
-"微熱のワルツ",
-"ミッドナイトラプソディ",
-"結び葉"
+    "結び葉",
+    "微熱のワルツ",
+    "リバーブ",
+    "ミッドナイトラプソディ"
 ]
 
 [liella.kinako_solos]
@@ -536,9 +510,9 @@ name = "Kinako Solos"
 is_custom = false
 is_subunit = true
 songs = [
-"ビギナーズRock!!",
-"あふれる言葉",
-"てくてく日和"
+    "ビギナーズRock!!",
+    "あふれる言葉",
+    "てくてく日和"
 ]
 
 [liella.mei_solos]
@@ -546,8 +520,8 @@ name = "Mei Solos"
 is_custom = false
 is_subunit = true
 songs = [
-"茜心",
-"Sky Linker"
+    "茜心",
+    "Sky Linker"
 ]
 
 [liella.shiki_solos]
@@ -555,8 +529,8 @@ name = "Shiki Solos"
 is_custom = false
 is_subunit = true
 songs = [
-"ガラスボールリジェクション",
-"LiLiA"
+    "ガラスボールリジェクション",
+    "LiLiA"
 ]
 
 [liella.natsumi_solos]
@@ -564,8 +538,8 @@ name = "Natsumi Solos"
 is_custom = false
 is_subunit = true
 songs = [
-"Eyeをちょうだい",
-"パステルコラージュ"
+    "Eyeをちょうだい",
+    "パステルコラージュ"
 ]
 
 [liella.wien_solos]
@@ -573,9 +547,10 @@ name = "Wien Solos"
 is_custom = false
 is_subunit = true
 songs = [
-"Butterfly Wing",
-"エーデルシュタイン",
-"ルカ"
+    "エーデルシュタイン",
+    "ルカ",
+    "dolce",
+    "Butterfly Wing"
 ]
 
 [liella.tomari_solos]
@@ -583,10 +558,7 @@ name = "Tomari Solos"
 is_custom = false
 is_subunit = true
 songs = [
-    "ワイルドカード",
-    "dolce",
-    "11th moon",
-    "Bubble Rise"
+    "ワイルドカード"
 ]
 
 [liella.sunny_passion]
@@ -596,4 +568,33 @@ is_subunit = true
 songs = [
     "HOT PASSION!!",
     "Till Sunrise"
+]
+
+[liella.all_solos]
+name = "All Solos"
+is_custom = false
+is_subunit = true
+songs = [
+    # Kanon
+    "青空を待ってる", "Free Flight", "Over Over", "ほんのちょっぴり", "心キラララ", "だいすきのうた",
+    # Keke
+    "Oh！レディ・ステディ・ポジティブ", "ファンダメンタル", "星屑クルージング", "水色のSunday",
+    # Chisato
+    "勇気のカケラ", "Flyer’s High", "君を想う花になる",
+    # Sumire
+    "ヒロインズ☆ランウェイ", "みてろ！", "Starry Prayer", "Just woo!!", "グソクムシのうた",
+    # Ren
+    "結び葉", "微熱のワルツ", "リバーブ", "ミッドナイトラプソディ",
+    # Kinako
+    "ビギナーズRock!!", "あふれる言葉", "てくてく日和",
+    # Mei
+    "茜心", "Sky Linker",
+    # Shiki
+    "ガラスボールリジェクション", "LiLiA",
+    # Natsumi
+    "Eyeをちょうだい", "パステルコラージュ",
+    # Wien
+    "エーデルシュタイン", "ルカ", "dolce", "Butterfly Wing",
+    # Tomari
+    "ワイルドカード"
 ]

@@ -8,8 +8,13 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     # Database
-    database_url: str = "postgresql://liella@postgres:5432/liella"
+    # Default to SQLite for local dev without Docker
+    # Docker/Prod will override this via DATABASE_URL env var
+    database_url: str = "sqlite:///./rankings.db"
     database_echo: bool = False
+    
+    # Seeding
+    seed_rankings_on_startup: bool = False
 
     # API
     api_title: str = "Liella Rankings API"

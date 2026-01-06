@@ -924,13 +924,26 @@ class ControversyIndexService:
     @staticmethod
     def compute_oshi_bias(franchise_id: str, username: str, db: Session) -> dict:
         try:
-            # Adjust path: api/app/services -> api/app -> api -> rankings -> data
-            # Use fixed relative path from known location
-            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-            data_path = os.path.join(base_dir, "data", "artists-info.json")
-            if not os.path.exists(data_path):
-                 # Fail silently or return error
-                 return {"error": "Artist data not found"}
+            # Try multiple possible locations for artists-info.json
+            # Path 1: Docker container mount
+            # Path 2: Running from project root (ll-rankings/data/)
+            # Path 3: Running from api folder (../data/)
+            possible_paths = [
+                "/project_root/data/artists-info.json",
+                os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), "data", "artists-info.json"),
+                os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "..", "data", "artists-info.json"),
+                os.path.join(os.getcwd(), "data", "artists-info.json"),
+                os.path.join(os.getcwd(), "..", "data", "artists-info.json"),
+            ]
+            
+            data_path = None
+            for p in possible_paths:
+                if os.path.exists(p):
+                    data_path = p
+                    break
+            
+            if not data_path:
+                 return {"error": f"Artist data not found. Checked: {possible_paths}"}
                  
             with open(data_path, 'r', encoding='utf-8') as f:
                 artists = json.load(f)
@@ -1047,60 +1060,10 @@ class ControversyIndexService:
         return {"global_avg": round(global_avg, 1), "biases": results}
 
     @staticmethod
-    def compute_artist_fans(franchise_id: str, artist_id: str, db: Session) -> dict:
-        """Calculate which users favor a specific artist most (reverse of compute_oshi_bias)."""
-        try:
-            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-            data_path = os.path.join(base_dir, "data", "artists-info.json")
-            if not os.path.exists(data_path):
-                return {"error": "Artist data not found"}
-            with open(data_path, 'r', encoding='utf-8') as f:
-                artists = json.load(f)
-        except Exception as e:
-            return {"error": str(e)}
-
-        # Find the target artist name
-        target_artist_name = None
-        for a in artists:
-            if a.get('characters') and len(a['characters']) == 1:
-                if a['characters'][0] == artist_id:
-                    target_artist_name = a.get('englishName', a['name'])
-                    break
-        
-        if not target_artist_name:
-            return {"error": f"Artist {artist_id} not found"}
-
-        # Build group_chars mapping for fuzzy matching
-        group_chars = {}
-        for a in artists:
-            if a.get('characters'):
-                group_chars[a['name']] = a['characters']
-                if a.get('englishName'):
-                    group_chars[a['englishName']] = a['characters']
-
-        # Find all subgroups for this artist
-        all_subgroups = db.query(Subgroup).filter(
-            Subgroup.franchise_id == to_uuid(franchise_id)
-        ).all()
-
-        artist_song_ids = set()
-        for sg in all_subgroups:
-            name_key = sg.name
-            matched_cids = None
-            
-            if name_key in group_chars:
-                matched_cids = group_chars[name_key]
-            elif name_key.endswith(" Solos"):
-                base_name = name_key.replace(" Solos", "")
-                for en_name, cids in group_chars.items():
-                    if len(cids) == 1 and base_name in en_name:
-                        matched_cids = cids
-                        break
-            
-            if matched_cids and len(matched_cids) == 1 and matched_cids[0] == artist_id:
-                if sg.song_ids:
-                    artist_song_ids.update(sg.song_ids)
-
+    def _compute_fans_for_songs(
+        franchise_id: str, artist_song_ids: set, target_artist_name: str, db: Session
+    ) -> dict:
+        """Helper to compute fan data given a set of song IDs."""
         if not artist_song_ids:
             return {"error": f"No songs found for {target_artist_name}"}
 
@@ -1157,11 +1120,116 @@ class ControversyIndexService:
 
         results.sort(key=lambda x: x['bias'], reverse=True)
         return {
-            "artist_id": artist_id,
+            "artist_id": target_artist_name,
             "artist_name": target_artist_name,
             "song_count": len(artist_song_ids),
             "fans": results
         }
+
+    @staticmethod
+    def compute_artist_fans(franchise_id: str, artist_id: str, db: Session) -> dict:
+        """Calculate which users favor a specific artist most (reverse of compute_oshi_bias)."""
+        
+        # Special case: "All Solos" fetches the combined subgroup directly
+        if artist_id.lower() == 'all solos':
+            all_solos_sg = db.query(Subgroup).filter(
+                Subgroup.franchise_id == to_uuid(franchise_id),
+                Subgroup.name == "All Solos"
+            ).first()
+            
+            if not all_solos_sg or not all_solos_sg.song_ids:
+                return {"error": "All Solos subgroup not found. Please restart the backend to seed it."}
+            
+            artist_song_ids = set(all_solos_sg.song_ids)
+            target_artist_name = "All Solos"
+            
+            # Jump to submission processing (skip character matching)
+            return AnalysisService._compute_fans_for_songs(
+                franchise_id, artist_song_ids, target_artist_name, db
+            )
+        
+        try:
+            possible_paths = [
+                "/project_root/data/artists-info.json",
+                os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), "data", "artists-info.json"),
+                os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "..", "data", "artists-info.json"),
+                os.path.join(os.getcwd(), "data", "artists-info.json"),
+                os.path.join(os.getcwd(), "..", "data", "artists-info.json"),
+            ]
+            
+            data_path = None
+            for p in possible_paths:
+                if os.path.exists(p):
+                    data_path = p
+                    break
+            
+            if not data_path:
+                return {"error": f"Artist data not found. Checked: {possible_paths}"}
+            with open(data_path, 'r', encoding='utf-8') as f:
+                artists = json.load(f)
+        except Exception as e:
+            return {"error": str(e)}
+
+        # Find the target artist name and ID
+        target_artist_name = None
+        target_cid = None
+        
+        for a in artists:
+            if a.get('characters') and len(a['characters']) == 1:
+                cid = a['characters'][0]
+                name_en = a.get('englishName', '')
+                name_jp = a.get('name', '')
+                
+                # Match by ID or Name (case-insensitive, with partial match support)
+                artist_lower = artist_id.lower()
+                if (cid == artist_id or 
+                    name_en.lower() == artist_lower or 
+                    name_jp.lower() == artist_lower or
+                    # Partial match: first name must match start of full name
+                    name_en.lower().startswith(artist_lower + ' ') or
+                    name_en.lower().startswith(artist_lower)):
+                    target_artist_name = name_en or name_jp
+                    target_cid = cid
+                    break
+        
+        if not target_artist_name or not target_cid:
+            return {"error": f"Artist {artist_id} not found"}
+
+        # Build group_chars mapping for fuzzy matching
+        group_chars = {}
+        for a in artists:
+            if a.get('characters'):
+                group_chars[a['name']] = a['characters']
+                if a.get('englishName'):
+                    group_chars[a['englishName']] = a['characters']
+
+        # Find all subgroups for this artist
+        all_subgroups = db.query(Subgroup).filter(
+            Subgroup.franchise_id == to_uuid(franchise_id)
+        ).all()
+
+        artist_song_ids = set()
+        for sg in all_subgroups:
+            name_key = sg.name
+            matched_cids = None
+            
+            if name_key in group_chars:
+                matched_cids = group_chars[name_key]
+            elif name_key.endswith(" Solos"):
+                base_name = name_key.replace(" Solos", "")
+                for en_name, cids in group_chars.items():
+                    if len(cids) == 1 and base_name in en_name:
+                        matched_cids = cids
+                        break
+            
+            if matched_cids and len(matched_cids) == 1 and matched_cids[0] == target_cid:
+                if sg.song_ids:
+                    artist_song_ids.update(sg.song_ids)
+
+        # Use the helper function for consistent processing
+        return AnalysisService._compute_fans_for_songs(
+            franchise_id, artist_song_ids, target_artist_name, db
+        )
 
     @staticmethod
     def compute_release_trends(franchise_id: str, db: Session, subgroup_name: str = "All Songs") -> dict:
