@@ -24,11 +24,8 @@ def init_engine():
     global engine, SessionLocal
     
     try:
-        connect_args = {}
-        if settings.database_url.startswith("postgresql"):
-            connect_args = {"connect_timeout": 10}
-        elif settings.database_url.startswith("sqlite"):
-            connect_args = {"check_same_thread": False}
+        # PostgreSQL connection settings
+        connect_args = {"connect_timeout": 10}
 
         engine = create_engine(
             settings.database_url,
